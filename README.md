@@ -428,7 +428,25 @@ The phone apps are the same app in a native shell made with
 [Capacitor](https://capacitorjs.com) 8, with the song catalog bundled (no
 server needed) and native MIDI input over USB and Bluetooth.
 
-### Android
+### Android: install the ready-made APK
+
+The quickest way to get the app on an Android phone (Android 7.0 or newer),
+with nothing to build:
+
+1. On the phone, download
+   [`releases/piano-practice-companion.apk`](releases/piano-practice-companion.apk)
+   (open the link, then **Download raw file**).
+2. Open the downloaded file. Android asks to allow installing apps from your
+   browser or file manager: allow it for that app, then tap **Install**.
+3. The app appears as **Ear Training** among your apps.
+
+This APK is a test build of the latest version, signed with a development key
+rather than a Play Store key, so Android may warn that the app is from an
+unknown developer. To update it, install the newer APK over the old one; if
+Android refuses because the signature differs, uninstall the old app first
+(your saved tunes and settings are then lost: export your playlists before).
+
+### Android: build it yourself
 
 **Tools to install first** (once):
 
