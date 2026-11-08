@@ -4,10 +4,15 @@ import type { Chart } from './chart'
 export interface Tune {
   id: string
   chart: Chart
-  source: 'choco' | 'example' | 'import' | 'link' | 'own'
+  // bundled: read-only test lead sheets served with a local build (studio/public/leadsheets/)
+  source: 'choco' | 'example' | 'import' | 'link' | 'own' | 'bundled'
   playlist?: string
   addedAt: number
 }
+
+/** Whether a tune is kept in this browser (and can be saved over, deleted and exported). */
+export const isSavedTune = (tune: Tune): boolean =>
+  tune.source !== 'choco' && tune.source !== 'example' && tune.source !== 'bundled'
 
 export const STARTER: Tune = {
   id: 'starter',

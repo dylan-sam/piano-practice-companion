@@ -14,7 +14,8 @@ import { loadMyStyles, myStyleId, removeMyStyle, saveMyStyle } from './library/m
 import { hasMelody, withoutMelody, type Chart as ChartData } from './music/chart'
 import { offsetToKey, prettyNoteName } from './music/chords'
 import { emptyChart } from './music/edit'
-import { STARTER, type Tune } from './music/songs'
+import { isSavedTune, STARTER, type Tune } from './music/songs'
+import { loadBundledLeadSheets } from './library/bundled'
 import { getStyle, STYLES, type StyleDefinition } from './styles'
 import { labFromStyle, styleFromLab, styleSource, STEPS_PER_BEAT, type LabStyle } from './styles/lab'
 import { Chart } from './ui/Chart'
@@ -315,7 +316,9 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         reportError(err, 'library')
         return [] as Tune[]
       })
-      let all = [...saved]
+      // Test lead sheets served with a local build, when there are any
+      const bundled = await loadBundledLeadSheets()
+      let all = [...saved, ...bundled]
       const shared = await chartFromHash(window.location.hash)
       const sharedStyle = await labFromHash(window.location.hash)
       if (sharedStyle) openSharedStyleRef.current(sharedStyle)
@@ -518,7 +521,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     if (!draft) return
     const chart = { ...draft.chart, title: draft.chart.title.trim() || 'Untitled' }
     let saved: Tune
-    if (draft.from && draft.from.source !== 'example' && draft.from.source !== 'choco') {
+    if (draft.from && isSavedTune(draft.from)) {
       saved = { ...draft.from, chart }
       await saveTune(saved)
     } else {
@@ -712,8 +715,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
           onChange={(c) => setDraft({ ...draft, chart: c })}
           selected={editBar}
           onSelect={setEditBar}
-          saveLabel={draft.from && draft.from.source !== 'example' && draft.from.source !== 'choco' ? 'Save' : 'Save to My tunes'}
-          canDelete={!!draft.from && draft.from.source !== 'example' && draft.from.source !== 'choco'}
+          saveLabel={draft.from && isSavedTune(draft.from) ? 'Save' : 'Save to My tunes'}
+          canDelete={!!draft.from && isSavedTune(draft.from)}
           onSave={() => void saveDraft()}
           onCancel={() => setDraft(null)}
           onDelete={() => void deleteDraftTune()}

@@ -21,3 +21,4 @@ Thumbs.db
 
 # Test playlists made by weimar_playlist.py from the Weimar Jazz Database (not shipped)
 data/weimar*
+studio/public/leadsheets/

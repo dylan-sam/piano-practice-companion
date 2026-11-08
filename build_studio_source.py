@@ -9,7 +9,7 @@ OUTPUT = ROOT / "studio" / "dist" / "source.zip"
 SOURCE_DIRECTORIES = ("docs", "studio/src", "studio/public",
                       "studio/tests", "studio/scripts", "studio/android", "studio/ios")
 # Generated data and native build output inside the source folders
-EXCLUDED = ("studio/public/catalog/", "studio/android/app/build/", "studio/android/.gradle/",
+EXCLUDED = ("studio/public/catalog/", "studio/public/leadsheets/", "studio/android/app/build/", "studio/android/.gradle/",
             "studio/android/build/", "studio/ios/App/build/", "studio/ios/DerivedData/",
             # copies of the built web app that cap sync puts into the native projects
             "studio/android/app/src/main/assets/public/", "studio/ios/App/App/public/")

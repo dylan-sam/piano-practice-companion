@@ -598,6 +598,12 @@ python weimar_playlist.py wjazzd.db data/weimar_solos.json            # all 450 
 python weimar_playlist.py wjazzd.db data/weimar_some.json --melid 1 3  # chosen solos
 ```
 
+To test without importing, copy the file to
+`studio/public/leadsheets/weimar_solos.json` (also ignored by git) and build
+the app: both players then list its solos as a read-only playlist (edits are
+saved as a copy in My tunes). The published web demo is built from git, so it
+has none; an APK built locally does include the file (about 14 MB).
+
 The database holds 456 transcribed solos (saxophones, trumpets, trombone,
 clarinet, vibraphone, piano, guitar) with every note's bar, beat and position
 inside the beat, the beat track and the chord changes. How a solo becomes a chart:

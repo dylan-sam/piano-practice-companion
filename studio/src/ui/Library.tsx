@@ -43,7 +43,9 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const showActions = !!(onImport || onNew)
   const searchCatalog = !!onLoadChoco
 
-  const playlists = useMemo(() => playlistNames(tunes), [tunes])
+  const playlists = useMemo(() => playlistNames(tunes, true), [tunes])
+  // Playlists that can be removed: saved in this browser (not bundled with the build)
+  const removable = useMemo(() => new Set(playlistNames(tunes)), [tunes])
   const activePlaylist = playlists.includes(playlist) ? playlist : ALL
 
   // A selected playlist leads the saved tunes; the remaining playlists stay searchable.
@@ -53,7 +55,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       .filter((t) => !q || fold(`${t.chart.title} ${t.chart.composer ?? ''}`).includes(q))
   }, [tunes, query, activePlaylist])
 
-  const canRemove = activePlaylist !== ALL && activePlaylist !== 'Examples'
+  const canRemove = activePlaylist !== ALL && activePlaylist !== 'Examples' && removable.has(activePlaylist)
 
   // Open one version of a score
   const openVersion = async (id: string) => {

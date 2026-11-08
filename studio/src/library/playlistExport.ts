@@ -1,5 +1,5 @@
 import { isChart, type Chart } from '../music/chart'
-import type { Tune } from '../music/songs'
+import { isSavedTune, type Tune } from '../music/songs'
 
 const FORMAT = 'ear-training-studio-playlists'
 const VERSION = 1
@@ -9,14 +9,19 @@ export interface StudioPlaylist {
   charts: Chart[]
 }
 
-/** Return charts saved on this device, excluding fetched ChoCo scores. */
+/** Return charts saved on this device, excluding fetched ChoCo scores and bundled lead sheets. */
 export function savedTunes(tunes: Tune[]): Tune[] {
-  return tunes.filter((tune) => tune.source !== 'choco' && tune.source !== 'example')
+  return tunes.filter(isSavedTune)
 }
 
-/** List saved playlist names with My tunes first. */
-export function playlistNames(tunes: Tune[]): string[] {
-  return [...new Set(savedTunes(tunes).map((tune) => tune.playlist ?? 'My tunes'))]
+/** The tunes of the tune list's playlists: the saved ones and the bundled lead sheets. */
+function listedTunes(tunes: Tune[]): Tune[] {
+  return tunes.filter((tune) => isSavedTune(tune) || tune.source === 'bundled')
+}
+
+/** List playlist names with My tunes first: saved ones only, or also bundled ones (`listed`). */
+export function playlistNames(tunes: Tune[], listed = false): string[] {
+  return [...new Set((listed ? listedTunes(tunes) : savedTunes(tunes)).map((tune) => tune.playlist ?? 'My tunes'))]
     .sort((a, b) => (a === 'My tunes' ? -1 : b === 'My tunes' ? 1 : a.localeCompare(b)))
 }
 
@@ -27,7 +32,7 @@ export function orderSavedTunes(tunes: Tune[], selected = ''): Tune[] {
     const name = tune.playlist ?? 'My tunes'
     return selected && name === selected ? 0 : name === 'My tunes' ? 1 : 2
   }
-  return savedTunes(tunes).sort((a, b) => rank(a) - rank(b) ||
+  return listedTunes(tunes).sort((a, b) => rank(a) - rank(b) ||
     (a.playlist ?? 'My tunes').localeCompare(b.playlist ?? 'My tunes') ||
     a.chart.title.localeCompare(b.chart.title))
 }
