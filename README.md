@@ -585,3 +585,5 @@ authors. Google Play has no such restriction. This is not legal advice.
 - **Synthesizer**: [SpessaSynth](https://github.com/spessasus/SpessaSynth);
   sound bank GeneralUser GS by S. Christian Collins.
 - **Fonts**: Petaluma (Steinberg), IBM Plex (IBM).
+
+This project was built with the help of GPT-6 Sol and Opus 5.5.

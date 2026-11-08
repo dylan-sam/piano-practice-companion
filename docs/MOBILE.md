@@ -1,59 +1,83 @@
-# iOS and Android apps
+# Android and iOS apps
 
-The apps are the Studio web app (`studio/`) in a native shell made with
-[Capacitor](https://capacitorjs.com) 8: `studio/android` is an Android Studio
-project, `studio/ios` an Xcode project (Swift Package Manager, no CocoaPods).
-App id `com.eartraining.app`, name "Ear Training" (`studio/capacitor.config.ts`).
+The phone apps are the web app of `studio/` inside a native shell made with
+[Capacitor](https://capacitorjs.com) 8. Everything is the same app; only the
+song catalog, MIDI input and the screen layout differ.
+
+| | |
+|---|---|
+| Android project | `studio/android` (Android Studio) |
+| iOS project | `studio/ios` (Xcode, Swift Package Manager, no CocoaPods) |
+| App id and name | `com.eartraining.app`, "Ear Training" (`studio/capacitor.config.ts`) |
+| Minimum system | Android 7.0 (API 24), iOS 15 |
+| Status | Android built and run on phones; iOS never built ([testing status](#testing-status)) |
+
+- [What differs from the desktop app](#what-differs-from-the-desktop-app)
+- [Building](#building)
+- [Common errors](#common-errors)
+- [Testing status](#testing-status)
 
 ## What differs from the desktop app
 
-**Songs come from the app, not from a server.** `python build_mobile_catalog.py`
-writes `studio/public/catalog/` (7 MB): `index.bin`, the songs with their
-versions in the server's order and the catalog progressions each version
-contains, and `charts-<n>.bin`, the Studio charts of 200 versions each. Both are
-gzipped JSON, written by the same Python code that answers `/api/*`
-(`score_search.search_score_groups`, `studio_bridge.score_chart`).
-`studio/src/library/catalog.ts` answers the song search, the progression
-filter, random songs and chart loading from these files in the app, and from
-the server on desktop. Building the app also bundles the files into the web
-build, where the desktop app ignores them; `VITE_BUNDLED_CATALOG=1` makes a web
-build use them too (for example a static web version without `server.py`).
+### Songs come with the app
 
-**MIDI comes from a native plugin.** Mobile web views have no Web MIDI, so the
-app registers its own `Midi` plugin (`studio/src/audio/nativeMidi.ts`):
+On desktop the song search asks the local server (`server.py`). The phone apps
+have no server, so the catalog is bundled:
 
-- Android: `android/app/src/main/java/com/eartraining/app/MidiPlugin.java`
-  (`android.media.midi`, USB, Bluetooth and virtual devices; registered in
-  `MainActivity`). The manifest declares MIDI as optional.
-- iOS: `ios/App/App/MidiPlugin.swift` (CoreMIDI, MIDI 1.0 note messages from
-  every source; registered by `MainViewController`, set in `Main.storyboard`).
+| File | Holds |
+|---|---|
+| `studio/public/catalog/index.bin` | every song with its versions, in the server's order, and the progressions each version contains |
+| `studio/public/catalog/charts-<n>.bin` | the charts of 200 versions each, ready for the app |
 
-`useMidiKeyboard` uses the plugin in the app and Web MIDI in the browser, so
-Chord Sightreading works the same way on both.
+Both are gzipped JSON (7 MB in all), written by `python build_mobile_catalog.py`
+with the same Python code that answers the server's requests
+(`score_search.search_score_groups`, `studio_bridge.score_chart`), so the
+results are identical.
 
-**Phone layout.** The app draws under the status and navigation bars and pads
-itself by their height: Capacitor passes it as `--safe-area-inset-*` on
-Android (`SystemBars.insetsHandling: 'css'` in `capacitor.config.ts`), iOS as
-`env(safe-area-inset-*)`, both read as `--inset-*` in `index.css`. Upright
-phones (below 820 px wide, and any window below 600 px) move a screen's
-top-bar actions into a ⋯ menu (`ui/TopbarMenu.tsx`) and the tune list into a
-Tunes drawer, and show two bars per chart row (`rowCells` in `ui/Chart.tsx`).
-Landscape phones (below 500 px high) keep the desktop layout, made compact so
-the chart keeps most of the height: thinner top bar and transport, the tune list as a
-drawer over the chart, opened and closed by the Tunes (Songs) button as on
-upright phones, a smaller title and bar rows, four bars per row,
-short button labels, and the screen's title shortened with an ellipsis when
-the buttons need its room. Up to 1100 px wide, and on
-landscape phones, the transport keeps play, position and a Settings button
-that opens a panel with style, pattern, key, tempo, choruses, Practice and
-Mixer (`ui/TransportSettings.tsx`), with the same layout in every screen,
-Chord Sightreading included, kept above the phone's navigation bar: from the bottom of the screen on upright
-phones, at the bottom right on tablets, at the right beside the chart on
-landscape phones. `ui/useNarrowScreen.ts` holds the breakpoints
-(`NARROW_QUERY`, `LANDSCAPE_QUERY`, `COMPACT_TRANSPORT_QUERY`, `TWO_BAR_QUERY`).
+`studio/src/library/catalog.ts` answers the search, the progression filter,
+random songs and chart loading from these files in the app, and from the server
+on desktop. A web build set with `VITE_BUNDLED_CATALOG=1` uses the files too,
+for example a static website without `server.py`.
 
-Everything else (sound bank, exercises, saved tunes and settings in the web
-view's storage) runs unchanged inside the app.
+### MIDI comes from a native plugin
+
+Phone web views have no Web MIDI, so the app has its own `Midi` plugin
+(`studio/src/audio/nativeMidi.ts`). `useMidiKeyboard` uses it in the app and
+Web MIDI in the browser, so Chord Sightreading works the same everywhere.
+
+| Platform | Plugin | Devices |
+|---|---|---|
+| Android | `android/app/src/main/java/com/eartraining/app/MidiPlugin.java` (`android.media.midi`, registered in `MainActivity`) | USB, Bluetooth and virtual devices; the manifest declares MIDI optional, so phones without it can install the app |
+| iOS | `ios/App/App/MidiPlugin.swift` (CoreMIDI, registered by `MainViewController`, set in `Main.storyboard`) | every MIDI source, MIDI 1.0 note messages |
+
+### The screen adapts to the phone
+
+The app draws under the status and navigation bars and pads itself by their
+height (`--inset-*` in `index.css`; Capacitor gives the height as
+`--safe-area-inset-*` on Android and `env(safe-area-inset-*)` on iOS), so
+nothing hides behind the phone's own buttons.
+
+| Screen | Size | Layout |
+|---|---|---|
+| Upright phone | below 820 px wide (or any screen below 600 px) | top-bar buttons in a ⋯ menu; tune list in a drawer opened by *Tunes* (*Songs* in the sightreader); **2 bars per row**; Settings panel from the bottom |
+| Landscape phone | below 500 px high | the desktop layout, made compact: thinner top bar and play bar, short button labels, tune list in a drawer, smaller title and rows, **4 bars per row**; Settings panel at the right, beside the chart |
+| Tablet, narrow window | up to 1100 px wide | the desktop layout; Settings panel at the bottom right |
+| Desktop | wider | everything in view, no Settings panel |
+
+On every screen except the desktop, the play bar keeps only play, the position
+and a **Settings** button. The panel it opens holds style, pattern, key, tempo,
+choruses, Practice and Mixer (`ui/TransportSettings.tsx`). The breakpoints live
+in `ui/useNarrowScreen.ts`:
+
+| Query | Screens |
+|---|---|
+| `NARROW_QUERY` | upright phones and narrow windows (menus, drawers) |
+| `TWO_BAR_QUERY` | the same (two bars per row) |
+| `LANDSCAPE_QUERY` | landscape phones (compact desktop layout) |
+| `COMPACT_TRANSPORT_QUERY` | up to 1100 px wide, and landscape phones (Settings panel) |
+
+Everything else (sound bank, exercises, saved tunes and settings, kept in the
+web view's storage) runs unchanged.
 
 ## Building
 
@@ -62,68 +86,88 @@ view's storage) runs unchanged inside the app.
 | | Android | iOS (not tested yet) |
 |---|---|---|
 | Computer | Windows, macOS or Linux | a Mac |
-| Tools | [Android Studio](https://developer.android.com/studio) 2025.2.1 or newer, with its bundled JDK 21 and the Android SDK platform 36 | Xcode 26 or newer and its command line tools (`xcode-select --install`) |
-| Both | Node.js 22 or newer, pnpm, Python 3.10 or newer | |
+| Tools | [Android Studio](https://developer.android.com/studio) 2025.2.1 or newer, with its own JDK 21 and the Android SDK platform 36 | Xcode 26 or newer and its command line tools (`xcode-select --install`) |
+| For both | Node.js 22 or newer, pnpm, Python 3.10 or newer (how to install them: [README](../README.md#android)) | |
 | To install on a phone | USB debugging, or copy the APK and allow installing it | an Apple account (free for your own device, paid for the App Store) |
-
-The app needs Android 7.0 (API 24) or newer, or iOS 15 or newer. The iOS
-project uses Swift Package Manager, so CocoaPods is not needed.
 
 ### Steps
 
 From `studio/`:
 
 ```sh
-pnpm install
-pnpm run native        # mobile catalog, web build, then copy into both native projects (cap sync)
+pnpm install           # once, and after the dependencies change
+pnpm run native        # phone catalog, web build, then copy into android/ and ios/ (cap sync)
 pnpm run android       # open in Android Studio
 pnpm run ios           # open in Xcode (on a Mac)
 ```
 
-`pnpm run native` rebuilds the bundled catalog from `data/progressions.sqlite`.
-Without the database, `pnpm run sync` does the same with the catalog already in
-`studio/public/catalog/`. Run one of them again after any change to the web app
-or the data. The web files copied into the native projects
-(`android/app/src/main/assets/public`, `ios/App/App/public`) are generated by
-`cap sync` and not kept in the repository.
+| Command | Does | Needs |
+|---|---|---|
+| `pnpm run native` | rebuilds `studio/public/catalog/` from the database, builds the app, copies it into both native projects | `data/progressions.sqlite` |
+| `pnpm run sync` | builds the app and copies it, with the catalog already in `studio/public/catalog/` | nothing more (the catalog is in the repository) |
 
-**Android APK.** In Android Studio, wait for the Gradle sync to finish, then
-choose **Build → Build Bundle(s) / APK(s) → Build APK(s)**. The debug APK is
-written to `android/app/build/outputs/apk/debug/app-debug.apk`. Copy it to the
-phone and open it, or connect the phone with USB debugging on and press
-**Run**. For the Play Store, build a signed bundle with
+Run one of them again after any change to the app or the data, before building
+in Android Studio or Xcode. The copies they make
+(`android/app/src/main/assets/public`, `ios/App/App/public`) are generated and
+not kept in the repository.
+
+### Android APK
+
+1. In Android Studio, wait for the **Gradle sync** to finish (bottom bar).
+2. Choose **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+3. Click **locate** in the message that appears, or open
+   `studio/android/app/build/outputs/apk/debug/app-debug.apk`.
+4. Copy the APK to the phone and open it (allow installing apps from that
+   source). Or connect the phone with USB debugging on and press **Run**.
+
+For the Play Store, build a signed bundle with
 **Build → Generate Signed Bundle / APK**.
 
-From the command line, `cd android` then `./gradlew assembleDebug`
-(`.\gradlew.bat assembleDebug` in PowerShell). Gradle needs `JAVA_HOME` set to a
-JDK 21 (or 17), for example Android Studio's own:
+From the command line instead:
 
-```powershell
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"   # Windows, default install folder
-$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+```sh
+cd android
+./gradlew assembleDebug            # Windows PowerShell: .\gradlew.bat assembleDebug
 ```
 
-Common errors on Windows:
+Gradle needs `JAVA_HOME` set to a JDK 21 (or 17), such as Android Studio's own.
+On Windows, for the current PowerShell window:
 
-- *pnpm.ps1 cannot be loaded, running scripts is disabled*: run
-  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or type
-  `pnpm.cmd` instead of `pnpm`.
-- *gradlew.bat is not recognized*: in PowerShell, type `.\gradlew.bat` from the
-  `android` folder.
-- *Dependency requires at least JVM runtime version 11* or *JAVA_HOME is not
-  set*: `JAVA_HOME` points to an old Java or nowhere; set it as above.
-- *SDK location not found*: open the project once in Android Studio, which
-  writes `android/local.properties` with the SDK path.
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"   # the default install folder
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+java -version                      # should say 21
+```
 
-**iOS app.** In Xcode, select the **App** target, choose your team under
-**Signing & Capabilities** (change the bundle id `com.eartraining.app` if it is
-taken), pick a device or a simulator and press **Run**.
+### iOS app
+
+1. `pnpm run ios` opens the project in Xcode.
+2. Select the **App** target, and under **Signing & Capabilities** choose your
+   team. Change the bundle id `com.eartraining.app` if Apple says it is taken.
+3. Pick a device or a simulator and press **Run**.
+
+The first build is also the first compile of `MidiPlugin.swift`, so expect to
+fix small errors.
+
+## Common errors
+
+| Message | Cause | Fix |
+|---|---|---|
+| *pnpm.ps1 cannot be loaded, running scripts is disabled* | PowerShell blocks scripts by default | run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or type `pnpm.cmd` |
+| *gradlew.bat is not recognized* | PowerShell does not run programs from the current folder by name | type `.\gradlew.bat`, from `studio\android` |
+| *Dependency requires at least JVM runtime version 11* | Gradle found an old Java (often from an old Android Studio) | set `JAVA_HOME` to a JDK 21 as above, or uninstall the old Java |
+| *JAVA_HOME is not set*, or points to a missing folder | no Java found | set `JAVA_HOME` as above, or build from Android Studio, which uses its own Java |
+| *SDK location not found* | the Android SDK path is unknown | open the project once in Android Studio, which writes `android/local.properties` |
+| the APK still shows the old app | the native project was not updated | run `pnpm run native` (or `sync`) before building |
 
 ## Testing status
 
-The Android app has been built in Android Studio and runs on phones. The iOS
-app has never been built: the project was generated on Linux, where Xcode is
-not available, so its first build is also the first compile of
-`MidiPlugin.swift`. Still to check on real devices: a USB or Bluetooth MIDI
-keyboard in Chord Sightreading (Android and iOS), and everything on iOS. Icons
-and splash screens are still Capacitor's defaults.
+| Platform | Built | Checked on a device |
+|---|---|---|
+| Android | yes | the app runs on phones, upright and in landscape |
+| iOS | never | nothing yet |
+
+The iOS project was generated on Linux, where Xcode is not available. Still to
+check on real devices: a USB or Bluetooth MIDI keyboard in Chord Sightreading
+(Android and iOS), and everything on iOS. Icons and splash screens are still
+Capacitor's defaults.
