@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { unzipMxl } from '../formats/musicxml'
 import { useBackClose } from './backButton'
 
 export interface ImportResult {
@@ -6,19 +7,51 @@ export interface ImportResult {
   playlists: string[]
 }
 
+export type ImportSource = 'ireal' | 'musicxml' | 'studio'
+
 interface ImportDialogProps {
   open: boolean
   onClose: () => void
-  onImport: (text: string) => Promise<ImportResult>
-  onImportStudio: (text: string) => Promise<ImportResult>
-  studioOnly?: boolean // only Studio exports (the Lead Sheet Player: iReal Pro charts have no melody)
+  sources: ImportSource[] // the formats this player offers, the first one selected
+  onImport: (source: ImportSource, text: string) => Promise<ImportResult>
 }
 
-/** Import iReal Pro links or portable Studio playlist JSON files. */
-export function ImportDialog({ open, onClose, onImport, onImportStudio, studioOnly }: ImportDialogProps) {
+// What each format is called, what to choose or paste, and what the file picker accepts
+const SOURCES: Record<ImportSource, { label: string; help: ReactNode; placeholder: string; input: string; accept: string }> = {
+  ireal: {
+    label: 'iReal Pro',
+    help: <>Paste an iReal Pro link (<code>irealb://...</code>) or a whole playlist, or choose an iReal Pro HTML export file.</>,
+    placeholder: 'irealb://\u2026',
+    input: 'iReal Pro link',
+    accept: '.html,.htm,.txt',
+  },
+  musicxml: {
+    label: 'MusicXML',
+    help: <>Choose a MuseScore MusicXML export file or paste its contents below.</>,
+    placeholder: '<?xml version="1.0"?> <score-partwise ...>',
+    input: 'MusicXML',
+    accept: '.musicxml,.xml,.mxl',
+  },
+  studio: {
+    label: 'Studio export',
+    help: <>Choose a Piano Practice Companion export file or paste its contents below. Playlist names and editable charts are restored.</>,
+    placeholder: '{ "format": "ear-training-studio-playlists", ... }',
+    input: 'Studio export JSON',
+    accept: '.json',
+  },
+}
+
+/** The text of a chosen file: a compressed MusicXML file (.mxl) is unpacked first. */
+async function fileText(file: File): Promise<string> {
+  return /\.mxl$/i.test(file.name) ? unzipMxl(await file.arrayBuffer()) : file.text()
+}
+
+/** Import iReal Pro links, MusicXML lead sheets or portable Studio playlist JSON files. */
+export function ImportDialog({ open, onClose, sources, onImport }: ImportDialogProps) {
   useBackClose(open, onClose)
   const ref = useRef<HTMLDialogElement>(null)
-  const [source, setSource] = useState<'ireal' | 'studio'>(studioOnly ? 'studio' : 'ireal')
+  const [source, setSource] = useState<ImportSource>(sources[0])
+  const format = SOURCES[source]
   const [text, setText] = useState('')
   const [status, setStatus] = useState<{ kind: 'idle' | 'busy' | 'done' | 'error'; message?: string }>({
     kind: 'idle',
@@ -36,9 +69,10 @@ export function ImportDialog({ open, onClose, onImport, onImportStudio, studioOn
 
   /** Parse and save the selected import format, reporting errors in the dialog. */
   const run = async (input: string) => {
+    if (!input) return // a file that could not be read (its error is shown)
     setStatus({ kind: 'busy' })
     try {
-      const result = await (source === 'ireal' ? onImport(input) : onImportStudio(input))
+      const result = await onImport(source, input)
       if (result.tunes === 0) {
         setStatus({ kind: 'error', message: 'No tunes found in this import.' })
         return
@@ -65,36 +99,34 @@ export function ImportDialog({ open, onClose, onImport, onImportStudio, studioOn
         <h2 id="import-title" className="dialog-title">
           Import tunes
         </h2>
-        {!studioOnly && <div className="import-source" role="group" aria-label="Import tunes from">
-          <button type="button" className="chip" aria-pressed={source === 'ireal'}
-            onClick={() => { setSource('ireal'); setText(''); setStatus({ kind: 'idle' }) }}>iReal Pro</button>
-          <button type="button" className="chip" aria-pressed={source === 'studio'}
-            onClick={() => { setSource('studio'); setText(''); setStatus({ kind: 'idle' }) }}>Studio export</button>
-        </div>}
+        {sources.length > 1 && (
+          <div className="import-source" role="group" aria-label="Import tunes from">
+            {sources.map((id) => (
+              <button key={id} type="button" className="chip" aria-pressed={source === id}
+                onClick={() => { setSource(id); setText(''); setStatus({ kind: 'idle' }) }}>{SOURCES[id].label}</button>
+            ))}
+          </div>
+        )}
         <p className="dialog-text">
-          {source === 'ireal' ? <>
-            Paste an iReal Pro link (<code>irealb://...</code>) or a whole playlist, or choose an iReal Pro HTML export.
-          </> : <>
-            Choose a Studio playlist JSON export or paste its contents. Playlist names and editable charts are restored{studioOnly ? '; charts with a melody appear here as lead sheets' : ''}.
-          </>}{' '}Tunes are stored in this browser only.
+          {format.help} Tunes are stored in this browser only.
         </p>
         <textarea
           className="dialog-input"
           rows={5}
-          placeholder={source === 'ireal' ? 'irealb://…' : '{ "format": "ear-training-studio-playlists", ... }'}
+          placeholder={format.placeholder}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          aria-label={source === 'ireal' ? 'iReal Pro link' : 'Studio export JSON'}
+          aria-label={format.input}
         />
         <div className="dialog-row">
           <label className="file-button">
             Choose file
             <input
               type="file"
-              accept={source === 'ireal' ? '.html,.htm,.txt' : '.json'}
+              accept={format.accept}
               onChange={async (e) => {
                 const file = e.target.files?.[0]
-                if (file) await run(await file.text())
+                if (file) await run(await fileText(file).catch((err: unknown) => { setStatus({ kind: 'error', message: String(err) }); return '' }))
                 e.target.value = ''
               }}
             />

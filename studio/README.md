@@ -89,7 +89,7 @@ tunes:
 | tunes | the catalog and every saved tune | saved tunes with a melody only (no catalog search, no New) |
 | a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
 | Mixer | bass, piano, drums | bass, piano, melody, drums |
-| Import | iReal Pro and Studio exports | Studio exports |
+| Import | iReal Pro and Studio exports | MusicXML and Studio exports |
 | last tune opened | remembered | remembered separately |
 | no tune to play | (the catalog is always there) | a page explaining how to import lead sheets |
 
@@ -126,8 +126,19 @@ How it is drawn and played:
 | loops | Practice > Choose bars: click a bar (or its chords) on the staff | `src/ui/LeadSheet.tsx` |
 | sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later); its own strip in the Mixer | `src/engine/melody.ts`, `src/engine/arrange.ts` |
 
-Charts with a melody are imported as a Studio export (**Import > Studio
-export**). To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
+Charts with a melody are imported as MusicXML (**Import > MusicXML**,
+`src/formats/musicxml.ts`) or as a Studio export. From a MusicXML file:
+
+| MusicXML | Chart |
+|---|---|
+| first part, first voice (the top note of a chord); ties joined, grace notes left out | the melody |
+| `<harmony>` (root, kind, alterations, bass), or a short text above the staff that reads as a chord | chord symbols: `dominant` + flat 9 is `C7b9`, `half-diminished` is `Bh7` |
+| `<key>`, `<time>`, `<sound tempo>` | key and mode, meter and its changes, tempo |
+| repeats, endings, double and final bar lines, segno, coda, `<rehearsal>`, D.C./D.S. texts | the chart's marks |
+| a first bar shorter than its meter (a pickup) | a whole bar with its notes at the end |
+
+The 502 lead sheets of OpenEWLD (public domain Wikifonia scores) import
+without errors. Compressed `.mxl` files are unpacked in the browser. To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
 Database into such a file ([the data](../docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)).
 
 ## The Display menu

@@ -20,7 +20,8 @@ import { getStyle, STYLES, type StyleDefinition } from './styles'
 import { labFromStyle, styleFromLab, styleSource, STEPS_PER_BEAT, type LabStyle } from './styles/lab'
 import { Chart } from './ui/Chart'
 import { Editor, EditorHeader } from './ui/Editor'
-import { ImportDialog, type ImportResult } from './ui/ImportDialog'
+import { ImportDialog, type ImportResult, type ImportSource } from './ui/ImportDialog'
+import { parseMusicXml } from './formats/musicxml'
 import { Library } from './ui/Library'
 import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
@@ -83,7 +84,11 @@ const PLAYER_NAMES: Record<PlayerMode, { title: string; tag: string }> = {
   chords: { title: 'Chord Accompaniment Player', tag: 'Practice with a band in your browser' },
   lead: { title: 'Lead Sheet Player', tag: 'Read and hear the melody with the band' },
 }
-const NO_LEAD_SHEETS = 'No lead sheets yet. Import a Studio export with melodies (Import), e.g. one made by weimar_playlist.py.'
+// Import formats of each player: iReal Pro charts have no melody, MusicXML lead sheets do
+const CHORD_SOURCES: ImportSource[] = ['ireal', 'studio']
+const LEAD_SOURCES: ImportSource[] = ['musicxml', 'studio']
+const MUSICXML_PLAYLIST = 'MusicXML imports'
+const NO_LEAD_SHEETS = 'No lead sheets yet. Import a MusicXML lead sheet or a Studio export with melodies (Import).'
 
 // The style being made in the style lab is kept in the browser between visits
 const LAB_KEY = 'eartraining:style-lab'
@@ -400,6 +405,17 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     return { tunes: added.length, playlists: playlists.map((list) => list.name) }
   }, [showAddedTunes])
 
+  /** Import a MusicXML lead sheet (MuseScore, Audiveris, homr) into the MusicXML imports playlist. */
+  const importMusicXml = useCallback(async (text: string): Promise<ImportResult> => {
+    const added = await addTunes([parseMusicXml(text)], 'import', MUSICXML_PLAYLIST)
+    showAddedTunes(added)
+    return { tunes: added.length, playlists: [MUSICXML_PLAYLIST] }
+  }, [showAddedTunes])
+
+  // Each format with its reader
+  const importFrom = (source: ImportSource, text: string) =>
+    source === 'ireal' ? importText(text) : source === 'musicxml' ? importMusicXml(text) : importStudioText(text)
+
   /** Download a portable JSON copy of one or all saved playlists. */
   const downloadStudioExport = (selected?: string) => {
     const content = serializeStudioPlaylists(tunes, selected)
@@ -679,7 +695,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
               <h1 className="sheet-title">Lead Sheet Player</h1>
               <p>
                 Lead sheets are charts with a melody: the band plays the chords and the melody is played and drawn on a
-                staff. The song catalog has chords only, so import lead sheets as a Studio export.
+                staff. The song catalog has chords only, so import lead sheets: a MusicXML file (from MuseScore, or a scan read by Audiveris) or a Studio export.
               </p>
               <button className="button button-primary" onClick={() => setImportOpen(true)}>Import lead sheets</button>
             </article>
@@ -793,8 +809,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       </>
       )}
 
-      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} studioOnly={leadMode}
-        onImport={importText} onImportStudio={importStudioText} />
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}
+        sources={leadMode ? LEAD_SOURCES : CHORD_SOURCES} onImport={importFrom} />
     </div>
   )
 }

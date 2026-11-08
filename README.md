@@ -66,8 +66,10 @@ or the chart's own instrument) and has its own fader in the Mixer.
   the style's swing; every option of the chord player (styles, Practice,
   Style lab, Display) works here too.
 - The list holds only tunes that have a melody. The song catalog has chords
-  only, so lead sheets are imported as a Studio export: to try it with 450
-  transcribed jazz solos, see
+  only, so lead sheets are imported: a **MusicXML** file (`.musicxml`, `.xml`
+  or `.mxl`, as MuseScore exports it, or a scanned or photographed sheet read
+  by Audiveris or homr and checked in MuseScore), or a Studio export. To try it
+  with 450 transcribed jazz solos, see
   [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database).
 
 ### Name the progression
