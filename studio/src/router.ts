@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react'
 export const ROUTES = {
   home: '/',
   studio: '/studio',
+  leadSheet: '/lead-sheet',
   nameProgression: '/exercises/name-progression',
   chordSightreading: '/exercises/chord-sightreading',
 } as const

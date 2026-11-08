@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { arrange, BASE_BPM, type Part } from './engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from './engine/pianoPatterns'
 import { warmUpMidi } from './engine/warmup'
@@ -11,7 +11,7 @@ import { addTunes, loadTunes, removePlaylist, removeTune, saveTune } from './lib
 import { fetchChocoTune } from './library/choco'
 import { parseStudioPlaylists, playlistNames, serializeStudioPlaylists } from './library/playlistExport'
 import { loadMyStyles, myStyleId, removeMyStyle, saveMyStyle } from './library/myStyles'
-import type { Chart as ChartData } from './music/chart'
+import { hasMelody, withoutMelody, type Chart as ChartData } from './music/chart'
 import { offsetToKey, prettyNoteName } from './music/chords'
 import { emptyChart } from './music/edit'
 import { STARTER, type Tune } from './music/songs'
@@ -73,6 +73,17 @@ const clampBpm = (v: number) => Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], v)
 // The comp instrument is named after the style's General MIDI program
 const LAST_TUNE = 'eartraining:last-tune'
 
+// The two players share the tune library: the chord player accompanies any chart (a lead sheet's
+// melody is left out), the Lead Sheet Player plays the charts that have a melody, with it
+export type PlayerMode = 'chords' | 'lead'
+// Each player remembers its own last tune
+const lastTuneKey = (mode: PlayerMode) => (mode === 'lead' ? `${LAST_TUNE}:lead` : LAST_TUNE)
+const PLAYER_NAMES: Record<PlayerMode, { title: string; tag: string }> = {
+  chords: { title: 'Chord Accompaniment Player', tag: 'Practice with a band in your browser' },
+  lead: { title: 'Lead Sheet Player', tag: 'Read and hear the melody with the band' },
+}
+const NO_LEAD_SHEETS = 'No lead sheets yet. Import a Studio export with melodies (Import), e.g. one made by weimar_playlist.py.'
+
 // The style being made in the style lab is kept in the browser between visits
 const LAB_KEY = 'eartraining:style-lab'
 const LAB_STYLE = 'lab' // style id used while the lab is open
@@ -107,8 +118,9 @@ function positionAt(timeline: Timeline, beat: number): Position | null {
   }
 }
 
-/** Run the editable accompaniment player and its local tune library. */
-export default function App() {
+/** Run an accompaniment player (chords only, or lead sheets) and its local tune library. */
+export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
+  const leadMode = mode === 'lead'
   const playerRef = useRef<Player | null>(null)
   const timelineRef = useRef<Timeline | null>(null)
 
@@ -161,8 +173,13 @@ export default function App() {
   const [editBar, setEditBar] = useState(0)
   const [irealState, setIrealState] = useState<'idle' | 'copied' | 'failed'>('idle')
 
-  const tune = tunes.find((t) => t.id === songId) ?? tunes[0] ?? STARTER
-  const chart = draft?.chart ?? tune.chart
+  // The tunes this player offers, and the chart as it plays it
+  const shownTunes = useMemo(() => (leadMode ? tunes.filter((t) => hasMelody(t.chart)) : tunes), [tunes, leadMode])
+  const tune = shownTunes.find((t) => t.id === songId) ?? shownTunes[0] ?? STARTER
+  const tuneChart = useMemo(() => (leadMode ? tune.chart : withoutMelody(tune.chart)), [tune.chart, leadMode])
+  const chart = draft?.chart ?? tuneChart
+  // The Lead Sheet Player with nothing to play yet
+  const empty = leadMode && !shownTunes.length && !draft
   // The lab's style is rebuilt from the grid each time it is needed
   // Saved styles are chosen as "my:<id>"
   const styleFor = (id: string, current: LabStyle | null, mine: LabStyle[]): StyleDefinition => {
@@ -175,7 +192,7 @@ export default function App() {
   const style = draft ? getStyle(draft.chart.style) : styleFor(styleId, lab, myStyles)
   const keyPc = (chart.key + transpose + 12) % 12
   // A chart with a melody is drawn as a lead sheet (the editor shows the chords only)
-  const leadSheet = !draft && !!chart.melody?.notes.length
+  const leadSheet = !draft && hasMelody(chart)
   // Where the band is, for the sheet's highlight
   const playhead = {
     activeMeasure: position && position.measure >= 0 ? position.measure : null,
@@ -281,8 +298,8 @@ export default function App() {
     setPractice((p) => ({ ...p, loop: null }))
     setPicking(null)
     setLibraryOpen(false)
-    localStorage.setItem(LAST_TUNE, next.id)
-  }, [])
+    localStorage.setItem(lastTuneKey(mode), next.id)
+  }, [mode])
 
   // Open a tune of the library
   const selectSong = (id: string) => {
@@ -309,9 +326,10 @@ export default function App() {
         open = added
         history.replaceState(null, '', window.location.pathname)
       } else {
-        open = all.find((t) => t.id === localStorage.getItem(LAST_TUNE))
+        open = all.find((t) => t.id === localStorage.getItem(lastTuneKey(mode)))
       }
-      const requestedTrack = new URLSearchParams(window.location.search).get('track')
+      // A catalog chart asked for in the address (chord player only: the catalog has no melodies)
+      const requestedTrack = leadMode ? null : new URLSearchParams(window.location.search).get('track')
       if (requestedTrack) {
         try {
           const loaded = await fetchChocoTune(requestedTrack)
@@ -328,7 +346,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [showTune])
+  }, [showTune, mode, leadMode])
 
   // A share link opened while the app is already open only changes the URL fragment
   useEffect(() => {
@@ -353,8 +371,10 @@ export default function App() {
     if (!added.length) return
     const ids = new Set(added.map((tune) => tune.id))
     setTunes((all) => [...all.filter((tune) => !ids.has(tune.id)), ...added])
-    showTune(added[0])
-  }, [showTune])
+    // The Lead Sheet Player opens the first imported lead sheet
+    const first = leadMode ? added.find((tune) => hasMelody(tune.chart)) : added[0]
+    if (first) showTune(first)
+  }, [showTune, leadMode])
 
   /** Import iReal Pro charts into their named playlists. */
   const importText = useCallback(
@@ -515,7 +535,7 @@ export default function App() {
     await removeTune(draft.from.id)
     setTunes((all) => all.filter((t) => t.id !== draft.from?.id))
     setDraft(null)
-    showTune(tunes.find((item) => item.id !== draft.from?.id) ?? STARTER)
+    showTune(shownTunes.find((item) => item.id !== draft.from?.id) ?? STARTER)
   }
 
   // ---- Loop picking: tap the first bar, then the last ----
@@ -563,10 +583,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <Wordmark>Accompaniment Player</Wordmark>
-        <span className="topbar-tag">Practice with a band in your browser</span>
+        <Wordmark>{PLAYER_NAMES[mode].title}</Wordmark>
+        <span className="topbar-tag">{PLAYER_NAMES[mode].tag}</span>
         <span className="topbar-spacer" />
-        {!editing && (
+        {!editing && !empty && (
           <TopbarMenu active={!!lab}>
             <button
               className="topbar-button topbar-lab"
@@ -633,12 +653,13 @@ export default function App() {
 
       <div className={libraryOpen ? 'workspace library-open' : 'workspace'}>
         <Library
-          tunes={tunes}
+          tunes={shownTunes}
           selectedId={tune.id}
           onSelect={selectSong}
-          onLoadChoco={loadChoco}
+          onLoadChoco={leadMode ? undefined : loadChoco}
           onImport={() => setImportOpen(true)}
-          onNew={() => startEditing(null)}
+          onNew={leadMode ? undefined : () => startEditing(null)}
+          emptyText={leadMode ? NO_LEAD_SHEETS : undefined}
           disabled={editing}
           onRemovePlaylist={(name) => {
             void removePlaylist(name)
@@ -650,7 +671,16 @@ export default function App() {
           className={['stage', editing && 'stage-editing', picking && 'stage-picking'].filter(Boolean).join(' ')}
           onClick={() => setLibraryOpen(false)}
         >
-          {leadSheet ? (
+          {empty ? (
+            <article className="sheet lead-empty" aria-label="No lead sheets">
+              <h1 className="sheet-title">Lead Sheet Player</h1>
+              <p>
+                Lead sheets are charts with a melody: the band plays the chords and the melody is played and drawn on a
+                staff. The song catalog has chords only, so import lead sheets as a Studio export.
+              </p>
+              <button className="button button-primary" onClick={() => setImportOpen(true)}>Import lead sheets</button>
+            </article>
+          ) : leadSheet ? (
             <LeadSheet
               chart={chart}
               style={style}
@@ -728,7 +758,7 @@ export default function App() {
           onClose={closeLab}
         />
       )}
-      <Transport
+      {!empty && <Transport
         readiness={readiness}
         playing={playing}
         onToggle={toggle}
@@ -756,11 +786,11 @@ export default function App() {
       >
         <Practice chart={chart} settings={practice} onChange={changePractice} onPickLoop={() => setPicking('first')} />
         <Mixer {...mixer(style.comp.program)} parts={leadSheet ? MELODY_PARTS : undefined} />
-      </Transport>
+      </Transport>}
       </>
       )}
 
-      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} studioOnly={leadMode}
         onImport={importText} onImportStudio={importStudioText} />
     </div>
   )

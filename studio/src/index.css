@@ -626,6 +626,25 @@ button:disabled {
   pointer-events: none;
 }
 
+/* The Lead Sheet Player before any lead sheet is imported */
+.lead-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.lead-empty p,
+.lead-empty .button {
+  font-family: var(--sans);
+}
+
+.lead-empty p {
+  max-width: 34em;
+  color: var(--ink-2);
+}
+
 /* Lead sheets: the abcjs engraving, with the highlighter and loop marks laid over it */
 .lead-score {
   position: relative;

@@ -10,9 +10,14 @@ interface MenuItem {
 // Each exercise adds one entry here and one route in Root
 const MENU: MenuItem[] = [
   {
-    title: 'Accompaniment Player',
+    title: 'Chord Accompaniment Player',
     description: 'Practice over bass, piano and drums. Load a ChoCo chart, pick a style, key and tempo.',
     path: ROUTES.studio,
+  },
+  {
+    title: 'Lead Sheet Player',
+    description: 'Read a melody on the staff with its chords, and hear it played with the band.',
+    path: ROUTES.leadSheet,
   },
   {
     title: 'Name the progression',

@@ -27,7 +27,8 @@ OpenStand's example songs, telemetry and submission action.
 | Screen | Address | Code |
 |---|---|---|
 | Menu | `/` | `src/Home.tsx` |
-| Accompaniment Player (Studio) | `/studio` | `src/App.tsx` |
+| Chord Accompaniment Player (Studio) | `/studio` | `src/App.tsx` (`mode="chords"`) |
+| Lead Sheet Player | `/lead-sheet` | `src/App.tsx` (`mode="lead"`) |
 | Name the progression | `/exercises/name-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
 | Chord Sightreading | `/exercises/chord-sightreading` | `src/exercises/ChordSightreading.tsx` |
 
@@ -80,8 +81,20 @@ Charts from the catalog arrive in iReal Pro chord notation, written by
 
 ## Lead sheets
 
-A chart with a `melody` is drawn as a lead sheet in the Accompaniment Player
-(the editor still shows its chords only). The melody is stored with the chart:
+The two players are one screen (`src/App.tsx`) in two modes, sharing the saved
+tunes:
+
+| | Chord Accompaniment Player | Lead Sheet Player |
+|---|---|---|
+| tunes | the catalog and every saved tune | saved tunes with a melody only (no catalog search, no New) |
+| a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
+| Mixer | bass, piano, drums | bass, piano, melody, drums |
+| Import | iReal Pro and Studio exports | Studio exports |
+| last tune opened | remembered | remembered separately |
+| no tune to play | (the catalog is always there) | a page explaining how to import lead sheets |
+
+The editor of either player shows the chords only and keeps the melody as it
+is. The melody is stored with the chart:
 
 ```json
 "melody": {
@@ -119,7 +132,7 @@ Database into such a file ([the data](../docs/DATA.md#testing-lead-sheets-with-t
 
 ## The Display menu
 
-In the Accompaniment Player and Chord Sightreading (`src/ui/DisplayMenu.tsx`,
+In the two players and Chord Sightreading (`src/ui/DisplayMenu.tsx`,
 settings in `src/ui/display.ts`, kept in the browser):
 
 | Setting | Example |

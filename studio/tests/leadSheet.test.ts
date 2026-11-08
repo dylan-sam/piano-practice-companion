@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { chordText, melodyToAbc, spellPitch } from '../src/music/abc'
-import type { Chart, ChartBar } from '../src/music/chart'
+import { hasMelody, withoutMelody, type Chart, type ChartBar } from '../src/music/chart'
 import { isMelody, notesByBar, type MelodyNote } from '../src/music/melody'
 import { DEFAULT_DISPLAY } from '../src/ui/display'
 import { melodyEvents } from '../src/engine/melody'
@@ -98,6 +98,14 @@ describe('melody model', () => {
     expect(isMelody({ notes: [note(0, 0, 1, 60)], program: 66 })).toBe(true)
     expect(isMelody({ notes: [note(0, 0, 0, 60)] })).toBe(false)
     expect(isMelody({ notes: [note(0, 0, 1, 128)] })).toBe(false)
+  })
+
+  test('the chord player leaves the melody out', () => {
+    const c = chart([note(0, 0, 1, 60)])
+    expect(hasMelody(c)).toBe(true)
+    expect(hasMelody(withoutMelody(c))).toBe(false)
+    expect(withoutMelody(c).bars).toBe(c.bars)
+    expect(hasMelody(chart([]))).toBe(false)
   })
 
   test('notes grouped by bar', () => {

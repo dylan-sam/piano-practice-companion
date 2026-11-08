@@ -11,13 +11,14 @@ interface ImportDialogProps {
   onClose: () => void
   onImport: (text: string) => Promise<ImportResult>
   onImportStudio: (text: string) => Promise<ImportResult>
+  studioOnly?: boolean // only Studio exports (the Lead Sheet Player: iReal Pro charts have no melody)
 }
 
 /** Import iReal Pro links or portable Studio playlist JSON files. */
-export function ImportDialog({ open, onClose, onImport, onImportStudio }: ImportDialogProps) {
+export function ImportDialog({ open, onClose, onImport, onImportStudio, studioOnly }: ImportDialogProps) {
   useBackClose(open, onClose)
   const ref = useRef<HTMLDialogElement>(null)
-  const [source, setSource] = useState<'ireal' | 'studio'>('ireal')
+  const [source, setSource] = useState<'ireal' | 'studio'>(studioOnly ? 'studio' : 'ireal')
   const [text, setText] = useState('')
   const [status, setStatus] = useState<{ kind: 'idle' | 'busy' | 'done' | 'error'; message?: string }>({
     kind: 'idle',
@@ -64,17 +65,17 @@ export function ImportDialog({ open, onClose, onImport, onImportStudio }: Import
         <h2 id="import-title" className="dialog-title">
           Import tunes
         </h2>
-        <div className="import-source" role="group" aria-label="Import tunes from">
+        {!studioOnly && <div className="import-source" role="group" aria-label="Import tunes from">
           <button type="button" className="chip" aria-pressed={source === 'ireal'}
             onClick={() => { setSource('ireal'); setText(''); setStatus({ kind: 'idle' }) }}>iReal Pro</button>
           <button type="button" className="chip" aria-pressed={source === 'studio'}
             onClick={() => { setSource('studio'); setText(''); setStatus({ kind: 'idle' }) }}>Studio export</button>
-        </div>
+        </div>}
         <p className="dialog-text">
           {source === 'ireal' ? <>
             Paste an iReal Pro link (<code>irealb://...</code>) or a whole playlist, or choose an iReal Pro HTML export.
           </> : <>
-            Choose a Studio playlist JSON export or paste its contents. Playlist names and editable charts are restored.
+            Choose a Studio playlist JSON export or paste its contents. Playlist names and editable charts are restored{studioOnly ? '; charts with a melody appear here as lead sheets' : ''}.
           </>}{' '}Tunes are stored in this browser only.
         </p>
         <textarea

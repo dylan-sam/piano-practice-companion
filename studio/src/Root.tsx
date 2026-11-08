@@ -14,7 +14,9 @@ export default function Root() {
     history.replaceState(null, '', routeUrl(ROUTES.studio) + window.location.hash)
     return <App />
   }
-  if (path === ROUTES.studio) return <App />
+  // The two players are one screen in two modes; the key gives each its own state
+  if (path === ROUTES.studio) return <App key="chords" mode="chords" />
+  if (path === ROUTES.leadSheet) return <App key="lead" mode="lead" />
   if (path === ROUTES.nameProgression) return <NameProgression />
   if (path === ROUTES.chordSightreading) return <ChordSightreading />
   return <Home />

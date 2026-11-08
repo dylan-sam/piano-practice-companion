@@ -12,7 +12,7 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 **[▶ Try it in your browser](https://dylan-sam.github.io/piano-practice-companion/)**
 (no install) · **[Download the Android app](https://github.com/dylan-sam/piano-practice-companion/releases/latest)**
 
-![The Accompaniment Player](docs/images/player.png)
+![The Chord Accompaniment Player](docs/images/player.png)
 
 - [What you can do](#what-you-can-do)
 - [The data](#the-data)
@@ -26,9 +26,9 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The app opens on a menu of three screens.
+The app opens on a menu of four screens.
 
-### Accompaniment Player
+### Chord Accompaniment Player
 
 A band (bass, piano, drums) plays any chart of the catalog, or one of your own, so that you can play along !
 
@@ -41,16 +41,7 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
   fourth, a half step or a whole step each chorus), speed up each chorus.
-- **Lead sheets**: a chart that carries a melody is drawn as a lead sheet,
-  the melody on a staff with the chords above it, and the melody plays with the
-  band (alto sax by default, or the chart's own instrument). The bar being
-  played is highlighted and the note being played is coloured; the melody
-  follows repeats, loops, transposition and Practice > Keys. Melodies come with
-  imported charts (Studio export): the catalog has none (see
-  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)
-  to try it with 450 transcribed jazz solos).
-- **Mixer**: volume and mute for bass, piano and drums (and the melody of a lead
-  sheet), and a master volume.
+- **Mixer**: volume and mute for bass, piano and drums, and a master volume.
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the
   tempo and the number of beats in a row. It can be turned off in the Display
@@ -60,6 +51,24 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Your own charts**: write or edit a chart, import iReal Pro links and
   playlists, export your playlists to a file, and share a chart as a link that
   opens in this app or in iReal Pro.
+- **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
+  and the band plays it without its melody.
+
+### Lead Sheet Player
+
+The same band plays a **lead sheet**: a chart with a melody, drawn on a staff
+with the chords above it. The melody plays with the band (alto sax by default,
+or the chart's own instrument) and has its own fader in the Mixer.
+
+- The bar being played gets the yellow highlighter and the note being played
+  is coloured; long sheets scroll by themselves.
+- The melody follows repeats, loops, transposition and Practice > Keys, with
+  the style's swing; every option of the chord player (styles, Practice,
+  Style lab, Display) works here too.
+- The list holds only tunes that have a melody. The song catalog has chords
+  only, so lead sheets are imported as a Studio export: to try it with 450
+  transcribed jazz solos, see
+  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database).
 
 ### Name the progression
 
@@ -92,7 +101,7 @@ fifth of a four-note chord may be left out. Three modes:
 
 Both exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
-<img src="docs/images/phone.png" alt="The Accompaniment Player on a phone" width="260">
+<img src="docs/images/phone.png" alt="The Chord Accompaniment Player on a phone" width="260">
 
 ## The data
 
@@ -433,7 +442,7 @@ pnpm run lint
 Put iReal Pro playlist files (`.txt` or `.html` with `irealb://` links, as
 iReal Pro exports them) in `data/ireal-playlists/` and build the data again
 (step 2). Their songs join the catalog as "iReal Pro playlists". The app can
-also import playlists itself (**Import** in the Accompaniment Player); those
+also import playlists itself (**Import** in the Chord Accompaniment Player); those
 are kept in your browser only.
 
 ## Android and iOS apps

@@ -10,9 +10,10 @@ interface LibraryProps {
   tunes: Tune[]
   selectedId: string
   onSelect: (id: string) => void
-  onLoadChoco: (id: string) => Promise<void>
+  onLoadChoco?: (id: string) => Promise<void> // omitted: no ChoCo catalog search (the Lead Sheet Player)
   onImport?: () => void
   onNew?: () => void
+  emptyText?: string // shown when there is no tune at all
   disabled?: boolean // while a chart is being edited
   onRemovePlaylist?: (playlist: string) => void
 }
@@ -27,7 +28,7 @@ const fold = (s: string) =>
     .toLowerCase()
 
 /** The tune list: ChoCo search with a progression filter, saved tunes and playlists. */
-export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, onNew, disabled, onRemovePlaylist }: LibraryProps) {
+export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, onNew, emptyText, disabled, onRemovePlaylist }: LibraryProps) {
   const [query, setQuery] = useState('')
   const [scoreGroups, setScoreGroups] = useState<ScoreGroup[]>([])
   const [scoreError, setScoreError] = useState('')
@@ -39,7 +40,8 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const [matchAll, setMatchAll] = useState(true)
   const [filterOpen, setFilterOpen] = useState(false)
   const filtering = chosen.length > 0
-  const showActions = !!(onImport && onNew)
+  const showActions = !!(onImport || onNew)
+  const searchCatalog = !!onLoadChoco
 
   const playlists = useMemo(() => playlistNames(tunes), [tunes])
   const activePlaylist = playlists.includes(playlist) ? playlist : ALL
@@ -57,7 +59,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const openVersion = async (id: string) => {
     // Report a failed chart load in the library without losing the search.
     try {
-      await onLoadChoco(id)
+      await onLoadChoco?.(id)
       setScoreError('')
     } catch (error) {
       setScoreError(String(error))
@@ -66,6 +68,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
 
   useEffect(() => {
     // Query grouped ChoCo titles with a short pause while the user is typing.
+    if (!searchCatalog) return
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
       void searchSongs(query, chosen, matchAll, controller.signal)
@@ -75,10 +78,11 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         })
     }, 180)
     return () => { window.clearTimeout(timer); controller.abort() }
-  }, [query, chosen, matchAll])
+  }, [query, chosen, matchAll, searchCatalog])
 
   useEffect(() => {
     // Load the progressions offered by the filter once
+    if (!searchCatalog) return
     const controller = new AbortController()
     void listProgressions(controller.signal)
       .then(setCatalog)
@@ -86,7 +90,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         // Without the list the filter is simply not offered
       })
     return () => controller.abort()
-  }, [])
+  }, [searchCatalog])
 
   /** Add or remove one progression from the filter. */
   const toggleProgression = (id: string) =>
@@ -100,19 +104,19 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
           Tunes <span className="library-count">{scoreGroups.length + (filtering ? 0 : matches.length)}</span>
         </h2>
         {showActions && <span className="library-actions">
-          <button className="library-import" onClick={onNew}>
+          {onNew && <button className="library-import" onClick={onNew}>
             New
-          </button>
-          <button className="library-import" onClick={onImport}>
+          </button>}
+          {onImport && <button className="library-import" onClick={onImport}>
             Import
-          </button>
+          </button>}
         </span>}
       </div>
 
       <input
         className="library-search"
         type="search"
-        placeholder="Search ChoCo title, artist or saved tune"
+        placeholder={searchCatalog ? 'Search ChoCo title, artist or saved tune' : 'Search title or performer'}
         aria-label="Search tunes"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -244,7 +248,9 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
           </li>
         ))}
       </ul>
-      {(filtering || matches.length === 0) && scoreGroups.length === 0 && <p className="library-more">No tunes match.</p>}
+      {(filtering || matches.length === 0) && scoreGroups.length === 0 && (
+        <p className="library-more">{!tunes.length && emptyText ? emptyText : 'No tunes match.'}</p>
+      )}
     </nav>
   )
 }

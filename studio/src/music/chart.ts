@@ -59,6 +59,16 @@ export interface Chart {
 
 export const ROW_CELLS = 16
 
+/** Whether a chart carries a melody (it is then a lead sheet). */
+export const hasMelody = (chart: Chart): boolean => !!chart.melody?.notes.length
+
+/** The chart without its melody, for players that only accompany (the chord player). */
+export function withoutMelody(chart: Chart): Chart {
+  if (!chart.melody) return chart
+  const { melody: _melody, ...chords } = chart
+  return chords
+}
+
 /** Check a two-part time signature used by a chart or bar. */
 function isTimeSignature(value: unknown): value is TimeSignature {
   return Array.isArray(value) && value.length === 2 &&
