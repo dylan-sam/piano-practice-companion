@@ -86,11 +86,13 @@ settings in `src/ui/display.ts`, kept in the browser):
 | **Roman numerals** On / Off | in C: `Dm7 G7 Cmaj7` is drawn `II-7 V7 I^7`; `Db7` is `bII7` |
 | **Minor written** C− or Cm | `C-7` or `Cm7` |
 | **Repeat sign** | a bar repeating the bar before (same chords, same lengths) is drawn `%` |
+| **Sheet auto-scroller** On / Off (On by default) | while playing, a sheet taller than the screen scrolls to keep the highlighted bar near the middle |
 
 Roman numerals follow the key changes of catalog charts from the beat where
 they happen; the band still plays in the chosen key. Name the progression has
 the minor and repeat options in its own Display menu, without Roman numerals
-(they would give the answer away), plus *Hide the key* and *Hide all chords*.
+(they would give the answer away) or the auto-scroller (its line always fits),
+plus *Hide the key* and *Hide all chords*.
 
 ## Tunes and playlists
 

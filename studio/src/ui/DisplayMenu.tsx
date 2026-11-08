@@ -2,10 +2,11 @@ import { Popover } from './Popover'
 import { setDisplay, useDisplay, useDisplayChanged } from './display'
 
 /**
- * The chart display options: Roman numerals, how minor is written, and % for a repeated bar.
- * `roman` is false where numerals would give an answer away (Name the progression).
+ * The chart display options: Roman numerals, how minor is written, % for a repeated bar and the
+ * sheet auto-scroller. `roman` is false where numerals would give an answer away (Name the
+ * progression); `autoScroll` is shown where a whole sheet is read (player and sightreader).
  */
-export function DisplayOptions({ roman = true }: { roman?: boolean }) {
+export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: boolean; autoScroll?: boolean }) {
   const display = useDisplay()
   return (
     <>
@@ -24,18 +25,24 @@ export function DisplayOptions({ roman = true }: { roman?: boolean }) {
         <span className="share-name">Repeat sign {display.repeatSign ? 'On' : 'Off'}</span>
         <span className="share-desc">Draw a bar with the same chords as the bar before as %.</span>
       </button>
+      {autoScroll && (
+        <button className="share-option" aria-pressed={display.autoScroll} onClick={() => setDisplay({ autoScroll: !display.autoScroll })}>
+          <span className="share-name">Sheet auto-scroller {display.autoScroll ? 'On' : 'Off'}</span>
+          <span className="share-desc">While playing, scroll a long sheet so the highlighted bar stays near the middle of the screen.</span>
+        </button>
+      )}
     </>
   )
 }
 
-/** The Display button of a chart screen's top bar, with the display options. */
+/** The Display button of a sheet-reading screen's top bar (player, sightreader), with the display options. */
 export function DisplayMenu({ roman = true }: { roman?: boolean }) {
-  const changed = useDisplayChanged(roman)
+  const changed = useDisplayChanged(roman, true)
   return (
     <Popover id="chart-display" className="share" label="Display" title="Choose how chord charts are drawn" active={changed}>
       {() => (
         <div className="share-panel">
-          <DisplayOptions roman={roman} />
+          <DisplayOptions roman={roman} autoScroll />
         </div>
       )}
     </Popover>

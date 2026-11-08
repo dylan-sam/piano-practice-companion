@@ -268,7 +268,7 @@ export function Chart(props: ChartProps) {
   const sheetRef = useRef<HTMLElement>(null)
   const drawn = useMemo(() => [layout, keyPc, props.chordFeedback, display], [layout, keyPc, props.chordFeedback, display])
   useFitChords(sheetRef, drawn)
-  useAutoScroll(sheetRef, !!props.autoScroll && props.activeMeasure !== null, `${props.activeMeasure}:${props.beatInBar}`)
+  useAutoScroll(sheetRef, !!props.autoScroll && display.autoScroll && props.activeMeasure !== null, `${props.activeMeasure}:${props.beatInBar}`)
 
   return (
     <article className="sheet" ref={sheetRef} aria-label={`${chart.title} chord chart`}>

@@ -10,18 +10,21 @@ export interface DisplaySettings {
   roman: boolean // chords as Roman numerals of the key in force (II-7 V7 I^7)
   minor: '-' | 'm' // how minor is written: C- or Cm
   repeatSign: boolean // a bar with the same chords as the bar before is drawn as a % sign
+  autoScroll: boolean // a playing sheet scrolls to keep the highlighted bar mid-screen (player and sightreader)
 }
 
-export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false }
+export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false, autoScroll: true }
 const STORAGE_KEY = 'openstand.display'
 
-/** Check a stored value before using it as display settings. */
-function isDisplay(value: unknown): value is DisplaySettings {
+/** Check a stored value before using it as display settings (settings saved before auto-scroll existed lack it). */
+function isDisplay(value: unknown): value is Partial<DisplaySettings> {
   const v = value as Partial<DisplaySettings> | null
   return !!v && typeof v.roman === 'boolean' && (v.minor === '-' || v.minor === 'm') && typeof v.repeatSign === 'boolean'
+    && (v.autoScroll === undefined || typeof v.autoScroll === 'boolean')
 }
 
-let current: DisplaySettings = loadJson(STORAGE_KEY, DEFAULT_DISPLAY, isDisplay)
+// Missing settings take their default
+let current: DisplaySettings = { ...DEFAULT_DISPLAY, ...loadJson<Partial<DisplaySettings>>(STORAGE_KEY, DEFAULT_DISPLAY, isDisplay) }
 const listeners = new Set<() => void>()
 
 /** Change some display settings, save them and redraw every chart. */
@@ -42,10 +45,10 @@ export function useDisplay(): DisplaySettings {
   return useSyncExternalStore(subscribe, () => current, () => current)
 }
 
-/** Whether any display option differs from the default (lights the Display button). */
-export function useDisplayChanged(roman = true): boolean {
+/** Whether any display option shown on this screen differs from the default (lights the Display button). */
+export function useDisplayChanged(roman = true, autoScroll = false): boolean {
   const display = useDisplay()
-  return (roman && display.roman) || display.minor === 'm' || display.repeatSign
+  return (roman && display.roman) || display.minor === 'm' || display.repeatSign || (autoScroll && !display.autoScroll)
 }
 
 /**

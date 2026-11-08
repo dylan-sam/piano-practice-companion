@@ -40,7 +40,8 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Mixer**: volume and mute for bass, piano and drums, and a master volume.
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the
-  tempo and the number of beats in a row.
+  tempo and the number of beats in a row. It can be turned off in the Display
+  menu (Sheet auto-scroller On/Off).
 - **Display**: Roman numerals (each chord as a degree of the key, following key
   changes), minor written C− or Cm, and % for a bar that repeats the bar before.
 - **Your own charts**: write or edit a chart, import iReal Pro links and

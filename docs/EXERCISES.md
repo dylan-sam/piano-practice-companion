@@ -137,7 +137,8 @@ while bass and drums play along.
   the *Tunes* button of the player.
 - Only *Infinite progressions* stops the song, since it replaces the chart.
 - While a song plays, a chart taller than the screen scrolls by itself to keep
-  the playing bar near the middle, as in the player.
+  the playing bar near the middle, as in the player (Display → Sheet
+  auto-scroller On/Off).
 
 ### The band
 

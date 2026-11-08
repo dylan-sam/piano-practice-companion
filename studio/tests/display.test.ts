@@ -79,3 +79,12 @@ describe('charts drawn with the display settings', () => {
     setDisplay({ roman: false })
   })
 })
+
+describe('sheet auto-scroller setting', () => {
+  test('is on by default and listed only where a whole sheet is read', async () => {
+    expect(DEFAULT_DISPLAY.autoScroll).toBe(true)
+    const { DisplayOptions } = await import('../src/ui/DisplayMenu')
+    expect(renderToStaticMarkup(createElement(DisplayOptions, { autoScroll: true }))).toContain('Sheet auto-scroller On')
+    expect(renderToStaticMarkup(createElement(DisplayOptions, { roman: false }))).not.toContain('auto-scroller')
+  })
+})
