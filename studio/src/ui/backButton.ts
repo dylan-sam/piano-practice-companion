@@ -1,17 +1,41 @@
-// The Android back button: close the last opened menu, else go back to the main menu, else leave the app
+// The back button: close the last opened menu, else go back to the main menu, else leave the app.
+// In the Android app, MainActivity calls handleBack on each press. In a phone's browser (the web
+// demo), each open menu adds a history entry, so the browser's back button closes it the same way.
 import { useEffect, useRef } from 'react'
-import { currentPath, navigate, ROUTES } from '../router'
+import { Capacitor } from '@capacitor/core'
+import { currentPath, navigate, routeUrl, ROUTES } from '../router'
+
+// History state of an entry added for an open menu, holding the menu's number
+const MENU_STATE = 'eartrainingMenu'
 
 // Close functions of the menus, panels and dialogs open now, the last opened last
-const closers: { close: () => void }[] = []
+const closers: { close: () => void; id: number }[] = []
+let nextId = 0
+// True in a phone's browser: open menus are mirrored in the browser history
+let browserBack = false
+// History steps taken back by the app itself (a menu closed by its own button), not by the user
+let ownSteps = 0
+
+/** The number of the menu a history entry was added for, if any. */
+function menuOfEntry(): number | undefined {
+  const state = history.state as Record<string, unknown> | null
+  return typeof state?.[MENU_STATE] === 'number' ? state[MENU_STATE] : undefined
+}
 
 /** Add a close function to the back button's list; returns the function that removes it again. */
 export function registerBackClose(close: () => void): () => void {
-  const entry = { close }
+  const entry = { close, id: ++nextId }
   closers.push(entry)
+  if (browserBack) history.pushState({ [MENU_STATE]: entry.id }, '')
   return () => {
     const index = closers.indexOf(entry)
-    if (index >= 0) closers.splice(index, 1)
+    if (index < 0) return // already closed by the back button, which used up its history entry
+    closers.splice(index, 1)
+    // Closed by its own button (Done, a click outside...): take back its history entry, if it is the latest
+    if (browserBack && menuOfEntry() === entry.id) {
+      ownSteps++
+      history.back()
+    }
   }
 }
 
@@ -44,7 +68,32 @@ export function handleBack(): boolean {
   return false
 }
 
-/** Let the Android app call handleBack (MainActivity runs window.earTrainingBack() on each press). */
+/** Whether the page runs in a phone or tablet browser (a touch screen), not in the Android or iOS app. */
+function inMobileBrowser(): boolean {
+  return !Capacitor.isNativePlatform() && !!window.matchMedia?.('(pointer: coarse)').matches
+}
+
+/**
+ * Set up the back button: let the Android app call handleBack (window.earTrainingBack), and in a
+ * phone's browser make the browser's back button close menus first, then go back to the main menu.
+ */
 export function installBackHandler(): void {
   (window as Window & { earTrainingBack?: () => boolean }).earTrainingBack = handleBack
+  if (!inMobileBrowser()) return
+  browserBack = true
+  // A screen opened from a link goes back to the main menu, as in the app
+  const path = currentPath()
+  if (path !== ROUTES.home && history.length <= 2) {
+    const { search, hash } = window.location
+    history.replaceState(null, '', routeUrl(ROUTES.home))
+    history.pushState(null, '', routeUrl(path) + search + hash)
+  }
+  // The browser has gone back one entry: if it was a menu's, close that menu
+  window.addEventListener('popstate', () => {
+    if (ownSteps > 0) {
+      ownSteps--
+      return
+    }
+    closeLastMenu()
+  })
 }

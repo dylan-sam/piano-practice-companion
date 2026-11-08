@@ -64,6 +64,14 @@ The back button never quits the app by surprise
 Each menu registers itself while it is open (`useBackClose`), so a new menu
 gets the same behaviour by calling it.
 
+**In a phone's browser (the web demo)** the browser's own back button (or the
+iPhone's swipe back) behaves the same way. The page detects a touch screen
+outside the app (`(pointer: coarse)`), and each open menu then adds an entry to
+the browser history: back closes the menu instead of leaving the page. A menu
+closed with its own button takes its entry back, and a screen opened from a
+link goes back to the main menu. On a computer the browser's back button is left
+as it is.
+
 ### The screen adapts to the phone
 
 The app draws under the status and navigation bars and pads itself by their
