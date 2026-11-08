@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBackClose } from './backButton'
 
 export interface ImportResult {
   tunes: number
@@ -14,6 +15,7 @@ interface ImportDialogProps {
 
 /** Import iReal Pro links or portable Studio playlist JSON files. */
 export function ImportDialog({ open, onClose, onImport, onImportStudio }: ImportDialogProps) {
+  useBackClose(open, onClose)
   const ref = useRef<HTMLDialogElement>(null)
   const [source, setSource] = useState<'ireal' | 'studio'>('ireal')
   const [text, setText] = useState('')

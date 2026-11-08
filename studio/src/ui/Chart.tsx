@@ -6,6 +6,7 @@ import { ChordSymbol, type ChordNotation } from './ChordSymbol'
 import { useDisplay } from './display'
 import { keyChange } from '../music/roman'
 import { useFitChords } from './fitChords'
+import { useAutoScroll } from './useAutoScroll'
 import { useTwoBarRows } from './useNarrowScreen'
 
 // SMuFL glyphs from Petaluma Text
@@ -26,6 +27,7 @@ interface ChartProps {
   concealOtherChords?: boolean // leave non-answer chords empty while preserving the bar layout
   chordFeedback?: Record<string, 'correct' | 'missed'> // written bar:chord index
   romanNumerals?: boolean // false where Roman numerals would give an answer away (default true)
+  autoScroll?: boolean // keep the playing bar near the middle of the screen (player and sightreader)
 }
 
 interface PlacedBar {
@@ -266,6 +268,7 @@ export function Chart(props: ChartProps) {
   const sheetRef = useRef<HTMLElement>(null)
   const drawn = useMemo(() => [layout, keyPc, props.chordFeedback, display], [layout, keyPc, props.chordFeedback, display])
   useFitChords(sheetRef, drawn)
+  useAutoScroll(sheetRef, !!props.autoScroll && props.activeMeasure !== null, `${props.activeMeasure}:${props.beatInBar}`)
 
   return (
     <article className="sheet" ref={sheetRef} aria-label={`${chart.title} chord chart`}>

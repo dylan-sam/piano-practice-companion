@@ -50,6 +50,20 @@ Web MIDI in the browser, so Chord Sightreading works the same everywhere.
 | Android | `android/app/src/main/java/com/eartraining/app/MidiPlugin.java` (`android.media.midi`, registered in `MainActivity`) | USB, Bluetooth and virtual devices; the manifest declares MIDI optional, so phones without it can install the app |
 | iOS | `ios/App/App/MidiPlugin.swift` (CoreMIDI, registered by `MainViewController`, set in `Main.storyboard`) | every MIDI source, MIDI 1.0 note messages |
 
+### The Android back button
+
+The back button never quits the app by surprise
+(`android/.../MainActivity.java` asks the page, `src/ui/backButton.ts` decides):
+
+| Open now | One press of back |
+|---|---|
+| a menu, panel or dialog (Settings, Display, Practice, Mixer, ⋯, Share, Export, Import, the tune drawer, the chart editor, the Style lab, loop picking) | closes the last one opened, without saving; press again for the one before |
+| nothing, on a screen (player or an exercise) | goes back to the main menu |
+| nothing, on the main menu | leaves the app |
+
+Each menu registers itself while it is open (`useBackClose`), so a new menu
+gets the same behaviour by calling it.
+
 ### The screen adapts to the phone
 
 The app draws under the status and navigation bars and pads itself by their

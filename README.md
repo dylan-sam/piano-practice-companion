@@ -38,6 +38,9 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Practice**: loop a range of bars or a section, go round the keys (up a
   fourth, a half step or a whole step each chorus), speed up each chorus.
 - **Mixer**: volume and mute for bass, piano and drums, and a master volume.
+- **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
+  yellow highlight stays near the middle of the screen, at a speed set by the
+  tempo and the number of beats in a row.
 - **Display**: Roman numerals (each chord as a degree of the key, following key
   changes), minor written C− or Cm, and % for a bar that repeats the bar before.
 - **Your own charts**: write or edit a chart, import iReal Pro links and

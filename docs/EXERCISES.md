@@ -136,6 +136,8 @@ while bass and drums play along.
 - Pressing *Pick a song* again (or *Songs*) opens or closes the song list, like
   the *Tunes* button of the player.
 - Only *Infinite progressions* stops the song, since it replaces the chart.
+- While a song plays, a chart taller than the screen scrolls by itself to keep
+  the playing bar near the middle, as in the player.
 
 ### The band
 

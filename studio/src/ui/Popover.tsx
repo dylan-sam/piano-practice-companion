@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useBackClose } from './backButton'
 
 interface PopoverProps {
   id: string
@@ -13,6 +14,7 @@ interface PopoverProps {
 export function Popover({ id, label, title, active, className, children }: PopoverProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  useBackClose(open, () => setOpen(false))
 
   useEffect(() => {
     if (!open) return

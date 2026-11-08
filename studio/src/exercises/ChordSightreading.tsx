@@ -28,6 +28,8 @@ import { Transport } from '../ui/Transport'
 import { BANK_URL, transposeFor, type KeyChoice, type QuestionBank } from './nameProgression'
 import { ChordJudge, INFINITE_GROUPS, infiniteLine, isMistakes, mistakeKey, type InfiniteLine, type Mistakes } from './sightReading'
 import type { CatalogProgression } from '../library/scoreSearch'
+import { useBackClose } from '../ui/backButton'
+import { useDrawerScreen } from '../ui/useNarrowScreen'
 
 type Mode = 'pick' | 'random' | 'infinite'
 type Feedback = Record<string, 'correct' | 'missed'>
@@ -418,6 +420,11 @@ export function ChordSightreading() {
     </label>
   )
 
+  // The Android back button closes the song drawer and stops loop picking (menus register themselves)
+  const drawer = useDrawerScreen()
+  useBackClose(drawer && mode === 'pick' && libraryOpen, () => setLibraryOpen(false))
+  useBackClose(pickLoop !== null, () => setPickLoop(null))
+
   return (
     <div className="app sightreading">
       <header className="topbar">
@@ -492,7 +499,7 @@ export function ChordSightreading() {
             transpose={shownTranspose} activeMeasure={position?.measure ?? null}
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4}
             chordFeedback={feedback} selectedBar={typeof pickLoop === 'number' ? pickLoop : null}
-            onBarClick={pickLoop === null ? undefined : chooseLoopBar} />}
+            onBarClick={pickLoop === null ? undefined : chooseLoopBar} autoScroll={playing} />}
           {chart && <p className="sight-hint">Play each chord on your keyboard before the next chord begins. Green means correct; red means its time expired.</p>}
           {!chart && mode === 'pick' && <p className="sight-hint">Search ChoCo or a saved playlist, then select a song.</p>}
           <p className="sight-midi-status" role="status">MIDI notes held: {noteNames.length ? noteNames.join(' · ') : 'none'}</p>

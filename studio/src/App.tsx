@@ -34,6 +34,8 @@ import { Wordmark } from './ui/AppLink'
 import type { Player } from './audio/player'
 import { useHeardBeat, usePlayer } from './audio/usePlayer'
 import { useMixer } from './audio/useMixer'
+import { useBackClose } from './ui/backButton'
+import { useDrawerScreen } from './ui/useNarrowScreen'
 import { loadJson, saveJson } from './library/storage'
 
 interface Position {
@@ -539,6 +541,14 @@ export default function App() {
   })()
   const exportPlaylists = playlistNames(tunes)
 
+  // The Android back button closes, the last opened first: the tune drawer, the editor (without
+  // saving), the Style lab and loop picking (menus and dialogs register themselves)
+  const drawer = useDrawerScreen()
+  useBackClose(drawer && libraryOpen, () => setLibraryOpen(false))
+  useBackClose(draft !== null, () => setDraft(null))
+  useBackClose(lab !== null, closeLab)
+  useBackClose(picking !== null, () => setPicking(null))
+
   return (
     <div className="app">
       <header className="topbar">
@@ -639,6 +649,7 @@ export default function App() {
             range={picking && picking !== 'first' ? [picking.from, picking.from] : draft ? null : practice.loop}
             selectedBar={draft ? editBar : null}
             onBarClick={draft ? setEditBar : picking ? pickBar : undefined}
+            autoScroll={playing && !draft}
             header={draft ? <EditorHeader chart={draft.chart} onChange={(c) => setDraft({ ...draft, chart: c })} /> : undefined}
           />
         </main>

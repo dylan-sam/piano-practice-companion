@@ -71,6 +71,7 @@ The patterns, their sources and how they follow the chords:
 | a time signature at the start of a line (the first bar, or a change starting a line) | in the margin before the bar line, so the chords keep their room | `src/ui/Chart.tsx` |
 | a time signature change inside a line | at the start of its bar | `src/ui/Chart.tsx` |
 | upright phones | 2 bars per row instead of 4 | `src/ui/useNarrowScreen.ts`, [mobile](../docs/MOBILE.md) |
+| playing a chart taller than the screen (player and sightreader) | once the highlight reaches the middle of the visible area, the sheet scrolls so it stays there: the reading point moves down the row as the highlight runs along it, so the speed follows the tempo and the beats in a row. Scrolling by hand (wheel, swipe, arrow keys) pauses it for 3 seconds | `src/ui/useAutoScroll.ts` |
 
 Charts from the catalog arrive in iReal Pro chord notation, written by
 `chord_notation.py` ([chord notation](../docs/CHORD_NOTATION.md)).
