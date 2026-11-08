@@ -4,6 +4,8 @@
 // lead sheet. Each bar carries its chords with their length in beats, plus the
 // markings a player reads: rehearsal marks, repeats, endings, D.C./D.S., coda.
 
+import { isMelody, type Melody } from './melody'
+
 export type TimeSignature = [beats: number, unit: number]
 
 export interface BarChord {
@@ -52,6 +54,7 @@ export interface Chart {
   bpm: number
   time: TimeSignature
   bars: ChartBar[]
+  melody?: Melody // a melody line over the chords: the chart is then drawn as a lead sheet
 }
 
 export const ROW_CELLS = 16
@@ -82,6 +85,7 @@ export function isChart(value: unknown): value is Chart {
     Number.isInteger(chart.key) && Number(chart.key) >= 0 && Number(chart.key) < 12 &&
     typeof chart.bpm === 'number' && Number.isFinite(chart.bpm) && chart.bpm > 0 &&
     isTimeSignature(chart.time) &&
+    (chart.melody === undefined || isMelody(chart.melody)) &&
     Array.isArray(chart.bars) && chart.bars.length > 0 && chart.bars.every((item: unknown) => {
       if (!item || typeof item !== 'object') return false
       const bar = item as Record<string, unknown>
@@ -108,6 +112,15 @@ export function isChart(value: unknown): value is Chart {
 export function beatsPerBar([beats, unit]: TimeSignature): number {
   // Eighth-note meters are counted in quarter notes (6/8 -> 3 beats)
   return unit === 8 ? beats / 2 : unit === 2 ? beats * 2 : beats
+}
+
+/** The meter in force at each written bar, with its length in quarter notes. */
+export function barMeters(chart: Chart): { time: TimeSignature; beats: number; compound?: boolean }[] {
+  let time: TimeSignature = chart.time
+  return chart.bars.map((bar) => {
+    if (bar.time) time = bar.time
+    return { time, beats: beatsPerBar(time), compound: isCompound(time) || undefined }
+  })
 }
 
 // 6/8, 9/8 and 12/8 are felt in dotted quarters; 3/8 is felt in one, like a fast 3/4

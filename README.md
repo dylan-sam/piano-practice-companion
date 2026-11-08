@@ -41,7 +41,16 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
   fourth, a half step or a whole step each chorus), speed up each chorus.
-- **Mixer**: volume and mute for bass, piano and drums, and a master volume.
+- **Lead sheets**: a chart that carries a melody is drawn as a lead sheet,
+  the melody on a staff with the chords above it, and the melody plays with the
+  band (alto sax by default, or the chart's own instrument). The bar being
+  played is highlighted and the note being played is coloured; the melody
+  follows repeats, loops, transposition and Practice > Keys. Melodies come with
+  imported charts (Studio export): the catalog has none (see
+  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)
+  to try it with 450 transcribed jazz solos).
+- **Mixer**: volume and mute for bass, piano and drums (and the melody of a lead
+  sheet), and a master volume.
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the
   tempo and the number of beats in a row. It can be turned off in the Display
@@ -567,6 +576,7 @@ common_progressions.py   the catalog progressions; find_progressions.py finds th
 build_exercises.py       questions of Name the progression
 build_mobile_catalog.py  the catalog bundled in the phone apps
 build_nottingham_fix.py  rebuilds the Nottingham correction file from the ChoCo repository
+weimar_playlist.py       turns Weimar Jazz Database solos into lead sheets to test the app (not shipped)
 left_hand_patterns.py    the piano patterns (data/left_hand_patterns.json)
 server.py                serves the app and the song search on http://127.0.0.1:8765/
 score_search.py          song search, versions and their order
@@ -575,9 +585,9 @@ tests/                   Python tests
 data/                    sources list, licenses; the database and catalogs once built
 docs/                    documentation and screenshots
 studio/                  the app (React, TypeScript, Vite) and its Android and iOS projects
-  src/engine/            arranges a chart into MIDI: bass, piano, drums
+  src/engine/            arranges a chart into MIDI: bass, piano, drums, melody
   src/audio/             synthesizer (SpessaSynth), mixer, MIDI input
-  src/music/             chords, charts, Roman numerals, practice settings
+  src/music/             chords, charts, melodies and their ABC notation, Roman numerals, practice
   src/exercises/         Name the progression and Chord Sightreading
   src/ui/                screens and controls
   src/formats/           iReal Pro import and export, share links
@@ -612,7 +622,7 @@ Sonatas) are not included. The iReal Pro forum charts were contributed by forum
 users and are distributed by ChoCo. The catalog holds chord symbols, titles,
 composers and keys only: no melodies, lyrics or recordings.
 
-**Sound bank and fonts** keep their own licenses: GeneralUser GS
+**Libraries, sound bank and fonts** keep their own licenses: abcjs (MIT), GeneralUser GS
 (`studio/public/soundfonts/GeneralUser-GS-LICENSE.txt`, free to use, also
 commercially), Petaluma (`studio/src/assets/fonts/Petaluma-OFL.txt`) and IBM
 Plex, both under the SIL Open Font License.
@@ -636,6 +646,12 @@ authors. Google Play has no such restriction. This is not legal advice.
   (see [studio/README.md](studio/README.md)).
 - **Synthesizer**: [SpessaSynth](https://github.com/spessasus/SpessaSynth);
   sound bank GeneralUser GS by S. Christian Collins.
+- **Music engraving**: [abcjs](https://github.com/paulrosen/abcjs) by Paul Rosen
+  and Gregory Dyke (MIT), which draws the lead sheets.
+- **Test melodies** (not shipped): the Weimar Jazz Database, M. Pfleiderer,
+  K. Frieler, J. Abesser, W.-G. Zaddach and B. Burkhart (eds.), *Inside the
+  Jazzomat: New Perspectives for Jazz Research*, Schott Campus (2017).
+  [Jazzomat Research Project](https://jazzomat.hfm-weimar.de/).
 - **Fonts**: Petaluma (Steinberg), IBM Plex (IBM).
 
 This project was built with the help of GPT-6 Sol and Opus 5.5.

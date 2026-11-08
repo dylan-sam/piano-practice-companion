@@ -247,6 +247,18 @@ function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, activ
   )
 }
 
+/** The title block of a sheet: the style, the title, and the composer or the key. */
+export function SheetHead({ chart, style, keyPc }: { chart: ChartData; style: StyleDefinition; keyPc: number }) {
+  const keyName = prettyNoteName(keyPc) + (chart.minor ? '\u2212' : '')
+  return (
+    <header className="sheet-head">
+      <span className="sheet-meta">{`(${chart.sourceStyle || style.name})`}</span>
+      <h1 className="sheet-title">{chart.title}</h1>
+      <span className="sheet-meta sheet-meta-right">{chart.composer ?? `Key of ${keyName}`}</span>
+    </header>
+  )
+}
+
 /** Render an editable or read-only chord chart with optional exercise concealment. */
 export function Chart(props: ChartProps) {
   const { chart, style, transpose, activeMeasure, beatInBar, barBeats, range, selectedBar, onBarClick, header } = props
@@ -264,7 +276,6 @@ export function Chart(props: ChartProps) {
   const rowCells = narrow && !conceal ? ROW_CELLS / 2 : ROW_CELLS
   const layout = useMemo(() => rows(chart, transpose, conceal, concealOtherChords, rowCells),
     [chart, transpose, conceal, concealOtherChords, rowCells])
-  const keyName = prettyNoteName(keyPc) + (chart.minor ? '\u2212' : '')
   const sheetRef = useRef<HTMLElement>(null)
   const drawn = useMemo(() => [layout, keyPc, props.chordFeedback, display], [layout, keyPc, props.chordFeedback, display])
   useFitChords(sheetRef, drawn)
@@ -272,13 +283,7 @@ export function Chart(props: ChartProps) {
 
   return (
     <article className="sheet" ref={sheetRef} aria-label={`${chart.title} chord chart`}>
-      {header ?? (
-        <header className="sheet-head">
-          <span className="sheet-meta">{`(${chart.sourceStyle || style.name})`}</span>
-          <h1 className="sheet-title">{chart.title}</h1>
-          <span className="sheet-meta sheet-meta-right">{chart.composer ?? `Key of ${keyName}`}</span>
-        </header>
-      )}
+      {header ?? <SheetHead chart={chart} style={style} keyPc={keyPc} />}
 
       <div className="rows">
         {layout.map((row, r) => (

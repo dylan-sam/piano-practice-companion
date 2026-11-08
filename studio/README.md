@@ -9,11 +9,13 @@ kept.
 **Changed from OpenStand:** song search in the ChoCo catalog and chart
 conversion, the project's six styles and their piano patterns, the two
 exercises, the Display menu, Android and iOS apps, a link to the source code,
-and the removal of OpenStand's example songs, telemetry and submission action.
+and lead sheets (a melody over the chords, drawn with abcjs), and the removal of
+OpenStand's example songs, telemetry and submission action.
 
 - [Screens](#screens)
 - [Styles and piano patterns](#styles-and-piano-patterns)
 - [Charts on screen](#charts-on-screen)
+- [Lead sheets](#lead-sheets)
 - [The Display menu](#the-display-menu)
 - [Tunes and playlists](#tunes-and-playlists)
 - [Building and running](#building-and-running)
@@ -75,6 +77,45 @@ The patterns, their sources and how they follow the chords:
 
 Charts from the catalog arrive in iReal Pro chord notation, written by
 `chord_notation.py` ([chord notation](../docs/CHORD_NOTATION.md)).
+
+## Lead sheets
+
+A chart with a `melody` is drawn as a lead sheet in the Accompaniment Player
+(the editor still shows its chords only). The melody is stored with the chart:
+
+```json
+"melody": {
+  "notes": [{ "bar": 0, "at": 0.5, "beats": 1.5, "pitch": 70 }],
+  "program": 65,
+  "source": "Weimar Jazz Database, melid 1"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `bar` | the written bar (index in `bars`), so the note follows repeats, endings, loops and choruses |
+| `at` | start in quarter notes from the start of the bar (0.5 is the "and" of beat 1) |
+| `beats` | length in quarter notes; it may run past the bar line (the note is drawn tied) |
+| `pitch` | MIDI note number in the written key (60 is middle C) |
+| `program` | the General MIDI instrument (default 65, alto sax) |
+
+How it is drawn and played:
+
+| What | How | Code |
+|---|---|---|
+| engraving | the chart is written as ABC notation and drawn by [abcjs](https://github.com/paulrosen/abcjs) (MIT), loaded the first time a lead sheet opens | `src/music/abc.ts`, `src/ui/LeadSheet.tsx` |
+| rhythm | each beat is written in sixteenths, or in triplet eighths when a note starts on a third of it; notes are cut and tied at bar lines, chord changes and odd beat crossings (a note crosses a beat only from an eighth to an eighth) | `melodyToAbc` |
+| key and spelling | the key signature of the key on the stand; chromatic notes take sharps in sharp keys and flats in flat keys (in C, flats except F#); an accidental lasts for the bar | `spellPitch` |
+| clef | bass clef when the middle note of the melody is below A3 | `melodyToAbc` |
+| layout | 4 bars a line (2 on upright phones); a rehearsal mark starts a line and is drawn boxed in the margin, as on the chord chart; a pickup bar stays on the first line | `melodyToAbc`, `sectionMarks` |
+| chords | above the staff, in the Display menu's notation (C−7 or Cm7, Roman numerals) | `chordText` |
+| playing | the bar being played gets the yellow highlighter and the note being played is coloured; the sheet scrolls like a chart (auto-scroller in the Display menu) | `src/ui/LeadSheet.tsx`, `src/ui/useAutoScroll.ts` |
+| loops | Practice > Choose bars: click a bar (or its chords) on the staff | `src/ui/LeadSheet.tsx` |
+| sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later); its own strip in the Mixer | `src/engine/melody.ts`, `src/engine/arrange.ts` |
+
+Charts with a melody are imported as a Studio export (**Import > Studio
+export**). To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
+Database into such a file ([the data](../docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)).
 
 ## The Display menu
 
@@ -147,13 +188,13 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 
 | Folder | Holds |
 |---|---|
-| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), timeline and count-in (`timeline.ts`) |
+| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`), timeline and count-in (`timeline.ts`) |
 | `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
-| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
+| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
-| `src/ui/` | screens and controls: chart, transport, mixer, menus, editor, Style lab |
+| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
 | `src/exercises/` | Name the progression and Chord Sightreading |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |
@@ -161,6 +202,8 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 ## Licenses
 
 - The app: [AGPL-3.0-or-later](LICENSE), as OpenStand.
+- [abcjs](https://github.com/paulrosen/abcjs), which draws lead sheets: MIT,
+  Paul Rosen and Gregory Dyke.
 - The GeneralUser GS sound bank: its own terms, in
   `public/soundfonts/GeneralUser-GS-LICENSE.txt`.
 - The Petaluma fonts: SIL Open Font License, `src/assets/fonts/Petaluma-OFL.txt`.

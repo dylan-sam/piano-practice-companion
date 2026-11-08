@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { arrange, BASE_BPM } from './engine/arrange'
+import { arrange, BASE_BPM, type Part } from './engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from './engine/pianoPatterns'
 import { warmUpMidi } from './engine/warmup'
 import { chorusTranspose, type Timeline } from './engine/timeline'
@@ -34,6 +34,7 @@ import { Wordmark } from './ui/AppLink'
 import type { Player } from './audio/player'
 import { useHeardBeat, usePlayer } from './audio/usePlayer'
 import { useMixer } from './audio/useMixer'
+import { LeadSheet } from './ui/LeadSheet'
 import { useBackClose } from './ui/backButton'
 import { useDrawerScreen } from './ui/useNarrowScreen'
 import { loadJson, saveJson } from './library/storage'
@@ -63,6 +64,8 @@ interface Draft {
 }
 
 const BPM_RANGE: [number, number] = [40, 300]
+// The mixer strips of a lead sheet, with the melody instrument
+const MELODY_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
 const MAX_CHORUSES = 24
 // Keep a tempo inside the allowed range
 const clampBpm = (v: number) => Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], v))
@@ -171,6 +174,14 @@ export default function App() {
   const resolveStyle = (id: string) => styleFor(id, labRef.current, myStylesRef.current)
   const style = draft ? getStyle(draft.chart.style) : styleFor(styleId, lab, myStyles)
   const keyPc = (chart.key + transpose + 12) % 12
+  // A chart with a melody is drawn as a lead sheet (the editor shows the chords only)
+  const leadSheet = !draft && !!chart.melody?.notes.length
+  // Where the band is, for the sheet's highlight
+  const playhead = {
+    activeMeasure: position && position.measure >= 0 ? position.measure : null,
+    beatInBar: position?.beatInBar ?? 0,
+    barBeats: position?.barBeats ?? 4,
+  }
 
   // During practice the chorus decides the key on the stand and the tempo
   const chorus = position ? Math.min(position.chorus, choruses - 1) : 0
@@ -639,19 +650,29 @@ export default function App() {
           className={['stage', editing && 'stage-editing', picking && 'stage-picking'].filter(Boolean).join(' ')}
           onClick={() => setLibraryOpen(false)}
         >
-          <Chart
-            chart={chart}
-            style={style}
-            transpose={draft ? 0 : shownTranspose}
-            activeMeasure={position && position.measure >= 0 ? position.measure : null}
-            beatInBar={position?.beatInBar ?? 0}
-            barBeats={position?.barBeats ?? 4}
-            range={picking && picking !== 'first' ? [picking.from, picking.from] : draft ? null : practice.loop}
-            selectedBar={draft ? editBar : null}
-            onBarClick={draft ? setEditBar : picking ? pickBar : undefined}
-            autoScroll={playing && !draft}
-            header={draft ? <EditorHeader chart={draft.chart} onChange={(c) => setDraft({ ...draft, chart: c })} /> : undefined}
-          />
+          {leadSheet ? (
+            <LeadSheet
+              chart={chart}
+              style={style}
+              transpose={shownTranspose}
+              {...playhead}
+              range={picking && picking !== 'first' ? [picking.from, picking.from] : practice.loop}
+              onBarClick={picking ? pickBar : undefined}
+              autoScroll={playing}
+            />
+          ) : (
+            <Chart
+              chart={chart}
+              style={style}
+              transpose={draft ? 0 : shownTranspose}
+              {...playhead}
+              range={picking && picking !== 'first' ? [picking.from, picking.from] : draft ? null : practice.loop}
+              selectedBar={draft ? editBar : null}
+              onBarClick={draft ? setEditBar : picking ? pickBar : undefined}
+              autoScroll={playing && !draft}
+              header={draft ? <EditorHeader chart={draft.chart} onChange={(c) => setDraft({ ...draft, chart: c })} /> : undefined}
+            />
+          )}
         </main>
       </div>
 
@@ -734,7 +755,7 @@ export default function App() {
         onChoruses={(n) => changeArrangement({ choruses: n })}
       >
         <Practice chart={chart} settings={practice} onChange={changePractice} onPickLoop={() => setPicking('first')} />
-        <Mixer {...mixer(style.comp.program)} />
+        <Mixer {...mixer(style.comp.program)} parts={leadSheet ? MELODY_PARTS : undefined} />
       </Transport>
       </>
       )}

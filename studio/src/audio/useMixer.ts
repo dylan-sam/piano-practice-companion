@@ -9,14 +9,15 @@ import type { Player } from './player'
 // Kept in the browser: levels depend on the speakers, not on the tune or the screen
 const MASTER_KEY = 'eartraining:master-volume'
 const VOLUMES_KEY = 'eartraining:part-volumes'
-const DEFAULT_VOLUMES: Record<Part, number> = { bass: 110, comp: 85, drums: 95 }
-const UNMUTED: Record<Part, boolean> = { bass: false, comp: false, drums: false }
+const DEFAULT_VOLUMES: Record<Part, number> = { bass: 110, comp: 85, melody: 100, drums: 95 }
+const UNMUTED: Record<Part, boolean> = { bass: false, comp: false, melody: false, drums: false }
 
 // Whether a stored value is a valid channel level
 const isLevel = (v: unknown) => typeof v === 'number' && v >= 0 && v <= 127
-// Whether a stored value is a valid set of channel levels
+// Whether a stored value is a valid set of channel levels; a part saved before it existed is absent
 const isVolumes = (v: unknown) =>
-  typeof v === 'object' && v !== null && (Object.keys(DEFAULT_VOLUMES) as Part[]).every((p) => isLevel((v as Record<string, unknown>)[p]))
+  typeof v === 'object' && v !== null &&
+  (Object.keys(DEFAULT_VOLUMES) as Part[]).every((p) => (v as Record<string, unknown>)[p] === undefined || isLevel((v as Record<string, unknown>)[p]))
 
 /** The label of the comp part, after the style's General MIDI program. */
 export const compLabel = (program: number) => (program >= 24 && program <= 31 ? 'Guitar' : 'Piano')
@@ -26,7 +27,8 @@ export const compLabel = (program: number) => (program >= 24 && program <= 31 ? 
  * Returns the props of the Mixer popover, given the comp instrument's General MIDI program.
  */
 export function useMixer(playerRef: RefObject<Player | null>, readiness: Readiness) {
-  const [volumes, setVolumes] = useState(() => loadJson(VOLUMES_KEY, DEFAULT_VOLUMES, isVolumes))
+  // Levels kept from an earlier visit; parts added since then start at their default
+  const [volumes, setVolumes] = useState(() => ({ ...DEFAULT_VOLUMES, ...loadJson(VOLUMES_KEY, DEFAULT_VOLUMES, isVolumes) }))
   const [muted, setMuted] = useState(UNMUTED)
   const [master, setMaster] = useState(() => loadJson(MASTER_KEY, 100, isLevel))
   const [masterMuted, setMasterMuted] = useState(false)
@@ -47,7 +49,7 @@ export function useMixer(playerRef: RefObject<Player | null>, readiness: Readine
   }, [playerRef, master, masterMuted, readiness.kind])
 
   return (compProgram: number) => ({
-    labels: { bass: 'Bass', comp: compLabel(compProgram), drums: 'Drums' },
+    labels: { bass: 'Bass', comp: compLabel(compProgram), melody: 'Melody', drums: 'Drums' },
     volumes,
     muted,
     onVolume: (part: Part, v: number) => setVolumes((all) => ({ ...all, [part]: v })),

@@ -1,4 +1,4 @@
-import { beatsPerBar, isCompound, playbackOrder, type Chart, type TimeSignature } from '../music/chart'
+import { barMeters, beatsPerBar, isCompound, playbackOrder, type Chart } from '../music/chart'
 import { parseChord, transposeChord, type Chord } from '../music/chords'
 import { PULSE } from './meter'
 
@@ -72,6 +72,7 @@ export interface Bar {
   start: number
   beats: number
   measure: number // -1 for the ending bar
+  chorus: number // the pass through the chart this bar belongs to (its key with Practice > Keys)
   isFirst: boolean
   isLast: boolean
   compound?: boolean // in 6/8, 9/8 or 12/8
@@ -128,11 +129,7 @@ export function buildTimeline(chart: Chart, transpose: number, choruses: number,
   }
 
   // Time signature in force at each written bar
-  let time: TimeSignature = chart.time
-  const meters = chart.bars.map((bar) => {
-    if (bar.time) time = bar.time
-    return { beats: beatsPerBar(time), compound: isCompound(time) || undefined }
-  })
+  const meters = barMeters(chart)
 
   const order = practiceOrder(chart, practice.loop)
   const slots: Slot[] = []
@@ -154,7 +151,7 @@ export function buildTimeline(chart: Chart, transpose: number, choruses: number,
     order.forEach((measure, n) => {
       const bar = chart.bars[measure]
       const { beats, compound } = meters[measure]
-      bars.push({ start: beat, beats, measure, isFirst: n === 0, isLast: n === order.length - 1, compound })
+      bars.push({ start: beat, beats, measure, chorus, isFirst: n === 0, isLast: n === order.length - 1, compound })
 
       if (bar.chords.length === 0) {
         if (held) slots.push({ chord: held, start: beat, beats, measure, chordIndex: -1, chorus, compound })
@@ -176,7 +173,7 @@ export function buildTimeline(chart: Chart, transpose: number, choruses: number,
   if (first && choruses > 0 && practice.ending !== false) {
     const last = meters[order[order.length - 1]] ?? { beats: 4 }
     const beats = last.beats >= 3 ? last.beats : last.beats * 2
-    bars.push({ start: beat, beats, measure: -1, isFirst: false, isLast: false, compound: last.compound })
+    bars.push({ start: beat, beats, measure: -1, chorus: choruses - 1, isFirst: false, isLast: false, compound: last.compound })
     slots.push({ chord: toChord(first, choruses - 1), start: beat, beats, measure: -1, chordIndex: -1, chorus: choruses, compound: last.compound })
     beat += beats
   }

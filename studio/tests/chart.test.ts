@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { chartFromMeasures, playbackOrder, tuplets, type Chart, type ChartBar } from '../src/music/chart'
 import { decodeChart, encodeChart } from '../src/formats/share'
 

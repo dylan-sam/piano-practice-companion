@@ -10,9 +10,11 @@ import type { NoteEvent } from './events'
 import { DRUM_CHANNEL, generateDrums } from './drums'
 import { writeMidi } from './midiWriter'
 import { buildTimeline, type PracticeOptions, type Timeline } from './timeline'
+import { melodyEvents } from './melody'
+import { melodyProgram } from '../music/melody'
 
-// Channel layout, shared with the mixer
-export const CHANNELS = { bass: 0, comp: 1, drums: DRUM_CHANNEL } as const
+// Channel layout, shared with the mixer (channel 2 is the live MIDI keyboard's piano, player.ts)
+export const CHANNELS = { bass: 0, comp: 1, melody: 3, drums: DRUM_CHANNEL } as const
 export type Part = keyof typeof CHANNELS
 
 // Playback rate is set relative to this tempo, so tempo changes don't regenerate the MIDI
@@ -42,7 +44,7 @@ export function bassEventsForStyle(
   return generateBass(timeline.slots, style.bass, style.swing, compound.bass)
 }
 
-/** Render a chart into separate bass, comp, and drum MIDI tracks. */
+/** Render a chart into separate bass, comp and drum MIDI tracks, plus its melody when it has one. */
 export function arrange(
   chart: Chart,
   style: StyleDefinition,
@@ -90,6 +92,14 @@ export function arrange(
       reverb: 35,
       events: generateDrums(timeline.bars, style.drums, swing, timeline.clicks, compound.drums),
     },
+    ...(chart.melody?.notes.length ? [{
+      name: 'Melody',
+      channel: CHANNELS.melody,
+      program: melodyProgram(chart.melody),
+      pan: 54,
+      reverb: 45,
+      events: melodyEvents(chart, timeline, CHANNELS.melody, swing, transpose, practice.keyStep ?? 0),
+    }] : []),
   ])
   return { midi, timeline }
 }

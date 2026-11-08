@@ -28,6 +28,7 @@
   --control: #f3efe6;
   --highlighter: #ffde3b;
   --highlighter-blend: multiply;
+  --note-playing: #b8460e;
   --on-ink: #fbf8f1;
   --danger: #a3322a;
 
@@ -55,6 +56,7 @@
     --line: #36322c;
     --control: #24211d;
     --highlighter: rgb(255 214 51 / 0.3);
+    --note-playing: #ffb15c;
     --highlighter-blend: normal;
     --on-ink: #121110;
     --danger: #e0786e;
@@ -622,6 +624,55 @@ button:disabled {
   transform-origin: left center;
   rotate: -0.6deg;
   pointer-events: none;
+}
+
+/* Lead sheets: the abcjs engraving, with the highlighter and loop marks laid over it */
+.lead-score {
+  position: relative;
+  margin-top: 8px;
+}
+
+.lead-engraving {
+  position: relative;
+  z-index: 1;
+  color: var(--ink);
+}
+
+.lead-engraving svg {
+  display: block;
+  overflow: visible;
+}
+
+.lead-score .lead-highlight {
+  inset: auto;
+  position: absolute;
+}
+
+.lead-section {
+  z-index: 2;
+  font-size: 17px;
+}
+
+/* A mark before a staff line ends just left of it, in the sheet's margin */
+.lead-section-margin {
+  transform: translateX(-100%);
+}
+
+.lead-loop {
+  position: absolute;
+  border-bottom: 2px solid var(--ink-2);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* The playing note: its head, stem and flags, not the chord symbol drawn with it */
+.lead-note-playing path {
+  fill: var(--note-playing);
+  stroke: var(--note-playing);
+}
+
+.lead-score-clickable {
+  cursor: pointer;
 }
 
 .chord {

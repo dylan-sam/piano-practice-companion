@@ -12,28 +12,40 @@ function scrollerOf(element: HTMLElement): HTMLElement {
   return (document.scrollingElement as HTMLElement | null) ?? document.documentElement
 }
 
+/** Where the reading point is: the highlight, the row it runs along, and the row after it. */
+export interface ReadingRow {
+  highlight: DOMRect
+  row: DOMRect
+  next: DOMRect | null
+}
+
+/** The reading row of a chord chart: the yellow highlight inside a bar of a row. */
+function chartRow(sheet: HTMLElement): ReadingRow | null {
+  const highlight = sheet.querySelector<HTMLElement>('.bar-highlight')
+  const row = highlight?.parentElement?.parentElement
+  if (!highlight || !row) return null
+  return { highlight: highlight.getBoundingClientRect(), row: row.getBoundingClientRect(), next: row.nextElementSibling?.getBoundingClientRect() ?? null }
+}
+
 /**
  * The reading point, in screen pixels from the top: the middle of the playing row, moved down
  * towards the next row as the highlight runs along it, so it moves at a steady speed set by the
  * tempo and the number of beats in a row.
  */
-function readingY(highlight: HTMLElement): number | null {
-  const row = highlight.parentElement?.parentElement
-  if (!row) return null
-  const rowBox = row.getBoundingClientRect()
-  const along = rowBox.width > 0
-    ? Math.min(1, Math.max(0, (highlight.getBoundingClientRect().right - rowBox.left) / rowBox.width)) : 0
-  const next = row.nextElementSibling
-  const pitch = next ? next.getBoundingClientRect().top - rowBox.top : rowBox.height
-  return rowBox.top + rowBox.height / 2 + along * pitch
+function readingY({ highlight, row, next }: ReadingRow): number {
+  const along = row.width > 0 ? Math.min(1, Math.max(0, (highlight.right - row.left) / row.width)) : 0
+  const pitch = next ? next.top - row.top : row.height
+  return row.top + row.height / 2 + along * pitch
 }
 
 /**
  * Scroll the sheet while it plays so the yellow highlight stays near the middle of the visible
  * area: nothing happens until it reaches the middle, or when the whole sheet fits. `position`
  * changes on every frame of playback; scrolling by hand pauses the auto-scroll for a moment.
+ * `locate` finds the reading row (by default the chord chart's highlighted bar).
  */
-export function useAutoScroll(sheetRef: RefObject<HTMLElement | null>, enabled: boolean, position: unknown): void {
+export function useAutoScroll(sheetRef: RefObject<HTMLElement | null>, enabled: boolean, position: unknown,
+  locate: (sheet: HTMLElement) => ReadingRow | null = chartRow): void {
   const pausedUntil = useRef(0)
 
   useEffect(() => {
@@ -55,9 +67,9 @@ export function useAutoScroll(sheetRef: RefObject<HTMLElement | null>, enabled: 
   useEffect(() => {
     const sheet = sheetRef.current
     if (!enabled || !sheet || performance.now() < pausedUntil.current) return
-    const highlight = sheet.querySelector<HTMLElement>('.bar-highlight')
-    const y = highlight && readingY(highlight)
-    if (y == null) return
+    const reading = locate(sheet)
+    if (!reading) return
+    const y = readingY(reading)
     const scroller = scrollerOf(sheet)
     const room = scroller.scrollHeight - scroller.clientHeight
     if (room <= 1) return // the whole sheet is visible
@@ -65,5 +77,5 @@ export function useAutoScroll(sheetRef: RefObject<HTMLElement | null>, enabled: 
     const view = page ? { top: 0, height: window.innerHeight } : scroller.getBoundingClientRect()
     const target = Math.max(0, Math.min(room, scroller.scrollTop + y - (view.top + view.height / 2)))
     if (Math.abs(target - scroller.scrollTop) >= 0.5) scroller.scrollTop = target
-  }, [sheetRef, enabled, position])
+  }, [sheetRef, enabled, position, locate])
 }

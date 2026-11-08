@@ -13,6 +13,7 @@ every correction made to the source data. The short version is in the
 - [Key modes](#key-modes)
 - [The catalog progressions](#the-catalog-progressions)
 - [Piano patterns](#piano-patterns)
+- [Testing lead sheets with the Weimar Jazz Database](#testing-lead-sheets-with-the-weimar-jazz-database)
 - [Rights](#rights)
 
 ## Sources
@@ -581,6 +582,46 @@ catalog holds 143,324 passages. The exercises are built from them
 `data/left_hand_patterns.json` holds the 16 piano patterns offered in the app,
 with their styles and notes. Rebuild it with `python left_hand_patterns.py`;
 the [pattern audit](../PATTERN_AUDIT.md) gives their sources and menus.
+
+## Testing lead sheets with the Weimar Jazz Database
+
+The catalog has chords only. To test the app's lead sheets (a melody over the
+chords) on real music, `weimar_playlist.py` turns the solos of the
+[Weimar Jazz Database](https://jazzomat.hfm-weimar.de/) into a Studio export
+that the app imports with **Import > Studio export**. The database and the
+files made from it are **not shipped** with the project (`data/weimar*` is
+ignored by git): it is a test tool.
+
+```sh
+# wjazzd.db is in the ChoCo repository (partitions/weimar/raw/) or on the Jazzomat site
+python weimar_playlist.py wjazzd.db data/weimar_solos.json            # all 450 solos
+python weimar_playlist.py wjazzd.db data/weimar_some.json --melid 1 3  # chosen solos
+```
+
+The database holds 456 transcribed solos (saxophones, trumpets, trombone,
+clarinet, vibraphone, piano, guitar) with every note's bar, beat and position
+inside the beat, the beat track and the chord changes. How a solo becomes a chart:
+
+| Database | Chart | Example |
+|---|---|---|
+| `solo_info.title`, `performer` | title, and "performer solo" in place of the composer | Anthropology, "Art Pepper solo" |
+| `key` | key and minor flag | `Bb-maj` is B♭ major; `C-min`, `F-dor` are minor |
+| `avgtempo`, `rhythmfeel` | tempo; style (SWING, TWOBEAT: Swing; LATIN: Latin; BALLAD: Ballad; FUNK: Straight Pop/Rock) | 218.8 bpm, SWING: Swing at 219 |
+| `instrument` | the melody's instrument | `as` alto sax, `ts` tenor sax, `tp` trumpet, `vib` vibraphone |
+| `beats.bar`, `beat` | bars from the first note to the last, four to a row; a pickup bar is a whole bar, with N.C. before the first chord | bar 0 (pickup), bars 1, 2... |
+| `beats.chord` | chords where they change, in chart notation (checked with `chord_notation.py`) | `Bbj7` is B♭^7, `Am7b5` Ah7, `D79b` D7♭9, `F+j7` F^7#5, `NC` N.C. |
+| `beats.form` | rehearsal marks | `A1` at bar 1 is mark A, `I1` an intro |
+| `melody.beat`, `tatum`, `division` | position: (beat − 1) + (tatum − 1) / division quarter notes, rounded to a twelfth | beat 2, tatum 2 of 3 is 1.333 |
+| `melody.duration`, `beatdur` | length: duration / beat duration, rounded to a twelfth; a silence shorter than a sixteenth before the next note is closed up | 0.14 s at 0.3 s a beat is an eighth |
+
+Six free-time solos (transcribed without bars) are left out. On screen, the
+app writes each beat in sixteenths or triplet eighths
+([lead sheets](../studio/README.md#lead-sheets)), so a played rubato or a
+laid-back phrase appears on the nearest of those positions.
+
+Citation: M. Pfleiderer, K. Frieler, J. Abeßer, W.-G. Zaddach and B. Burkhart
+(eds.), *Inside the Jazzomat: New Perspectives for Jazz Research*, Schott
+Campus, Mainz (2017).
 
 ## Rights
 
