@@ -3,7 +3,7 @@
 // played gets the yellow highlighter of the chord chart and the note being played is coloured.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import type { Chart as ChartData } from '../music/chart'
+import { barMeters, type Chart as ChartData } from '../music/chart'
 import { melodyToAbc, type DrawnEvent } from '../music/abc'
 import type { StyleDefinition } from '../styles/types'
 import { useDisplay } from './display'
@@ -33,6 +33,7 @@ const PHONE_STAFF_WIDTH = 520
 const CLICK_ABOVE = 50 // a bar can be picked from this far above its staff (its chord symbols)...
 const CLICK_BELOW = 20 // ...and below it
 const LOOP_GAP = 10 // the pencil line under looped bars, this far below the staff
+const NOTE_LEAD = 2 // the highlight reaches a note just before its head
 const MARGIN_GAP = 6 // a rehearsal mark before a staff line ends this far left of it
 
 /** A drawn note or rest with its SVG element and the staff line it sits on. */
@@ -94,6 +95,15 @@ function union(boxes: Box[]): Box | null {
   return { left, top, width: right - left, height: bottom - top }
 }
 
+/**
+ * The box of a note or rest symbol (head, stem, flags, accidentals), without the chord symbol
+ * drawn in its group, which may stick out past the bar line.
+ */
+function symbolBox(element: Element, root: Element): Box {
+  return union([...element.querySelectorAll('path')].map((path) => boxIn(path, root)).filter((b) => b.width > 0)) ??
+    boxIn(element, root)
+}
+
 /** The vertical extent of each staff line: the box around its five staff lines. */
 function staffBoxes(root: HTMLElement): Map<number, Box> {
   const out = new Map<number, Box>()
@@ -111,13 +121,15 @@ function staffBoxes(root: HTMLElement): Map<number, Box> {
  */
 function barBox(root: HTMLElement, notes: DrawnNote[], bar: number, staffs: Map<number, Box>): BarBox | null {
   const own = notes.filter((n) => n.bar === bar)
-  const area = union(own.map((n) => boxIn(n.element, root)))
+  const area = union(own.map((n) => symbolBox(n.element, root)))
   if (!area) return null
   const line = own[0].line
   const staff = staffs.get(line)
   const bars = [...root.querySelectorAll('.abcjs-bar')].filter((b) => lineOf(b) === line).map((b) => boxIn(b, root))
   const before = bars.filter((b) => b.left + b.width <= area.left + 1).map((b) => b.left + b.width)
-  const after = bars.filter((b) => b.left >= area.left + area.width - 1).map((b) => b.left)
+  // The bar line after the last symbol's start (a tie from it runs on past the bar line)
+  const lastStart = Math.max(...own.map((n) => symbolBox(n.element, root).left))
+  const after = bars.filter((b) => b.left > lastStart).map((b) => b.left)
   // The first bar of a staff line starts after the clef and key signature, just before its first note
   const left = before.length ? Math.max(...before) : area.left - 6
   const right = after.length ? Math.min(...after) : area.left + area.width
@@ -126,11 +138,50 @@ function barBox(root: HTMLElement, notes: DrawnNote[], bar: number, staffs: Map<
   return { left, top, width: right - left, height, lineStart: !before.length }
 }
 
+/** A point of a bar's highlight: at a time of the bar (quarter notes), the highlight reaches x. */
+interface Anchor { at: number; x: number }
+
 interface Boxes {
   bars: Map<number, BarBox> // by written bar
+  anchors: Map<number, Anchor[]> // by written bar, in time order
   sections: { text: string; left: number; top: number; margin: boolean }[]
 }
-const NO_BOXES: Boxes = { bars: new Map(), sections: [] }
+const NO_BOXES: Boxes = { bars: new Map(), anchors: new Map(), sections: [] }
+
+
+/**
+ * Where the highlight of a bar is at each note: abcjs spaces notes by their kind, not their
+ * length (a run of sixteenths takes more room than a half note), so the highlight runs from
+ * note to note, reaching each one as it sounds, instead of sweeping the bar at a steady speed.
+ */
+function barAnchors(root: HTMLElement, notes: DrawnNote[], bar: number, box: Box, beats: number): Anchor[] {
+  const anchors: Anchor[] = [{ at: 0, x: box.left }]
+  for (const note of notes) {
+    if (note.bar !== bar || note.at <= 1e-6) continue // a note on the downbeat: begin at the bar line
+    const x = Math.max(symbolBox(note.element, root).left - NOTE_LEAD, anchors[anchors.length - 1].x)
+    anchors.push({ at: note.at, x })
+  }
+  anchors.push({ at: beats, x: Math.max(box.left + box.width, anchors[anchors.length - 1].x) })
+  return anchors
+}
+
+/** The highlight's right edge at a time of the bar, between the anchors around it. */
+function anchorX(anchors: Anchor[], at: number): number {
+  const next = anchors.findIndex((a) => a.at > at)
+  if (next <= 0) return anchors[next === 0 ? 0 : anchors.length - 1].x
+  const a = anchors[next - 1]
+  const b = anchors[next]
+  return a.x + ((b.x - a.x) * (at - a.at)) / (b.at - a.at)
+}
+
+/** The screen rectangle of a staff line: around all the pieces of its five lines. */
+function lineRect(root: HTMLElement, line: number): DOMRect | null {
+  const rects = [...root.querySelectorAll('.abcjs-staff')].filter((s) => lineOf(s) === line).map((s) => s.getBoundingClientRect())
+  if (!rects.length) return null
+  const left = Math.min(...rects.map((r) => r.left))
+  const top = Math.min(...rects.map((r) => r.top))
+  return new DOMRect(left, top, Math.max(...rects.map((r) => r.right)) - left, Math.max(...rects.map((r) => r.bottom)) - top)
+}
 
 /**
  * Rehearsal marks (A, B, Intro...), boxed as on the chord chart: in the margin before a staff
@@ -230,11 +281,15 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     if (!score || !notes.length) return setBoxes(NO_BOXES)
     const staffs = staffBoxes(score)
     const bars = new Map<number, BarBox>()
+    const anchors = new Map<number, Anchor[]>()
+    const meters = barMeters(chart)
     for (const bar of new Set(notes.map((n) => n.bar))) {
       const box = barBox(score, notes, bar, staffs)
-      if (box) bars.set(bar, box)
+      if (!box) continue
+      bars.set(bar, box)
+      anchors.set(bar, barAnchors(score, notes, bar, box, meters[bar]?.beats ?? 4))
     }
-    setBoxes({ bars, sections: sectionMarks(score, chart, notes, bars) })
+    setBoxes({ bars, anchors, sections: sectionMarks(score, chart, notes, bars) })
   }, [notes, layout, chart])
   const active = activeMeasure === null ? undefined : boxes.bars.get(activeMeasure)
   const loop = range
@@ -243,15 +298,11 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
 
   // Follow the highlight down the page: its row is the staff line, the next row the line below
   const locate = useMemo(() => (): ReadingRow | null => {
-    const sheet = sheetRef.current
-    const highlight = sheet?.querySelector('.lead-highlight')
-    if (!sheet || !highlight || !current) return null
-    const score = scoreRef.current!
-    const staffs = [...score.querySelectorAll('.abcjs-staff')]
-    const row = staffs.filter((s) => lineOf(s) === current.line).map((s) => s.getBoundingClientRect())
-    const next = staffs.filter((s) => lineOf(s) === current.line + 1).map((s) => s.getBoundingClientRect())
-    if (!row.length) return null
-    return { highlight: highlight.getBoundingClientRect(), row: row[0], next: next[0] ?? null }
+    const highlight = sheetRef.current?.querySelector('.lead-highlight')
+    const score = scoreRef.current
+    const row = score && current && lineRect(score, current.line)
+    if (!highlight || !score || !current || !row) return null
+    return { highlight: highlight.getBoundingClientRect(), row, next: lineRect(score, current.line + 1) }
   }, [current])
   useAutoScroll(sheetRef, !!autoScroll && display.autoScroll && activeMeasure !== null, `${activeMeasure}:${beatInBar}`, locate)
 
@@ -267,7 +318,9 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     if (hit) clickRef.current(hit[0])
   }
 
-  const progress = Math.min(1, beatInBar / barBeats)
+  // The highlight's right edge: from note to note, as they are played
+  const activeAnchors = activeMeasure === null ? undefined : boxes.anchors.get(activeMeasure)
+  const reach = active && activeAnchors ? anchorX(activeAnchors, Math.min(beatInBar, barBeats)) - active.left : 0
   return (
     <article className="sheet lead-sheet" ref={sheetRef} aria-label={`${chart.title} lead sheet`}>
       <SheetHead chart={chart} style={style} keyPc={keyPc} />
@@ -282,7 +335,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
         {active && (
           <span
             className="bar-highlight lead-highlight"
-            style={{ left: active.left, top: active.top, width: active.width, height: active.height, transform: `scaleX(${progress})` }}
+            style={{ left: active.left, top: active.top, width: Math.max(0, reach), height: active.height }}
           />
         )}
         <div ref={scoreRef} className="lead-engraving" />

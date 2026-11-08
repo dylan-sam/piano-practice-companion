@@ -134,6 +134,8 @@ def chart_bars(bars, first, last):
             changes.insert(0, (0, current))  # the chord before the change goes on sounding
         if not changes and index == 0:
             changes = [(0, current)]
+        # A change to the chord already playing (N.C. then N.C.) is no change
+        changes = [c for i, c in enumerate(changes) if i == 0 or c[1] != changes[i - 1][1]]
         ends = [start for start, _ in changes[1:]] + [length]
         chords = [{"symbol": symbol, "beats": end - start} for (start, symbol), end in zip(changes, ends)]
         if changes:
