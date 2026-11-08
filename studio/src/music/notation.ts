@@ -16,6 +16,15 @@ const QUALITY: [RegExp, string][] = [
   [/^(aug|\+)/, '+'],
 ]
 
+/**
+ * Whether a symbol is written in the chart's own notation (C-7, Bh7, F^7#11, D7b9/F#), as the
+ * chart reads and draws it. Used to check chords read from other formats.
+ */
+export function isChartSymbol(symbol: string): boolean {
+  // The half-diminished h of chart notation is typed as m7b5
+  return toChartSymbol(symbol.replace(/^([A-G][b#]?)h7?/, '$1m7b5')) !== null
+}
+
 // One chord in chart notation, or null if it can't be read
 export function toChartSymbol(input: string): string | null {
   const [main, bassRaw, extra] = input.trim().replace('6/9', '69').split('/')

@@ -27,6 +27,7 @@ export interface ChartBar {
   rowStart?: boolean
   section?: string // rehearsal mark: A, B, C, i (intro), v (verse)...
   time?: TimeSignature // time signature change at this bar
+  partial?: boolean // a pickup or the bar completing one: `time` is its length, the meter goes on unchanged
   repeatStart?: boolean
   repeatEnd?: boolean
   repeatTimes?: number // total passes through a repeat (default 2)
@@ -102,7 +103,7 @@ export function isChart(value: unknown): value is Chart {
       return Number.isInteger(bar.cells) && Number(bar.cells) > 0 &&
         (bar.time === undefined || isTimeSignature(bar.time)) &&
         ['section', 'directive', 'comment'].every((field) => bar[field] === undefined || typeof bar[field] === 'string') &&
-        ['rowStart', 'repeatStart', 'repeatEnd', 'segno', 'coda', 'fermata', 'end', 'spacer']
+        ['rowStart', 'repeatStart', 'repeatEnd', 'segno', 'coda', 'fermata', 'end', 'spacer', 'partial']
           .every((field) => bar[field] === undefined || typeof bar[field] === 'boolean') &&
         ['repeatTimes', 'ending'].every((field) => bar[field] === undefined ||
           (Number.isInteger(bar[field]) && Number(bar[field]) > 0)) &&
@@ -124,12 +125,16 @@ export function beatsPerBar([beats, unit]: TimeSignature): number {
   return unit === 8 ? beats / 2 : unit === 2 ? beats * 2 : beats
 }
 
-/** The meter in force at each written bar, with its length in quarter notes. */
+/**
+ * The meter in force at each written bar, with its length in quarter notes. A partial bar (a
+ * pickup) has its own length and leaves the meter of the bars after it unchanged.
+ */
 export function barMeters(chart: Chart): { time: TimeSignature; beats: number; compound?: boolean }[] {
   let time: TimeSignature = chart.time
   return chart.bars.map((bar) => {
-    if (bar.time) time = bar.time
-    return { time, beats: beatsPerBar(time), compound: isCompound(time) || undefined }
+    if (bar.time && !bar.partial) time = bar.time
+    const own = bar.partial && bar.time ? bar.time : time
+    return { time: own, beats: beatsPerBar(own), compound: isCompound(time) || undefined }
   })
 }
 

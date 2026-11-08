@@ -2,13 +2,14 @@
 //
 // The melody is the first part's first voice (the top note of a chord); chord symbols come from
 // <harmony> elements, or from short texts above the staff that read as chords (scans). Repeats,
-// endings, segno, coda, rehearsal marks, key, meter and tempo are kept. A pickup bar is drawn as
-// a whole bar with its notes at the end. Only DOM methods that @xmldom/xmldom also has are used,
-// so the reader can be tested outside a browser.
+// endings, segno, coda, rehearsal marks, key, meter and tempo are kept; a pickup keeps its own
+// length (leadSheet.ts). Only DOM methods that @xmldom/xmldom also has are used, so the reader
+// can be tested outside a browser.
 
-import type { BarChord, Chart, ChartBar, TimeSignature } from '../music/chart'
-import { parseChord } from '../music/chords'
+import type { Chart, TimeSignature } from '../music/chart'
+import { isChartSymbol, toChartSymbol } from '../music/notation'
 import type { MelodyNote } from '../music/melody'
+import { inferredMeter, leadSheetChart, type ReadMeasure } from './leadSheet'
 
 const STEP_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
 // MusicXML chord kinds as chart suffixes
@@ -20,7 +21,6 @@ const KINDS: Record<string, string> = {
   'major-13th': '^13', 'minor-13th': '-13', 'suspended-second': 'sus2', 'suspended-fourth': 'sus',
   power: '5', Neapolitan: '', Italian: '7', French: '7', German: '7', Tristan: '7',
 }
-const ROW = 4 // bars to a row of the chord chart
 
 /** The child elements of an element with a tag name. */
 function children(element: Element, name: string): Element[] {
@@ -66,16 +66,15 @@ export function harmonySymbol(harmony: Element): string | null | undefined {
   }).join('')
   const slash = bassName ? `/${bassName}` : ''
   for (const candidate of [rootName + suffix + degrees + slash, rootName + suffix + slash, rootName + suffix]) {
-    if (parseChord(candidate)) return candidate
+    if (isChartSymbol(candidate)) return candidate
   }
   return undefined
 }
 
 /** A short text above the staff that reads as a chord symbol (OMR exports often write chords so). */
-function textChord(words: string): string | undefined {
-  const cleaned = words.replace(/\s+/g, '').replace('♭', 'b').replace('♯', '#').replace(/maj7|M7|Δ/, '^7')
-    .replace(/^([A-G][b#]?)m(?!aj)/, '$1-').replace('ø', 'h').replace('°', 'o')
-  return cleaned.length <= 12 && parseChord(cleaned) ? cleaned : undefined
+export function textChord(words: string): string | undefined {
+  const text = words.trim()
+  return text.length <= 12 && /^[A-G]/.test(text) ? toChartSymbol(text) ?? undefined : undefined
 }
 
 /** A MIDI note number from a <pitch> element. */
@@ -92,16 +91,6 @@ function readKey(key: Element): { key: number; minor: boolean } {
   return { key: minor ? (major + 9) % 12 : major, minor }
 }
 
-/** What a measure holds once read. */
-interface ReadMeasure {
-  length: number // in quarter notes, from the meter
-  content: number // quarter notes the notes fill (shorter in a pickup)
-  time?: TimeSignature
-  notes: MelodyNote[]
-  chords: { at: number; symbol: string | null }[]
-  marks: Partial<ChartBar>
-}
-
 /** Read a MusicXML document (score-partwise) into a chart with a melody. */
 export function chartFromMusicXml(doc: Document): Chart {
   const score = doc.documentElement
@@ -116,14 +105,16 @@ export function chartFromMusicXml(doc: Document): Chart {
 
   let divisions = 1
   let time: TimeSignature = [4, 4]
-  let keyInfo: { key: number; minor: boolean } | null = null
+  let keyInfo: { key: number; minor: boolean } | null = null // the key of the score
+  let keyNow: { key: number; minor: boolean } | null = null // the key in force
   let bpm = 0
   let voice: string | null = null // the melody voice: the first one with a note
   const measures: ReadMeasure[] = []
+  let sawTime = false // a score without a time signature gets the meter its bars show
   let tied: MelodyNote | null = null // the last note, while a tie continues it
 
   for (const measure of children(part, 'measure')) {
-    const read: ReadMeasure = { length: 0, content: 0, notes: [], chords: [], marks: {} }
+    const read: ReadMeasure = { meter: time, content: 0, notes: [], chords: [], marks: {} }
     let cursor = 0 // in divisions
     let lastStart = 0
     let end = 0
@@ -134,17 +125,27 @@ export function chartFromMusicXml(doc: Document): Chart {
       if (name === 'attributes') {
         divisions = Number(text(element, 'divisions')) || divisions
         const timeElement = child(element, 'time')
+        if (timeElement) sawTime = true
         if (timeElement && text(timeElement, 'beats')) {
           const next: TimeSignature = [Number(text(timeElement, 'beats')), Number(text(timeElement, 'beat-type'))]
-          if (measures.length && (next[0] !== time[0] || next[1] !== time[1])) read.time = next
           time = next
+          read.meter = next
         }
         const keyElement = child(element, 'key')
-        if (keyElement && !keyInfo) keyInfo = readKey(keyElement)
+        if (keyElement) {
+          const next = readKey(keyElement)
+          // A change of key after the first is marked on its bar
+          if (keyInfo && measures.length && (next.key !== keyNow?.key || next.minor !== keyNow?.minor)) {
+            read.marks.keys = [{ beats: cursor / divisions, key: next.key, minor: next.minor }]
+          }
+          keyInfo ??= next
+          keyNow = next
+        }
       } else if (name === 'backup') {
         cursor -= Number(text(element, 'duration'))
       } else if (name === 'forward') {
         cursor += Number(text(element, 'duration'))
+        end = Math.max(end, cursor)
       } else if (name === 'harmony') {
         const symbol = harmonySymbol(element)
         const offset = Number(text(element, 'offset') || 0)
@@ -175,6 +176,7 @@ export function chartFromMusicXml(doc: Document): Chart {
         const ending = child(element, 'ending')
         if (ending?.getAttribute('type') === 'start') read.marks.ending = Number(ending.getAttribute('number')?.split(/[,\s]/)[0]) || 1
         const style = text(element, 'bar-style')
+        if (style === 'none' && element.getAttribute('location') !== 'left') read.joinNext = true
         if (style === 'light-heavy') read.marks.barline = 'final'
         else if (style === 'light-light' && !repeat) read.marks.barline = 'double'
       } else if (name === 'note') {
@@ -210,62 +212,23 @@ export function chartFromMusicXml(doc: Document): Chart {
         if (!ties.includes('start')) tied = null // the next note starts afresh
       }
     }
-    read.length = (time[0] * 4) / time[1]
     read.content = end / divisions
     measures.push(read)
   }
-  if (!measures.length) throw new Error('The score has no measures')
-
-  // A pickup (a first bar shorter than its meter) becomes a whole bar ending with its notes
-  const first = measures[0]
-  if (first.content > 0 && first.content < first.length - 1e-6) {
-    const shift = first.length - first.content
-    for (const note of first.notes) note.at += shift
-    for (const chord of first.chords) chord.at += shift
+  if (!measures.some((m) => m.notes.length)) throw new Error('No melody notes found in the first part')
+  if (!sawTime) {
+    const meter = inferredMeter(measures)
+    for (const m of measures) m.meter = meter
   }
-
-  let playing: string | null = null // the chord sounding at the end of the bar before
-  const bars: ChartBar[] = measures.map((m, index) => {
-    const changes = [...m.chords].filter((c) => c.at < m.length - 1e-6).sort((a, b) => a.at - b.at)
-    const chords: BarChord[] = []
-    if (changes.length && changes[0].at > 1e-6) chords.push({ symbol: playing, beats: changes[0].at })
-    changes.forEach((change, i) => {
-      const next = changes[i + 1]?.at ?? m.length
-      if (next - change.at > 1e-6) chords.push({ symbol: change.symbol, beats: next - change.at })
-    })
-    if (!chords.length && index === 0) chords.push({ symbol: null, beats: m.length })
-    if (chords.length) playing = chords[chords.length - 1].symbol
-    return {
-      chords,
-      cells: 4,
-      ...(index % ROW === 0 ? { rowStart: true } : {}),
-      ...(m.time ? { time: m.time } : {}),
-      ...m.marks,
-    }
-  })
-  if (!bars.at(-1)!.barline && !bars.at(-1)!.repeatEnd) bars[bars.length - 1].barline = 'final'
-  const notes = measures.flatMap((m) => m.notes).filter((n) => n.beats > 0)
-  if (!notes.length) throw new Error('No melody notes found in the first part')
-
-  return {
-    format: 'openstand-chart',
-    version: 1,
+  return leadSheetChart({
     title,
-    ...(composer ? { composer } : {}),
-    style: 'swing',
+    composer,
     key: keyInfo?.key ?? 0,
-    ...(keyInfo?.minor ? { minor: true } : {}),
-    bpm: bpm > 0 ? Math.round(Math.min(300, Math.max(40, bpm))) : 120,
-    time: initialTime(part),
-    bars,
-    melody: { notes, source: 'MusicXML import' },
-  }
-}
-
-/** The time signature of the first measure of a part (4/4 when none is written). */
-function initialTime(part: Element): TimeSignature {
-  const time = child(child(children(part, 'measure')[0], 'attributes'), 'time')
-  return time && text(time, 'beats') ? [Number(text(time, 'beats')), Number(text(time, 'beat-type'))] : [4, 4]
+    minor: keyInfo?.minor,
+    bpm: bpm > 0 ? bpm : 120,
+    style: 'swing',
+    source: 'MusicXML import',
+  }, measures)
 }
 
 /** The XML text of a compressed MusicXML file (.mxl): the score its container points to. */
@@ -306,7 +269,7 @@ export async function unzipMxl(data: ArrayBuffer): Promise<string> {
 
 /** Read MusicXML text into a chart; `parse` turns text into a document (DOMParser in browsers). */
 export function parseMusicXml(xml: string, parse: (text: string) => Document = (t) => new DOMParser().parseFromString(t, 'application/xml')): Chart {
-  const doc = parse(xml.replace(/^﻿/, ''))
+  const doc = parse(xml.replace(/^\uFEFF/, ''))
   if (doc.getElementsByTagName('parsererror').length) throw new Error('This is not valid XML')
   return chartFromMusicXml(doc)
 }

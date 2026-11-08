@@ -13,6 +13,7 @@ every correction made to the source data. The short version is in the
 - [Key modes](#key-modes)
 - [The catalog progressions](#the-catalog-progressions)
 - [Piano patterns](#piano-patterns)
+- [Lead sheets shipped with the app](#lead-sheets-shipped-with-the-app)
 - [Testing lead sheets with the Weimar Jazz Database](#testing-lead-sheets-with-the-weimar-jazz-database)
 - [Rights](#rights)
 
@@ -582,6 +583,65 @@ catalog holds 143,324 passages. The exercises are built from them
 `data/left_hand_patterns.json` holds the 16 piano patterns offered in the app,
 with their styles and notes. Rebuild it with `python left_hand_patterns.py`;
 the [pattern audit](../PATTERN_AUDIT.md) gives their sources and menus.
+
+## Lead sheets shipped with the app
+
+The Lead Sheet Player comes with **1,479 lead sheets** (melody and chords), in
+`studio/public/leadsheets/catalog.json`, from two collections that may be
+shared. Their sources are kept in the project root:
+
+| Collection | Source file | What it is | Rights |
+|---|---|---|---|
+| OpenEWLD | `openewld-ec03cbd.zip` | 502 public domain lead sheets of the old Wikifonia site, as MusicXML ([OpenEWLD](https://github.com/00sapo/OpenEWLD), F. Simonetta, commit `ec03cbd`), with their Discogs genres and styles | scores public domain; Discogs data CC0; OpenEWLD's code MIT. Its secondhandsongs data (CC BY-NC) is not used |
+| Nottingham Music Database | `choco-nottingham-raw-5fe168f.zip` | 1,037 British and American folk tunes in ABC (E. Foxley's database, as revised by J. Allwright and kept by ChoCo at commit `5fe168f`) | traditional tunes; CC BY 4.0 in ChoCo |
+
+Rebuild the file (and its log, `data/lead_sheets.log`) with
+`pnpm run leadsheets` in `studio`. The tunes are read with the app's own
+readers, the same ones that import files (`src/formats/musicxml.ts`,
+`src/formats/abcImport.ts`, both building charts in `src/formats/leadSheet.ts`),
+not with music21, whose conversions caused several of the
+[ChoCo errors](#corrections-to-choco).
+
+**How a tune is read**
+
+| In the source | In the chart | Example |
+|---|---|---|
+| a bar shorter than its meter (a pickup, or the bar completing one before a repeat) | a *partial* bar: its own length, the meter goes on unchanged, so the band plays what is written | a jig's one-eighth pickup is a bar of 1/8; the last bar before `:|` holds the other 5/8 |
+| several chords over one note, told apart only by where they are drawn | they share the note's time, on whole beats | `Eb^7` and `C-7` over a whole note: beats 1 and 3 |
+| ABC chords: `Em`, `D/f+` (bass F#), `Gm/b-`, `(A7)` (optional), `/@<.5D7` (placed earlier) | chart symbols | E-, D/F#, G-/Bb, A7, D7 |
+| a lower-case letter alone (`"D""a"`, `"e"`) | the bass note of the chord playing | D/A |
+| a remark in a chord text (`"C  drone"`, `"G (A7)"`) | its chords only | C; G then A7 |
+| an ABC part order (`P:AABA`, `P:A(AB)4`) | the parts written out (a part played twice in a row is repeated) | |
+| a change of key (`K:D` between parts, `<key>` in MusicXML) | a key change on its bar, drawn as a new key signature | |
+| a long bar split by an invisible bar line (a line break) | one bar | |
+| a MusicXML score without a time signature | the meter most of its bars show | |
+| OpenEWLD's Discogs genres and styles | the style: Swing, Bossa Nova, Ballad or Straight Pop/Rock | Big Band is Swing |
+
+**What is left out** (each tune and its reason are in the log)
+
+| Rule | OpenEWLD | Nottingham |
+|---|---|---|
+| a chord that cannot be read, or a bass note with no chord to go with | 0 | 5 |
+| no chord symbols at all | 0 | 14 |
+| a bar that is too long, or shorter than its meter away from a pickup, a repeat, an ending, a double bar or a part (a counting error in the source) | 4 | 11 |
+| a part order that names parts the tune does not have | 0 | 2 |
+| a duplicate: the same opening melody (24 notes, in any key) as a tune already kept | 0 | 24 |
+
+Two different tunes with one title are both kept, numbered (Cuckoo's Nest 2).
+Kept: 498 OpenEWLD and 981 Nottingham lead sheets.
+
+**Checks.** Besides the rules above, the build was compared with other
+readings of the same files:
+
+- every bar's notes fill its meter exactly (or it is a partial bar);
+- chords against ChoCo's music21 conversion of the same songs: on average
+  99.4 % of the OpenEWLD chord sequence and 98 % of the Nottingham one is found
+  in ChoCo's, in order. The differences are ChoCo's: it drops sevenths and
+  slash-bass accidentals, and writes out the repeats;
+- pitches against abcjs's own playback: the same notes, except where abcjs
+  plays both notes of a two-note chord (the lead sheet keeps the top one);
+- under 0.1 % of the notes fall outside the sixteenth and triplet grid the
+  sheet is drawn on (a few rubato bars in OpenEWLD).
 
 ## Testing lead sheets with the Weimar Jazz Database
 

@@ -65,8 +65,12 @@ or the chart's own instrument) and has its own fader in the Mixer.
 - The melody follows repeats, loops, transposition and Practice > Keys, with
   the style's swing; every option of the chord player (styles, Practice,
   Style lab, Display) works here too.
-- The list holds only tunes that have a melody. The song catalog has chords
-  only, so lead sheets are imported: a **MusicXML** file (`.musicxml`, `.xml`
+- It comes with **1,479 lead sheets that may be shared**: 498 public domain
+  songs of the old Wikifonia site (OpenEWLD) and 981 folk tunes of the
+  Nottingham Music Database, read and checked as described in
+  [Lead sheets shipped with the app](docs/DATA.md#lead-sheets-shipped-with-the-app).
+  They also open in the Chord Accompaniment Player, as chord charts.
+- More lead sheets can be imported: a **MusicXML** file (`.musicxml`, `.xml`
   or `.mxl`, as MuseScore exports it, or a scanned or photographed sheet read
   by Audiveris or homr and checked in MuseScore), or a Studio export. To try it
   with 450 transcribed jazz solos, see
@@ -659,6 +663,10 @@ authors. Google Play has no such restriction. This is not legal advice.
   sound bank GeneralUser GS by S. Christian Collins.
 - **Music engraving**: [abcjs](https://github.com/paulrosen/abcjs) by Paul Rosen
   and Gregory Dyke (MIT), which draws the lead sheets.
+- **Lead sheets**: [OpenEWLD](https://github.com/00sapo/OpenEWLD) by
+  F. Simonetta (public domain Wikifonia scores; Discogs data CC0), and the
+  Nottingham Music Database by E. Foxley, revised by J. Allwright, as kept by
+  ChoCo (CC BY 4.0).
 - **Test melodies** (not shipped): the Weimar Jazz Database, M. Pfleiderer,
   K. Frieler, J. Abesser, W.-G. Zaddach and B. Burkhart (eds.), *Inside the
   Jazzomat: New Perspectives for Jazz Research*, Schott Campus (2017).

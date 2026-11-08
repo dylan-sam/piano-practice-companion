@@ -1,6 +1,6 @@
 // Chart edits used by the editor. Every function returns a new chart.
 
-import { beatsPerBar, evenSplit, type Chart, type ChartBar, type TimeSignature } from './chart'
+import { barMeters, beatsPerBar, evenSplit, type Chart, type ChartBar, type TimeSignature } from './chart'
 
 // A new, empty chart
 export function emptyChart(): Chart {
@@ -18,9 +18,7 @@ export function emptyChart(): Chart {
 
 // Time signature in force at a bar
 export function timeAt(chart: Chart, index: number): TimeSignature {
-  let time = chart.time
-  for (let i = 0; i <= index && i < chart.bars.length; i++) time = chart.bars[i].time ?? time
-  return time
+  return barMeters(chart)[Math.min(index, chart.bars.length - 1)]?.time ?? chart.time
 }
 
 // Drops keys set to undefined/false so saved charts stay small

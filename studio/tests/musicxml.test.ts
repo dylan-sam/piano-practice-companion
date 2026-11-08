@@ -53,9 +53,10 @@ describe('MusicXML import', () => {
       ['Test Tune', 'Someone', 5, undefined, 160, [4, 4]])
   })
 
-  test('a pickup becomes a whole bar ending with its notes', () => {
-    expect(chart.melody!.notes[0]).toEqual({ bar: 0, at: 3, beats: 1, pitch: 72 })
-    expect(chart.bars[0].chords).toEqual([{ symbol: null, beats: 4 }])
+  test('a pickup keeps its own length, without changing the meter', () => {
+    expect(chart.melody!.notes[0]).toEqual({ bar: 0, at: 0, beats: 1, pitch: 72 })
+    expect(chart.bars[0]).toMatchObject({ partial: true, time: [1, 4], chords: [{ symbol: null, beats: 1 }] })
+    expect(chart.bars[1].time).toBeUndefined()
   })
 
   test('chords at their positions, repeats and rehearsal marks', () => {
@@ -67,7 +68,7 @@ describe('MusicXML import', () => {
 
   test('ties join notes across the bar line; a chord gives its top note', () => {
     const notes = chart.melody!.notes.map((n) => [n.bar, n.at, n.beats, n.pitch])
-    expect(notes).toEqual([[0, 3, 1, 72], [1, 0, 0.5, 74], [1, 0.5, 0.5, 76], [1, 2, 3, 77], [2, 1, 3, 72]])
+    expect(notes).toEqual([[0, 0, 1, 72], [1, 0, 0.5, 74], [1, 0.5, 0.5, 76], [1, 2, 3, 77], [2, 1, 3, 72]])
   })
 
   test('chord kinds, alterations and bass notes', () => {

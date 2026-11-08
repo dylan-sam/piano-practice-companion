@@ -20,6 +20,14 @@ iReal Pro data (commit `5fe168f`): converted to one SQLite database and one
 chord notation, curated, de-duplicated, and corrected as described in
 [docs/DATA.md](../docs/DATA.md).
 
+**Lead sheets.** `studio/public/leadsheets/catalog.json` holds public domain
+lead sheets from [OpenEWLD](https://github.com/00sapo/OpenEWLD) (F. Simonetta;
+the scores are public domain, its Discogs genres CC0) and the Nottingham Music
+Database (E. Foxley, revised by J. Allwright) as distributed by ChoCo under
+CC BY 4.0; the file is shared under CC BY 4.0 as well. Its sources,
+`openewld-ec03cbd.zip` and `choco-nottingham-raw-5fe168f.zip`, keep their own
+terms (OpenEWLD's license is in the zip).
+
 **Not included.** The ChoCo collections released under CC BY-NC-SA 4.0
 (Chordify Annotator Subjectivity Dataset, Mozart Piano Sonatas, Jazz
 Audio-Aligned Harmony) are left out, see [ChoCo's license](CHOCO_LICENSE.md).

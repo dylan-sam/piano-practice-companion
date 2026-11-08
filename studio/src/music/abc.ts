@@ -276,6 +276,12 @@ function barline(bar: ChartBar, next: ChartBar | undefined): string {
   return next?.ending ? `${line}[${next.ending}` : line
 }
 
+/** A key as ABC names it: Bb, F#m. */
+function abcKey(keyPc: number, minor: boolean): string {
+  const majorPc = minor ? (keyPc + 3) % 12 : keyPc
+  return noteName(keyPc, SIGNATURE_FIFTHS[majorPc] < 0) + (minor ? 'm' : '')
+}
+
 /** The marks written on the first and last notes of a bar: signs, fermata, directive. */
 function barMarks(bar: ChartBar): BarMarks {
   const signs = [bar.segno && '!segno!', bar.coda && '!coda!', bar.fermata && '!fermata!'].filter(Boolean).join('')
@@ -288,21 +294,21 @@ function barMarks(bar: ChartBar): BarMarks {
  * new line.
  */
 export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySettings, barsPerLine = 4): LeadSheetAbc {
-  const keyPc = (chart.key + transpose + 120) % 12
-  const majorPc = chart.minor ? (keyPc + 3) % 12 : keyPc
-  const flats = SIGNATURE_FIFTHS[majorPc] < 0
+  let keyPc = (chart.key + transpose + 120) % 12
+  let majorPc = chart.minor ? (keyPc + 3) % 12 : keyPc
   const byBar = notesByBar(chart.melody)
   // A low melody (a bass or baritone solo) is written in the bass clef
   const pitches = (chart.melody?.notes ?? []).map((n) => n.pitch + transpose).sort((a, b) => a - b)
   const clef = pitches.length && pitches[Math.floor(pitches.length / 2)] < 57 ? 'bass' : 'treble'
   const meters = barMeters(chart)
-  const key = noteName(keyPc, flats) + (chart.minor ? 'm' : '')
-  const header = ['X:1', '%%barnumbers 1', `M:${meterText(meters[0]?.time ?? chart.time)}`, `L:1/${UNIT * 4}`, `K:${key} clef=${clef}`]
+  const header = ['X:1', '%%barnumbers 1', `M:${meterText(chart.bars[0]?.partial ? chart.time : (meters[0]?.time ?? chart.time))}`,
+    `L:1/${UNIT * 4}`, `K:${abcKey(keyPc, !!chart.minor)} clef=${clef}`]
 
   const lines: string[] = []
   const events: DrawnEvent[] = []
   let line = ''
   let carry: MelodyNote | null = null
+  // Chords are named in the key in force (for Roman numerals)
   const chordAt = (symbol: string | null) => chordText(symbol, transpose, keyPc, display)
   const shown = chart.bars.map((bar, index) => ({ bar, index })).filter(({ bar }) => !bar.spacer)
   let onLine = 0
@@ -318,8 +324,15 @@ export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySet
     }
     const meter = meters[index]
     const notes = (byBar.get(index) ?? []).map((n) => ({ ...n, pitch: n.pitch + transpose }))
+    // A change of key on the downbeat changes the key signature (later in the bar it does not)
+    const change = i > 0 ? bar.keys?.find((k) => k.beats === 0) : undefined
+    if (change) {
+      keyPc = (change.key + transpose + 120) % 12
+      majorPc = change.minor ? (keyPc + 3) % 12 : keyPc
+    }
     const opening = (i === 0 && bar.repeatStart ? '|:' : '') + (i === 0 && bar.ending ? `[${bar.ending}` : '') +
-      (i > 0 && bar.time ? `[M:${meterText(bar.time)}]` : '')
+      (i > 0 && bar.time && !bar.partial ? `[M:${meterText(bar.time)}]` : '') +
+      (change ? `[K:${abcKey(keyPc, !!change.minor)}]` : '')
     const straight = !!meter.compound || !Number.isInteger(meter.beats)
     const written = writeBar(index, bar, notes, meter.beats, straight, majorPc, chordAt, carry, barMarks(bar))
     carry = written.carry

@@ -67,8 +67,9 @@ export function chartToMusic(chart: Chart): string {
   let held: string | null = null
   let prevClose = 'start'
 
+  let afterPartial = false // the bar before was a pickup: its meter is written again
   bars.forEach((bar, i) => {
-    if (bar.time) time = bar.time
+    if (bar.time && !bar.partial) time = bar.time
     let open = ''
     if (bar.repeatStart) open = '{'
     else if (prevClose === 'start' || (bar.section && !['}', ']', 'Z'].includes(prevClose))) open = '['
@@ -77,7 +78,9 @@ export function chartToMusic(chart: Chart): string {
     out += open
 
     if (bar.section) out += `*${bar.section}`
-    if (i === 0 || bar.time) out += timeToken(i === 0 ? chart.time : time)
+    if (bar.partial && bar.time) out += timeToken(bar.time)
+    else if (i === 0 || bar.time || afterPartial) out += timeToken(i === 0 ? chart.time : time)
+    afterPartial = !!bar.partial
     if (bar.ending) out += `N${bar.ending}`
     if (bar.segno) out += 'S'
     if (bar.coda) out += 'Q'

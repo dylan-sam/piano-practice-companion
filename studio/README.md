@@ -86,7 +86,7 @@ tunes:
 
 | | Chord Accompaniment Player | Lead Sheet Player |
 |---|---|---|
-| tunes | the catalog and every saved tune | saved tunes with a melody only (no catalog search, no New) |
+| tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets and saved tunes with a melody (no catalog search, no New) |
 | a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
 | Mixer | bass, piano, drums | bass, piano, melody, drums |
 | Import | iReal Pro and Studio exports | MusicXML and Studio exports |
@@ -137,8 +137,12 @@ Charts with a melody are imported as MusicXML (**Import > MusicXML**,
 | repeats, endings, double and final bar lines, segno, coda, `<rehearsal>`, D.C./D.S. texts | the chart's marks |
 | a first bar shorter than its meter (a pickup) | a whole bar with its notes at the end |
 
-The 502 lead sheets of OpenEWLD (public domain Wikifonia scores) import
-without errors. Compressed `.mxl` files are unpacked in the browser. To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
+Compressed `.mxl` files are unpacked in the browser. ABC tunes are read by
+`src/formats/abcImport.ts` (with abcjs's parser), so far for the shipped
+Nottingham tunes only. A bar shorter than its meter (a pickup) is a `partial`
+bar: `time` is its length and the meter goes on unchanged (`barMeters` in
+`src/music/chart.ts`). The shipped lead sheets and how they were checked:
+[docs/DATA.md](../docs/DATA.md#lead-sheets-shipped-with-the-app). To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
 Database into such a file ([the data](../docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)).
 
 ## The Display menu

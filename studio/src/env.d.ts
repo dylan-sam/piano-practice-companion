@@ -7,3 +7,5 @@ interface ImportMetaEnv {
 
 // Set from package.json at build time
 declare const __APP_VERSION__: string
+// Whether this build serves the Weimar test solos (public/leadsheets/weimar_solos.json)
+declare const __WEIMAR_SOLOS__: boolean
