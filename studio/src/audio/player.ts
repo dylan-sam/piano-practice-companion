@@ -62,6 +62,15 @@ export class Player {
     for (const type of UNLOCK_EVENTS) window.addEventListener(type, unlock, true)
   }
 
+  /**
+   * Whether playback can start without a tap first: browsers only let a page make sound once the
+   * user has touched or clicked it (here or on an earlier screen of the app).
+   */
+  get canPlayWithoutTap(): boolean {
+    const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+    return this.ctx.state === 'running' || !!activation?.hasBeenActive
+  }
+
   // The output stage: the General MIDI sound bank plays well below full scale, so the band is
   // raised by about 10 dB, and a fast limiter catches the peaks so nothing distorts.
   // The mixer's master fader sets `masterGain`; the meter reads what leaves the limiter.

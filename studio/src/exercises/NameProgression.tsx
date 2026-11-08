@@ -133,6 +133,9 @@ export function NameProgression() {
     setPosition(null)
   }, [])
 
+  // Set when a new question is asked: its line plays by itself once drawn and the sounds are ready
+  const autoPlay = useRef(false)
+
   /** Ask a new question of a level; a custom level without enough progressions opens its picker. */
   const nextQuestion = useCallback(
     (forLevel: string, source: QuestionBank | null = bank, customIds: readonly string[] = custom) => {
@@ -148,6 +151,7 @@ export function NameProgression() {
       const weight = focus ? (p: { id: string }) => mistakeWeight(results[p.id]) : undefined
       const next = pickQuestion(choices, recent.current, Math.random, weight)
       recent.current.add(questionId(next.progression, next.question))
+      autoPlay.current = true // the new line plays as soon as it is drawn
       setAsked(next)
       setAnswer(null)
       setListening(null)
@@ -205,6 +209,13 @@ export function NameProgression() {
     player.setRate(bpm / BASE_BPM)
     setPlaying('line')
   }
+
+  // A new question plays its line at once, unless the browser still waits for a first tap (Play then starts it)
+  useEffect(() => {
+    if (!autoPlay.current || !chart || readiness.kind !== 'ready') return
+    autoPlay.current = false
+    if (playerRef.current?.canPlayWithoutTap) void playChart()
+  })
 
   /** Play the tonic chord or a cadence of the current key. */
   const playReference = async (reference: KeyReference) => {

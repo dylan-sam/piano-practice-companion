@@ -29,6 +29,10 @@ occupies, and the bar after it:
 | Am7 D7 | [   ?   ] | [   ?   ] | F7  E7 |
 ```
 
+- Each new question **plays by itself** as soon as it appears (first question,
+  *Next*, a new level). Browsers only allow sound after a first tap or click on
+  the page: when the exercise is opened straight from a link, press *Play*
+  once.
 - The band plays every chord, including the hidden ones.
 - The hidden chords are drawn as **one blank per bar**, so you see how many bars
   the gap takes, but not how many chords it holds.
