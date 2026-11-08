@@ -434,8 +434,8 @@ The quickest way to get the app on an Android phone (Android 7.0 or newer),
 with nothing to build:
 
 1. On the phone, download
-   [`releases/piano-practice-companion.apk`](releases/piano-practice-companion.apk)
-   (open the link, then **Download raw file**).
+   [`releases/piano-practice-companion-debug.apk`](releases/piano-practice-companion-debug.apk)
+   (23 MB; open the link, then **Download raw file**).
 2. Open the downloaded file. Android asks to allow installing apps from your
    browser or file manager: allow it for that app, then tap **Install**.
 3. The app appears as **Ear Training** among your apps.
