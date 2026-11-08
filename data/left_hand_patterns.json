@@ -1,0 +1,1137 @@
+[
+  {
+    "id": "block_chords",
+    "name": "Blocked chords",
+    "categories": [
+      "ballad",
+      "straight"
+    ],
+    "styles": [
+      "bossa nova"
+    ],
+    "default_for": [],
+    "sources": [
+      "Philip Wesley article",
+      "Left Hand Pattern Worksheet",
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": 4,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 1.0,
+        "role": "chord",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "broken_chords",
+    "name": "Broken chords",
+    "categories": [
+      "ballad",
+      "straight"
+    ],
+    "styles": [
+      "straight pop/rock",
+      "ballad"
+    ],
+    "default_for": [],
+    "sources": [
+      "Philip Wesley article",
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "arpeggio_ascending",
+    "name": "Ascending arpeggio",
+    "categories": [
+      "ballad",
+      "classical"
+    ],
+    "styles": [
+      "ballad"
+    ],
+    "default_for": [
+      "ballad"
+    ],
+    "sources": [
+      "Philip Wesley article",
+      "Left Hand Pattern Worksheet"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.125,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.125,
+        "duration": 0.125,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "octave",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.125,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.625,
+        "duration": 0.125,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.125,
+        "role": "octave",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "rolled_chords",
+    "name": "Rolled chords",
+    "categories": [
+      "ballad",
+      "classical"
+    ],
+    "styles": [
+      "ballad"
+    ],
+    "default_for": [],
+    "sources": [
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 1.0,
+        "role": "rolled",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "stride",
+    "name": "Stride bass",
+    "categories": [
+      "swing",
+      "blues"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Philip Wesley article",
+      "Left Hand Pattern Worksheet",
+      "Creative Piano Teacher patterns",
+      "Index of Left-hand Accompaniment Patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "stride_chord",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "fifth_octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "stride_chord",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "walking_bass",
+    "name": "Walking bass",
+    "categories": [
+      "swing",
+      "blues"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [
+      "swing"
+    ],
+    "sources": [
+      "Philip Wesley article",
+      "Left Hand Pattern Worksheet",
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 2,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "second",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "fourth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.0,
+        "duration": 0.25,
+        "role": "sharp_fourth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.25,
+        "duration": 0.25,
+        "role": "fourth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.5,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.75,
+        "duration": 0.25,
+        "role": "second",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "tango",
+    "name": "Tango bass",
+    "categories": [
+      "latin"
+    ],
+    "styles": [
+      "latin"
+    ],
+    "default_for": [],
+    "sources": [
+      "Left Hand Pattern Worksheet",
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.375,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "octave",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "bossa_bass",
+    "name": "Bossa bass",
+    "categories": [
+      "latin"
+    ],
+    "styles": [
+      "bossa nova",
+      "latin"
+    ],
+    "default_for": [],
+    "sources": [],
+    "fidelity": "original",
+    "cycle_bars": 1,
+    "source_meter": null,
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0,
+        "duration": null,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": null,
+        "role": "chord",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": null,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": null,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": null,
+        "role": "chord",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "bossa_chord_comp",
+    "name": "Bossa chord comp 2",
+    "categories": [
+      "latin"
+    ],
+    "styles": [
+      "bossa nova"
+    ],
+    "default_for": [
+      "bossa nova"
+    ],
+    "sources": [
+      "Rhythm Dictionary bossa piano comp; Yamaha Exploring Latin Rhythms"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 2,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.5,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.0,
+        "duration": 0.375,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.5,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.0,
+        "duration": 0.5,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.25,
+        "duration": 0.375,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.5,
+        "duration": 0.5,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.625,
+        "duration": 0.375,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "latin_montuno",
+    "name": "Latin montuno (2-3 clave)",
+    "categories": [
+      "latin"
+    ],
+    "styles": [
+      "latin"
+    ],
+    "default_for": [
+      "latin"
+    ],
+    "sources": [
+      "Rhythm Dictionary son montuno 2-3; Midwest Clinic rhythm patterns"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 2,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "octaves_up",
+        "grace": false,
+        "initial_only": true
+      },
+      {
+        "position": 0.25,
+        "duration": 0.125,
+        "role": "third_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.25,
+        "role": "fifth_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.625,
+        "duration": 0.25,
+        "role": "third_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.25,
+        "role": "octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.125,
+        "duration": 0.25,
+        "role": "third_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.375,
+        "duration": 0.25,
+        "role": "fifth_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.625,
+        "duration": 0.25,
+        "role": "third_octaves_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.875,
+        "duration": 0.25,
+        "role": "octaves_up",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "pop_rock",
+    "name": "Pop and rock bass",
+    "categories": [
+      "straight"
+    ],
+    "styles": [
+      "straight pop/rock"
+    ],
+    "default_for": [
+      "straight pop/rock"
+    ],
+    "sources": [
+      "Creative Piano Teacher patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.125,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.625,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.125,
+        "role": "octaves",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "boogie_simple",
+    "name": "Simple boogie / barrelhouse shuffle",
+    "categories": [
+      "blues",
+      "straight",
+      "swing"
+    ],
+    "styles": [
+      "blues"
+    ],
+    "default_for": [
+      "blues"
+    ],
+    "sources": [
+      "Creative Piano Teacher patterns",
+      "Index of Left-hand Accompaniment Patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "power",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "sixth_power",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "power",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "sixth_power",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "boogie_walking",
+    "name": "Boogie walking bass",
+    "categories": [
+      "blues"
+    ],
+    "styles": [
+      "blues"
+    ],
+    "default_for": [],
+    "sources": [
+      "Index of Left-hand Accompaniment Patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 2,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "sixth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.0,
+        "duration": 0.25,
+        "role": "flat_seventh",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.25,
+        "duration": 0.25,
+        "role": "sixth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.5,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.75,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "left_hand_shuffle",
+    "name": "Left hand shuffle",
+    "categories": [
+      "blues",
+      "swing"
+    ],
+    "styles": [
+      "blues"
+    ],
+    "default_for": [],
+    "sources": [
+      "Index of Left-hand Accompaniment Patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.1875,
+        "role": "power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.1875,
+        "duration": 0.0625,
+        "role": "power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.1875,
+        "role": "sixth_power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.4375,
+        "duration": 0.0625,
+        "role": "sixth_power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.1875,
+        "role": "power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.6875,
+        "duration": 0.0625,
+        "role": "power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.1875,
+        "role": "sixth_power_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.9375,
+        "duration": 0.0625,
+        "role": "sixth_power_up",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "new_orleans_bass",
+    "name": "New Orleans bass",
+    "categories": [
+      "blues",
+      "swing"
+    ],
+    "styles": [
+      "blues"
+    ],
+    "default_for": [],
+    "sources": [
+      "Index of Left-hand Accompaniment Patterns"
+    ],
+    "fidelity": "scored example",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.375,
+        "role": "root_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.015625,
+        "role": "flat_third_up",
+        "grace": true,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.375,
+        "role": "third_up",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "fifth_up",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "boogie_walking_shells",
+    "name": "Boogie walking with chord shells",
+    "categories": [
+      "blues"
+    ],
+    "styles": [
+      "blues"
+    ],
+    "default_for": [],
+    "sources": [
+      "Index of Left-hand Accompaniment Patterns",
+      "Berklee basic piano voicing techniques"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 2,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "sixth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.125,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.0,
+        "duration": 0.25,
+        "role": "flat_seventh",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.25,
+        "duration": 0.25,
+        "role": "sixth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.375,
+        "duration": 0.125,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.5,
+        "duration": 0.25,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.75,
+        "duration": 0.25,
+        "role": "third",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 1.875,
+        "duration": 0.125,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": [
+      {
+        "name": "charleston",
+        "hits": [
+          {
+            "position_quarters": 0.0,
+            "from_bar_end": false,
+            "duration_quarters": 1.5
+          },
+          {
+            "position_quarters": 1.5,
+            "from_bar_end": false,
+            "duration_quarters": 0.5
+          }
+        ]
+      },
+      {
+        "name": "shifted_charleston",
+        "hits": [
+          {
+            "position_quarters": 0.5,
+            "from_bar_end": false,
+            "duration_quarters": 0.5
+          },
+          {
+            "position_quarters": 2.0,
+            "from_bar_end": false,
+            "duration_quarters": 1.0
+          }
+        ]
+      },
+      {
+        "name": "red_garland",
+        "hits": [
+          {
+            "position_quarters": 1.5,
+            "from_bar_end": false,
+            "duration_quarters": 0.5
+          },
+          {
+            "position_quarters": 0.5,
+            "from_bar_end": true,
+            "duration_quarters": 0.5
+          }
+        ]
+      },
+      {
+        "name": "three_and_hold",
+        "hits": [
+          {
+            "position_quarters": 0.0,
+            "from_bar_end": false,
+            "duration_quarters": 0.75
+          },
+          {
+            "position_quarters": 2.5,
+            "from_bar_end": false,
+            "duration_quarters": 1.25
+          }
+        ]
+      },
+      {
+        "name": "beat_two_push",
+        "hits": [
+          {
+            "position_quarters": 1.0,
+            "from_bar_end": false,
+            "duration_quarters": 0.75
+          },
+          {
+            "position_quarters": 0.5,
+            "from_bar_end": true,
+            "duration_quarters": 0.5
+          }
+        ]
+      },
+      {
+        "name": "sparse_and_three",
+        "hits": [
+          {
+            "position_quarters": 2.5,
+            "from_bar_end": false,
+            "duration_quarters": 1.25
+          }
+        ]
+      }
+    ]
+  }
+]

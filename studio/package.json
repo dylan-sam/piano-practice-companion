@@ -1,0 +1,44 @@
+{
+  "name": "ear-training-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && python ../build_studio_source.py",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run tests",
+    "soundbank": "node scripts/build-soundbank.mjs",
+    "catalog": "python ../build_mobile_catalog.py",
+    "native": "pnpm run catalog && pnpm run build && cap sync",
+    "sync": "pnpm run build && cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "dexie": "^4.4.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "spessasynth_core": "^4.4.4",
+    "spessasynth_lib": "^4.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.89.0",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "license": "AGPL-3.0-or-later",
+  "description": "ChoCo play-along studio with editable charts and mixed bass, piano and drums"
+}

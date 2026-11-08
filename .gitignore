@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+studio/dist/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+
+# Large or generated data, rebuilt by the scripts (see README, Getting started)
+choco-v1.0.0.zip
+data/progressions.sqlite
+data/progressions.sqlite-*
+data/common_progressions.json
+data/ireal-playlists/
+logs/
+
+# Editors and systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

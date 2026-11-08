@@ -1,0 +1,53 @@
+{
+  "database": "data/progressions.sqlite",
+  "logs": "logs",
+  "remove_similar_songs": true,
+  "sources": [
+    {
+      "name": "ChoCo v1.0.0",
+      "type": "choco-release",
+      "path": "choco-v1.0.0.zip",
+      "url": "https://github.com/smashub/choco/releases/tag/v1.0.0",
+      "license": "CC BY 4.0",
+      "corrections": [
+        "choco-nottingham-bass-5fe168f.zip"
+      ],
+      "skip": [
+        "ireal-pro"
+      ]
+    },
+    {
+      "name": "ChoCo iReal Pro playlists",
+      "type": "ireal",
+      "path": "choco-ireal-raw-5fe168f.zip",
+      "folder": "playlists/",
+      "url": "https://github.com/smashub/choco/tree/5fe168fd55be5c84512abcfbc4e6f1b1f8f0092a/partitions/ireal-pro/raw",
+      "collection": "ireal-pro",
+      "corpus": "iReal Pro",
+      "license": "CC BY 4.0 (ChoCo)"
+    },
+    {
+      "name": "My iReal Pro playlists",
+      "type": "ireal",
+      "path": "data/ireal-playlists",
+      "optional": true,
+      "collection": "ireal-playlists",
+      "corpus": "iReal Pro playlists",
+      "license": "as given by the playlist's author"
+    },
+    {
+      "name": "ChoCo iReal Pro forum",
+      "type": "ireal",
+      "path": "choco-ireal-raw-5fe168f.zip",
+      "folder": "forum/",
+      "url": "https://github.com/smashub/choco/tree/5fe168fd55be5c84512abcfbc4e6f1b1f8f0092a/partitions/ireal-pro/raw",
+      "collection": "ireal-pro-forum",
+      "corpus": "iReal Pro forum",
+      "license": "CC BY 4.0 (ChoCo); charts contributed by iReal Pro forum users",
+      "curate": {
+        "min_threads": 2,
+        "keep": []
+      }
+    }
+  ]
+}
