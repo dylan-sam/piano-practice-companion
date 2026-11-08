@@ -35,14 +35,17 @@ export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: b
   )
 }
 
-/** The Display button of a sheet-reading screen's top bar (player, sightreader), with the display options. */
-export function DisplayMenu({ roman = true }: { roman?: boolean }) {
-  const changed = useDisplayChanged(roman, true)
+/**
+ * The Display button of a sheet-reading screen's top bar (player, sightreader), with the display
+ * options; `autoScroll` is false where no sheet is read (the sightreader's infinite line).
+ */
+export function DisplayMenu({ roman = true, autoScroll = true }: { roman?: boolean; autoScroll?: boolean }) {
+  const changed = useDisplayChanged(roman, autoScroll)
   return (
     <Popover id="chart-display" className="share" label="Display" title="Choose how chord charts are drawn" active={changed}>
       {() => (
         <div className="share-panel">
-          <DisplayOptions roman={roman} autoScroll />
+          <DisplayOptions roman={roman} autoScroll={autoScroll} />
         </div>
       )}
     </Popover>

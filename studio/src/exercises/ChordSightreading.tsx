@@ -430,7 +430,8 @@ export function ChordSightreading() {
       <header className="topbar">
         <Wordmark>Chord Sightreading</Wordmark>
         <span className="topbar-spacer" />
-        <DisplayMenu />
+        {/* The infinite line scrolls on its own, so the sheet auto-scroller is not offered there */}
+        <DisplayMenu autoScroll={mode !== 'infinite'} />
         <button className="topbar-button" onClick={() => void keyboard.connect()} disabled={keyboard.connected}
           aria-label={keyboard.connected ? undefined : 'Connect MIDI keyboard'}>
           {keyboard.connected ? keyboard.devices.length ? keyboard.devices.join(', ')

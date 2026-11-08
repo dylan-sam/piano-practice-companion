@@ -211,6 +211,8 @@ The line scrolls to the left on large screens, and upwards on phones.
   iv-7 V7 i-7, I III7 IV iv-6 and bVI^7 bVII7 I.
 - **Focus on mistakes** chooses more often the progressions in keys that
   contain chords you missed.
+- **Scrolling.** The line scrolls by itself, so the Display menu does not offer
+  the sheet auto-scroller in this mode.
 - **No pause.** The line is built in long chunks. While one plays, the next is
   prepared, and it starts on the synthesizer's clock 60 ms before the current
   one ends.
