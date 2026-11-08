@@ -1,7 +1,7 @@
 // Links between the app's screens, and the music-stand mark shown in top bars and on the menu.
 
 import type { MouseEvent, ReactNode } from 'react'
-import { navigate, ROUTES } from '../router'
+import { navigate, routeUrl, ROUTES } from '../router'
 
 /** The music-stand mark. */
 export function StandIcon({ className }: { className?: string }) {
@@ -30,7 +30,7 @@ export function AppLink({ to, className, label, children }: AppLinkProps) {
     navigate(to)
   }
   return (
-    <a className={className} href={to} aria-label={label} onClick={onClick}>
+    <a className={className} href={routeUrl(to)} aria-label={label} onClick={onClick}>
       {children}
     </a>
   )

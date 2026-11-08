@@ -1,0 +1,59 @@
+# Publish the web demo on GitHub Pages: the app with the song catalog bundled, no server needed.
+# Enable it once in the repository: Settings > Pages > Source: GitHub Actions.
+name: Web demo
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: studio/pnpm-lock.yaml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the app's dependencies
+        working-directory: studio
+        run: pnpm install --frozen-lockfile
+      - name: Build the app for https://<user>.github.io/<repository>/
+        working-directory: studio
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BUNDLED_CATALOG: '1'
+        run: pnpm run build
+      # GitHub Pages answers unknown paths (/studio, /exercises/...) with 404.html: let the app route them
+      - name: Serve the app's screens from their own addresses
+        run: cp studio/dist/index.html studio/dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: studio/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

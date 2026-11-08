@@ -9,12 +9,16 @@ The charts come from [ChoCo](https://github.com/smashub/choco), a large open
 chord corpus, checked and corrected for this project (see [the data](#the-data)).
 The player is a modified version of [OpenStand](https://github.com/canbmaj7/openstand).
 
+**[▶ Try it in your browser](https://dylan-sam.github.io/piano-practice-companion/)**
+(no install) · **[Download the Android app](https://github.com/dylan-sam/piano-practice-companion/releases/latest)**
+
 ![The Accompaniment Player](docs/images/player.png)
 
 - [What you can do](#what-you-can-do)
 - [The data](#the-data)
 - [Getting started](#getting-started)
 - [Android and iOS apps](#android-and-ios-apps)
+- [Publishing the web demo and releases](#publishing-the-web-demo-and-releases)
 - [Project layout](#project-layout)
 - [Documentation](#documentation)
 - [License](#license)
@@ -434,9 +438,12 @@ server needed) and native MIDI input over USB and Bluetooth.
 The quickest way to get the app on an Android phone (Android 7.0 or newer),
 with nothing to build:
 
-1. On the phone, download
+1. On the phone, open the
+   [latest release](https://github.com/dylan-sam/piano-practice-companion/releases/latest)
+   and tap `piano-practice-companion-debug.apk` (23 MB) under **Assets**. The
+   same file is also in the repository, at
    [`releases/piano-practice-companion-debug.apk`](releases/piano-practice-companion-debug.apk)
-   (23 MB; open the link, then **Download raw file**).
+   (open the link, then **Download raw file**).
 2. Open the downloaded file. Android asks to allow installing apps from your
    browser or file manager: allow it for that app, then tap **Install**.
 3. The app appears as **Ear Training** among your apps.
@@ -522,6 +529,29 @@ Publishing on the App Store raises a license question: see [License](#license).
 
 How the bundled catalog, native MIDI and phone layouts work:
 [docs/MOBILE.md](docs/MOBILE.md).
+
+## Publishing the web demo and releases
+
+Two GitHub Actions workflows publish the app (`.github/workflows/`):
+
+| Workflow | Runs when | Does |
+|---|---|---|
+| `pages.yml` (Web demo) | every push to `master`, or by hand (Actions → Web demo → Run workflow) | builds the app with the song catalog bundled (`VITE_BUNDLED_CATALOG=1`, no server needed) for the folder `/piano-practice-companion/`, and publishes it on GitHub Pages |
+| `release.yml` (Release) | a version tag is pushed (`v1.0.0`, `v1.1.0`...) | creates a GitHub release with `releases/piano-practice-companion-debug.apk` attached, and the notes of `releases/<tag>.md` (or a list of the commits when there is no such file) |
+
+The web demo needs GitHub Pages turned on once: **Settings → Pages → Build and
+deployment → Source: GitHub Actions**. To publish a new release, rebuild the APK,
+copy it to `releases/piano-practice-companion-debug.apk`, write its notes in
+`releases/v1.1.0.md`, commit, then:
+
+```sh
+git tag v1.1.0
+git push origin master v1.1.0
+```
+
+The app can be served from any folder: `BASE_PATH=/my-folder/ pnpm run build`
+builds it for `https://example.org/my-folder/` (add `VITE_BUNDLED_CATALOG=1`
+when there is no `server.py` behind it).
 
 ## Project layout
 

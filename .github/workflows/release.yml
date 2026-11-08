@@ -1,0 +1,25 @@
+# Publish a GitHub release with the Android APK when a version tag (v1.0.0, v1.1.0...) is pushed.
+# The notes come from releases/<tag>.md when it exists, otherwise from the commits since the last release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish the release with the Android APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          notes="releases/$TAG.md"
+          if [ -f "$notes" ]; then set -- --notes-file "$notes"; else set -- --generate-notes; fi
+          gh release create "$TAG" releases/piano-practice-companion-debug.apk \
+            --title "Piano Practice Companion $TAG" "$@"

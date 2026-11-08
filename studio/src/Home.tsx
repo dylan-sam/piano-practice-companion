@@ -51,7 +51,7 @@ export function Home() {
       <footer className="home-footer">
         Chord data from <a href="https://github.com/smashub/choco">ChoCo</a> (CC BY 4.0).
         Studio is based on <a href="https://github.com/canbmaj7/openstand">OpenStand</a> (AGPL-3.0).{' '}
-        <a href="/source.zip">Source</a>
+        <a href={`${import.meta.env.BASE_URL}source.zip`}>Source</a>
       </footer>
     </div>
   )

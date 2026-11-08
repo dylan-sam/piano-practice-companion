@@ -1,6 +1,6 @@
 // The Android back button: close the last opened menu, else go back to the main menu, else leave the app
 import { useEffect, useRef } from 'react'
-import { navigate, normalizePath, ROUTES } from '../router'
+import { currentPath, navigate, ROUTES } from '../router'
 
 // Close functions of the menus, panels and dialogs open now, the last opened last
 const closers: { close: () => void }[] = []
@@ -37,7 +37,7 @@ export function useBackClose(open: boolean, close: () => void): void {
  */
 export function handleBack(): boolean {
   if (closeLastMenu()) return true
-  if (normalizePath(window.location.pathname) !== ROUTES.home) {
+  if (currentPath() !== ROUTES.home) {
     navigate(ROUTES.home)
     return true
   }

@@ -2,7 +2,7 @@ import App from './App'
 import { NameProgression } from './exercises/NameProgression.tsx'
 import { ChordSightreading } from './exercises/ChordSightreading.tsx'
 import { Home } from './Home'
-import { ROUTES, usePath } from './router'
+import { routeUrl, ROUTES, usePath } from './router'
 
 // Share links made before the menu existed point at '/#tune=...' or '/#style=...'.
 const SHARED = /^#(?:.*&)?(?:tune|style)=/
@@ -11,7 +11,7 @@ const SHARED = /^#(?:.*&)?(?:tune|style)=/
 export default function Root() {
   const path = usePath()
   if (path === ROUTES.home && SHARED.test(window.location.hash)) {
-    history.replaceState(null, '', ROUTES.studio + window.location.hash)
+    history.replaceState(null, '', routeUrl(ROUTES.studio) + window.location.hash)
     return <App />
   }
   if (path === ROUTES.studio) return <App />
