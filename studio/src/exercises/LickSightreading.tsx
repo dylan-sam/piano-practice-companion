@@ -16,7 +16,7 @@ import type { CatalogProgression } from '../library/scoreSearch'
 import { loadJson, saveJson } from '../library/storage'
 import { prettyNoteName, spellRoot } from '../music/chords'
 import { withoutMelody, type Chart as ChartData } from '../music/chart'
-import { NO_PRACTICE, type PracticeSettings } from '../music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from '../music/practice'
 import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { DisplayMenu } from '../ui/DisplayMenu'
@@ -113,14 +113,21 @@ export function LickSightreading() {
   const [practice, setPractice] = useState<PracticeSettings>(NO_PRACTICE)
   const [pickLoop, setPickLoop] = useState<number | 'first' | null>(null)
 
-  const { keyboard, feedback, score, total, settleThrough, begin, clear } = useMelodyJudging(playerRef)
+  const { keyboard, feedback, score, total, settleThrough, begin, resume, clear } = useMelodyJudging(playerRef)
 
-  // The lick: the one chosen, else the first one-chord lick
-  const lick = licks.find((item) => item.id === settings.lickId) ?? licks[0] ?? null
-  const shape = useMemo<LickShape | null>(() => (lick ? lickShape(lick.chart) : null), [lick])
+  // The lick of some settings: the one chosen, else the first one-chord lick
+  const lickFor = useCallback((chosen: LickSettings) => licks.find((item) => item.id === chosen.lickId) ?? licks[0] ?? null, [licks])
+  const lick = lickFor(settings)
   const source = mode === 'infinite' ? line?.chart ?? null : tune?.chart ?? null
-  /** A song or a chunk with the lick written over it. */
-  const withShape = useCallback((chart: ChartData, layout = settings) => (shape ? withLick(chart, shape, layout) : chart), [shape, settings])
+  /**
+   * A song or a chunk with the lick of `layout` written over it. The lick is read from the
+   * settings passed in, so a new lick chosen while the band plays is the one heard at once.
+   */
+  const withShape = useCallback((chart: ChartData, layout: LickSettings = settings) => {
+    const chosen = lickFor(layout)
+    const shape: LickShape | null = chosen ? lickShape(chosen.chart) : null
+    return shape ? withLick(chart, shape, layout) : chart
+  }, [lickFor, settings])
   const chart = useMemo(() => (source ? withShape(source) : null), [source, withShape])
 
   const style = getStyle(styleId)
@@ -139,25 +146,32 @@ export function LickSightreading() {
     return next
   }
 
-  /** Start a prepared chart: the judge, the sheet and the band move to it together. */
-  const startPrepared = useCallback(async (prepared: Prepared, keepScore: boolean) => {
+  /**
+   * Start a prepared chart: the judge, the sheet and the band move to it together. From
+   * `fromSeconds` (MIDI time) the band and the judge go on where they are (new keys).
+   */
+  const startPrepared = useCallback(async (prepared: Prepared, keepScore: boolean, layout = settings, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player) return
-    begin(prepared.notes, settings, keepScore)
+    if (fromSeconds > 0) resume(prepared.notes, layout, fromSeconds * BASE_BPM / 60)
+    else {
+      begin(prepared.notes, layout, keepScore)
+      setBeat(0)
+    }
     chunkEndRef.current = prepared.arrangement.timeline.totalBeats
     switchedRef.current = false
     setTimeline(prepared.arrangement.timeline)
-    setBeat(0)
-    await player.play(prepared.arrangement.midi)
+    await player.play(prepared.arrangement.midi, fromSeconds)
     player.setRate(liveBpmRef.current / BASE_BPM)
     setPlaying(true)
-  }, [begin, settings])
+  }, [begin, resume, settings])
 
   /** Arrange and play a song with the lick over it. */
   const startPlayback = useCallback(async (nextChart: ChartData, nextStyle = styleId, nextPattern = patternId,
-    nextTranspose = transpose, nextChoruses = choruses, nextPractice = practice, nextSettings = settings) => {
+    nextTranspose = transpose, nextChoruses = choruses, nextPractice = practice, nextSettings = settings, fromSeconds = 0) => {
     try {
-      await startPrepared(prepare(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings), false)
+      await startPrepared(prepare(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings), false,
+        nextSettings, fromSeconds)
     } catch (cause) {
       setError(String(cause))
       reportError(cause, 'lick sight-reading playback')
@@ -284,7 +298,7 @@ export function LickSightreading() {
       setTranspose(0)
       setPractice(NO_PRACTICE)
       continueRef.current = true
-      await startPrepared(prepared, false)
+      await startPrepared(prepared, false, layout)
       window.setTimeout(() => { if (continueRef.current) pendingRef.current = nextChunk(prepared.line!, layout, false) }, 0)
     } catch (cause) {
       setError(String(cause))
@@ -323,6 +337,25 @@ export function LickSightreading() {
     if (!playing) return
     if (mode === 'infinite') void startInfinite(nextSettings)
     else if (source) void startPlayback(withShape(source, nextSettings), nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings)
+  }
+
+  /**
+   * Change the practice settings: a new loop starts over, new keys go on from where the band is
+   * (with the choruses they need), a tempo ramp only changes the tempo.
+   */
+  const changePractice = (next: PracticeSettings) => {
+    const change = practiceChange(practice, next)
+    const nextChoruses = chorusesForKeys(practice, next, choruses)
+    const player = playerRef.current
+    if (change !== 'keys' || !playing || !source || !player) {
+      if (change === 'loop') changeArrangement(styleId, patternId, transpose, nextChoruses, next)
+      else { setPractice(next); setChoruses(nextChoruses) }
+      return
+    }
+    settleThrough(player.heardPosition * BASE_BPM / 60)
+    setPractice(next)
+    setChoruses(nextChoruses)
+    void startPlayback(withShape(source), styleId, patternId, transpose, nextChoruses, next, settings, player.position)
   }
 
   /** Change a setting (it restarts a playing song, so the score stays fair). */
@@ -427,7 +460,7 @@ export function LickSightreading() {
           </div>}
           {mode === 'infinite' && <div className="sight-picker">
             <button className="button button-primary" onClick={() => void startInfinite()}
-              disabled={!bank || !shape || readiness.kind !== 'ready'}>New infinite line</button>
+              disabled={!bank || !lick || readiness.kind !== 'ready'}>New infinite line</button>
           </div>}
           <div className="sight-picker lick-picker">
             <label className="control"><span className="label">Licks</span>
@@ -482,7 +515,7 @@ export function LickSightreading() {
         choruses={mode === 'infinite' ? 1 : choruses} maxChoruses={mode === 'infinite' ? 1 : 24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
         {mode !== 'infinite' && <Practice chart={chart} settings={practice}
-          onChange={(next) => changeArrangement(styleId, patternId, transpose, choruses, next)}
+          onChange={changePractice}
           onPickLoop={() => setPickLoop('first')} />}
         <Mixer {...mixer(style.comp.program)} parts={settings.guide ? GUIDE_PARTS : BAND_PARTS} />
       </Transport>}

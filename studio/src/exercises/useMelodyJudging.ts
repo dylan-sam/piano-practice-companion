@@ -83,6 +83,20 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     setTotal((current) => (keepScore ? current : 0) + notes.length)
   }, [])
 
+  /**
+   * Go on judging from a beat with the notes of a new arrangement of the same song (new keys):
+   * the notes already judged keep their score and colours, the notes still to come are judged
+   * as the new arrangement plays them.
+   */
+  const resume = useCallback((notes: MelodyOccurrence[], settings: ReadingSettings, fromBeat: number) => {
+    const previous = judgeRef.current
+    const judge = new MelodyJudge(notes.filter((note) => note.start > fromBeat), TIMING_WINDOWS[settings.strictness], settings.anyOctave)
+    if (previous) Object.assign(judge.score, previous.score)
+    judgeRef.current = judge
+    setScore({ ...judge.score })
+    setTotal((previous?.judged ?? 0) + judge.total)
+  }, [])
+
   /** Forget the judge and the score (another song is on the stand). */
   const clear = useCallback(() => {
     judgeRef.current = null
@@ -91,5 +105,5 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     setTotal(0)
   }, [])
 
-  return { keyboard, feedback, score, total, settleThrough, begin, clear }
+  return { keyboard, feedback, score, total, settleThrough, begin, resume, clear }
 }

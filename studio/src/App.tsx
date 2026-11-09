@@ -27,7 +27,7 @@ import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
 import { TopbarMenu } from './ui/TopbarMenu'
 import { DisplayMenu } from './ui/DisplayMenu'
-import { NO_PRACTICE, type PracticeSettings } from './music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from './music/practice'
 import { Practice } from './ui/Practice'
 import { StyleLab } from './ui/StyleLab'
 import { Transport } from './ui/Transport'
@@ -100,7 +100,6 @@ function loadLab(): LabStyle | null {
 }
 
 // Greatest common divisor, for the choruses needed to go round the keys
-const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
 
 
 // Where the playhead is at a beat: a count-in click, or a bar, beat and chorus
@@ -248,12 +247,14 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     if (playing && player) void start(next, loopChanged ? 0 : player.position)
   }
 
-  // Change the practice settings, adding choruses when going round the keys needs more
+  // Change the practice settings, adding choruses when going round the keys needs more. A tempo
+  // ramp only changes the tempo, so the band is not arranged again
   const changePractice = (next: PracticeSettings) => {
-    // Going round the keys needs enough choruses to get back home
-    const keysNeeded = next.keyStep ? 12 / gcd(next.keyStep, 12) : 0
-    const nextChoruses = next.keyStep !== practice.keyStep && choruses < keysNeeded ? keysNeeded : choruses
-    changeArrangement({ practice: next, choruses: nextChoruses })
+    if (practiceChange(practice, next) === 'tempo') {
+      setPractice(next)
+      return
+    }
+    changeArrangement({ practice: next, choruses: chorusesForKeys(practice, next, choruses) })
   }
 
   // Play or stop

@@ -6,7 +6,7 @@ import { chartToMusic, irealLink } from '../src/formats/irealWrite'
 import { chartFromMeasures, playbackOrder } from '../src/music/chart'
 import { deleteBar, emptyChart, insertBar, setTime, updateBar } from '../src/music/edit'
 import { barToInput, parseBarInput, toChartSymbol } from '../src/music/notation'
-import { sections } from '../src/music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, sections } from '../src/music/practice'
 import { getStyle } from '../src/styles'
 
 const tune = chartFromMeasures({ title: 'Practice Tune', composer: 'Some Writer', style: 'swing', key: 0, bpm: 132 }, [
@@ -146,5 +146,20 @@ describe('sections', () => {
       { name: 'A', from: 0, to: 3 },
       { name: 'B', from: 4, to: 7 },
     ])
+  })
+})
+
+describe('practice changes while the band plays', () => {
+  test('a new loop starts over, new keys go on, a tempo ramp only changes the tempo', () => {
+    expect(practiceChange(NO_PRACTICE, { ...NO_PRACTICE, loop: [0, 3] })).toBe('loop')
+    expect(practiceChange(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 5 })).toBe('keys')
+    expect(practiceChange(NO_PRACTICE, { ...NO_PRACTICE, ramp: 4 })).toBe('tempo')
+    expect(practiceChange(NO_PRACTICE, { ...NO_PRACTICE })).toBe('none')
+  })
+  test('going round the keys adds the choruses needed to get back home', () => {
+    expect(chorusesForKeys(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 5 }, 1)).toBe(12)
+    expect(chorusesForKeys(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 2 }, 1)).toBe(6)
+    expect(chorusesForKeys(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 2 }, 8)).toBe(8)
+    expect(chorusesForKeys({ ...NO_PRACTICE, keyStep: 5 }, { ...NO_PRACTICE, keyStep: 5, ramp: 2 }, 3)).toBe(3)
   })
 })

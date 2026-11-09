@@ -28,3 +28,22 @@ export function sections(chart: Chart): { name: string; from: number; to: number
     return { name: mark === 'i' ? 'Intro' : mark === 'v' ? 'Verse' : mark, from, to }
   })
 }
+
+/**
+ * How a change of practice settings reaches a playing band: a new loop changes the music and
+ * starts over, new keys are arranged again and go on from where the band is, a new tempo ramp only
+ * changes the tempo.
+ */
+export function practiceChange(from: PracticeSettings, to: PracticeSettings): 'loop' | 'keys' | 'tempo' | 'none' {
+  if (String(from.loop) !== String(to.loop)) return 'loop'
+  if (from.keyStep !== to.keyStep) return 'keys'
+  return from.ramp !== to.ramp ? 'tempo' : 'none'
+}
+
+const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
+
+/** The choruses to play when going round the keys starts: enough to get back to the written key. */
+export function chorusesForKeys(from: PracticeSettings, to: PracticeSettings, choruses: number): number {
+  const needed = to.keyStep ? 12 / gcd(to.keyStep, 12) : 0
+  return to.keyStep !== from.keyStep && choruses < needed ? needed : choruses
+}

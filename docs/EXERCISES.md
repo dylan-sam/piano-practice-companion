@@ -162,7 +162,7 @@ notes you play sound through an acoustic piano.
 | Style | the drum groove: Swing, Bossa Nova, Latin, Ballad, Blues, Straight Pop/Rock |
 | Bass pattern | Walking Bass, Boogie Walking Bass, Latin Bassline, Ballad Bassline, Root-Fifth Bassline, for any style |
 | Key | the song's key, a random key (chosen when a song loads), or any key |
-| Tempo, choruses, Practice | as in the player (loop, keys, speed up) |
+| Tempo, choruses, Practice | as in the player (loop, keys, speed up); choosing keys or a speed-up while the band plays goes on from where it is, with the choruses needed to go round the keys, and the chords already played keep their colours; a new loop starts over |
 | Mixer | bass, drums and master volume |
 
 Each style starts with its natural bass:
@@ -256,7 +256,7 @@ auto-scroller On/Off).
 | Songs | the 1,479 shipped lead sheets (OpenEWLD and Nottingham), every saved tune with a melody, and the licks and exercises ([licks and exercises](LICKS.md)); *Random song* picks songs only |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
-| Tempo, choruses, Practice | as in the players (loop, keys, speed up) |
+| Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
 | Mixer | bass, piano, drums, and melody when the guide melody is on |
 | Guide melody | Off (default): the band plays the chords only. On: it also plays the melody |
 
@@ -294,8 +294,9 @@ The line under the settings shows, for the play-through so far: notes right,
 wrong notes, missed notes, extra keys, the percentage of judged notes played
 right, and the average timing of the right notes in milliseconds (early or
 late). It starts again with each play, and whenever the arrangement or the
-judging changes (style, key, choruses, Practice, Timing, Any octave, Guide
-melody).
+judging changes (style, key, choruses, a Practice loop, Timing, Any octave,
+Guide melody). Practice > Keys and the speed-up go on from where the band is
+and keep the score: the notes still to come are judged in their new keys.
 
 MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)).
 
@@ -312,7 +313,7 @@ the same Timing, Any octave and Guide melody settings.
 |---|---|
 | Chords | **Pick a song** (the catalog, the shipped lead sheets and your own tunes, their chords only), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break; the score goes on across chunks) |
 | Licks | the playlists of one-chord licks of the [lick database](LICKS.md): vocabulary, licks from standards, Weimar licks (major, minor, dominant, altered, half-diminished, diminished chord) |
-| Lick | one lick of that playlist; **Random lick** picks any one-chord lick |
+| Lick | one lick of that playlist; **Random lick** picks any one-chord lick (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
 | Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Melody Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions) |
 

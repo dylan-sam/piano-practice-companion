@@ -13,7 +13,7 @@ import { loadTunes } from '../library/db'
 import { loadJson, saveJson } from '../library/storage'
 import { prettyNoteName, spellRoot } from '../music/chords'
 import { hasMelody, withoutMelody, type Chart as ChartData } from '../music/chart'
-import { NO_PRACTICE, type PracticeSettings } from '../music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from '../music/practice'
 import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { DisplayMenu } from '../ui/DisplayMenu'
@@ -81,12 +81,15 @@ export function MelodySightreading() {
     return next
   }
 
-  const { keyboard, feedback, score, total, settleThrough, begin, clear } = useMelodyJudging(playerRef)
+  const { keyboard, feedback, score, total, settleThrough, begin, resume, clear } = useMelodyJudging(playerRef)
 
-  /** Arrange the song for the full band (with the melody only as a guide) and start judging. */
+  /**
+   * Arrange the song for the full band (with the melody only as a guide) and start judging; from
+   * `fromSeconds` (MIDI time) the band and the judge go on where they are instead of starting over.
+   */
   const startPlayback = useCallback(async (
     nextChart: ChartData, nextStyle = styleId, nextPattern = patternId, nextTranspose = transpose,
-    nextChoruses = choruses, nextPractice = practice, nextSettings = settings,
+    nextChoruses = choruses, nextPractice = practice, nextSettings = settings, fromSeconds = 0,
   ) => {
     const player = playerRef.current
     if (!player) return
@@ -96,17 +99,20 @@ export function MelodySightreading() {
       const { midi, timeline } = arrange(nextSettings.guide ? nextChart : withoutMelody(nextChart), style,
         nextTranspose, nextChoruses, options, nextPattern)
       const notes = melodyOccurrences(nextChart, timeline, style.swing, nextTranspose, nextPractice.keyStep)
-      begin(notes, nextSettings)
+      if (fromSeconds > 0) resume(notes, nextSettings, fromSeconds * BASE_BPM / 60)
+      else {
+        begin(notes, nextSettings)
+        setBeat(0)
+      }
       setTimeline(timeline)
-      setBeat(0)
-      await player.play(midi)
+      await player.play(midi, fromSeconds)
       player.setRate(liveBpm / BASE_BPM)
       setPlaying(true)
     } catch (cause) {
       setError(String(cause))
       reportError(cause, 'melody sight-reading playback')
     }
-  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm, begin])
+  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm, begin, resume])
 
   const readiness = usePlayer(playerRef, () => {
     settleThrough(Infinity)
@@ -179,6 +185,25 @@ export function MelodySightreading() {
     setChoruses(nextChoruses)
     setPractice(nextPractice)
     if (playing && chart) void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings)
+  }
+
+  /**
+   * Change the practice settings: a new loop starts over, new keys go on from where the band is
+   * (with the choruses they need), a tempo ramp only changes the tempo.
+   */
+  const changePractice = (next: PracticeSettings) => {
+    const change = practiceChange(practice, next)
+    const nextChoruses = chorusesForKeys(practice, next, choruses)
+    const player = playerRef.current
+    if (change !== 'keys' || !playing || !chart || !player) {
+      if (change === 'loop') changeArrangement(styleId, patternId, transpose, nextChoruses, next)
+      else { setPractice(next); setChoruses(nextChoruses) }
+      return
+    }
+    settleThrough(player.heardPosition * BASE_BPM / 60)
+    setPractice(next)
+    setChoruses(nextChoruses)
+    void startPlayback(chart, styleId, patternId, transpose, nextChoruses, next, settings, player.position)
   }
 
   /** Change a reading setting (it restarts a playing song, so the score stays fair). */
@@ -286,7 +311,7 @@ export function MelodySightreading() {
         choruses={choruses} maxChoruses={24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
         <Practice chart={chart} settings={practice}
-          onChange={(next) => changeArrangement(styleId, patternId, transpose, choruses, next)}
+          onChange={changePractice}
           onPickLoop={() => setPickLoop('first')} />
         <Mixer {...mixer(style.comp.program)} parts={settings.guide ? GUIDE_PARTS : BAND_PARTS} />
       </Transport>}

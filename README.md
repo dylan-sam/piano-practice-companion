@@ -40,7 +40,10 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Style lab**: create your own groove on a step grid (drums, bass, comping),
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
-  fourth, a half step or a whole step each chorus), speed up each chorus.
+  fourth, a half step or a whole step each chorus), speed up each chorus. Keys
+  and speed-up apply while the band plays, without starting over, in every
+  player and exercise (with the choruses needed to go round the keys); a new
+  loop starts over.
 - **Mixer**: volume and mute for bass, piano and drums, and a master volume.
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the

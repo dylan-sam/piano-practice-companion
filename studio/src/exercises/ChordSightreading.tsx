@@ -14,7 +14,7 @@ import { loadTunes } from '../library/db'
 import { loadJson, saveJson } from '../library/storage'
 import { prettyNoteName, spellRoot } from '../music/chords'
 import type { Chart as ChartData } from '../music/chart'
-import { NO_PRACTICE, type PracticeSettings } from '../music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from '../music/practice'
 import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { Chart } from '../ui/Chart'
@@ -153,23 +153,31 @@ export function ChordSightreading() {
 
   useEffect(() => { scoringRef.current = keyboard.devices.length > 0 }, [keyboard.devices.length])
 
-  /** Start a chart with only bass and drums while keeping its full chord timeline. */
+  /**
+   * Start a chart with only bass and drums while keeping its full chord timeline. From
+   * `fromSeconds` (MIDI time) the band goes on where it is (new keys): the chords already past
+   * keep their colours and are not judged again.
+   */
   const startPlayback = useCallback(async (
     nextChart: ChartData, nextStyle = styleId, nextPattern = patternId, nextTranspose = transpose,
-    nextChoruses = choruses, nextPractice = practice, countIn = true,
+    nextChoruses = choruses, nextPractice = practice, countIn = true, fromSeconds = 0,
   ) => {
     const player = playerRef.current
     if (!player) return
     try {
       const arrangement = arrangeForReading(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses,
         nextPractice, countIn)
-      judgeRef.current = new ChordJudge(arrangement.timeline)
+      const judge = new ChordJudge(arrangement.timeline)
+      if (fromSeconds > 0) judge.expire(fromSeconds * BASE_BPM / 60) // already judged by the arrangement before
+      else {
+        setFeedback({})
+        setBeat(0)
+      }
+      judgeRef.current = judge
       chunkEndRef.current = arrangement.timeline.totalBeats
       switchedRef.current = false
       setTimeline(arrangement.timeline)
-      setFeedback({})
-      setBeat(0)
-      await player.play(arrangement.midi)
+      await player.play(arrangement.midi, fromSeconds)
       player.setRate(bpm / BASE_BPM)
       setPlaying(true)
     } catch (cause) {
@@ -363,6 +371,25 @@ export function ChordSightreading() {
     if (mode === 'infinite' && line) prepareNext(line, nextStyle, nextPattern)
   }
 
+  /**
+   * Change the practice settings: a new loop starts over, new keys go on from where the band is
+   * (with the choruses they need), a tempo ramp only changes the tempo.
+   */
+  const changePractice = (next: PracticeSettings) => {
+    const change = practiceChange(practice, next)
+    const nextChoruses = chorusesForKeys(practice, next, choruses)
+    const player = playerRef.current
+    if (change !== 'keys' || !playing || !chart || !player) {
+      if (change === 'loop') changeArrangement(styleId, patternId, transpose, nextChoruses, next)
+      else { setPractice(next); setChoruses(nextChoruses) }
+      return
+    }
+    finalizeThrough(player.heardPosition * BASE_BPM / 60)
+    setPractice(next)
+    setChoruses(nextChoruses)
+    void startPlayback(chart, styleId, patternId, transpose, nextChoruses, next, true, player.position)
+  }
+
   /** Set how often 7th-chord versions are played; the next chunk is prepared again with it. */
   const changeSevenths = (value: number) => {
     setSevenths(value)
@@ -520,7 +547,7 @@ export function ChordSightreading() {
         choruses={mode === 'infinite' ? 1 : choruses} maxChoruses={mode === 'infinite' ? 1 : 24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
         {mode !== 'infinite' && <Practice chart={chart} settings={practice}
-          onChange={(next) => changeArrangement(styleId, patternId, transpose, choruses, next)}
+          onChange={changePractice}
           onPickLoop={() => setPickLoop('first')} />}
         <Mixer {...mixerProps} parts={[...MIDI_PARTS]} />
       </Transport>}
