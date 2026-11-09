@@ -2182,8 +2182,11 @@ input.fader::-moz-range-thumb {
 }
 
 /* In an exercise the sheet shares the scrolling page with other blocks: it is as tall as its chart
-   (min-height: 100% would pin it to the window and let a long chart run under the next block) */
+   (min-height: 100% would pin it to the window and let a long chart run under the next block).
+   It is as wide as in the players: a grid item with auto margins would shrink to its content, and
+   a lead sheet's engraving, laid over the page, gives it no width (the sheet was as wide as its title) */
 .exercise-stage .sheet {
+  width: 100%;
   min-height: auto;
 }
 
