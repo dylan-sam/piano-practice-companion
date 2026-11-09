@@ -32,6 +32,7 @@ OpenStand's example songs, telemetry and submission action.
 | Name the progression | `/exercises/name-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
 | Chord Sightreading | `/exercises/chord-sightreading` | `src/exercises/ChordSightreading.tsx` |
 | Melody Sightreading | `/exercises/melody-sightreading` | `src/exercises/MelodySightreading.tsx`, note judging in `src/exercises/melodyReading.ts` |
+| Lick Sightreading | `/exercises/lick-sightreading` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; both melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` |
 
 Routes live in `src/router.ts` and `src/Root.tsx`. The exercises are described
 in [docs/EXERCISES.md](../docs/EXERCISES.md).
@@ -227,7 +228,7 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
-| `src/exercises/` | Name the progression, Chord Sightreading, Melody Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`) |
+| `src/exercises/` | Name the progression, Chord Sightreading, Melody Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |

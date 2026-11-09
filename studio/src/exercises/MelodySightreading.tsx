@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
-import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { useMixer } from '../audio/useMixer'
 import { useHeardBeat, usePlayer } from '../audio/usePlayer'
 import { arrange, BASE_BPM, type Part } from '../engine/arrange'
@@ -27,31 +26,15 @@ import { Transport } from '../ui/Transport'
 import { useBackClose } from '../ui/backButton'
 import { useDrawerScreen } from '../ui/useNarrowScreen'
 import { transposeFor, type KeyChoice } from './nameProgression'
-import {
-  accuracy, averageOffsetMs, EMPTY_SCORE, MelodyJudge, noteKey, TIMING_WINDOWS,
-  type MelodyScore, type NoteResult, type Strictness,
-} from './melodyReading'
+import { MelodyScoreLine, MidiButton, ReadingControls } from './ReadingControls'
+import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 
 type Mode = 'pick' | 'random'
 
-// The reading settings, kept on this device
-interface ReadingSettings {
-  strictness: Strictness
-  anyOctave: boolean // a note counts in any octave (small keyboards, melodies written high or low)
-  guide: boolean // the band also plays the melody
-}
 const SETTINGS_KEY = 'eartraining:melody-reading'
-const DEFAULT_SETTINGS: ReadingSettings = { strictness: 'normal', anyOctave: true, guide: false }
 const BPM_RANGE: [number, number] = [40, 300]
 const BAND_PARTS: Part[] = ['bass', 'comp', 'drums']
 const GUIDE_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
-
-/** Whether stored reading settings are usable. */
-function isSettings(value: unknown): value is ReadingSettings {
-  const v = value as Partial<ReadingSettings> | null
-  return !!v && typeof v === 'object' && !!v.strictness && v.strictness in TIMING_WINDOWS &&
-    typeof v.anyOctave === 'boolean' && typeof v.guide === 'boolean'
-}
 
 /** Locate the written bar currently sounding in the band. */
 function playbackPosition(timeline: Timeline, beat: number) {
@@ -62,8 +45,6 @@ function playbackPosition(timeline: Timeline, beat: number) {
 /** Practice reading lead sheet melodies by playing them on a MIDI keyboard with the band. */
 export function MelodySightreading() {
   const playerRef = useRef<Player | null>(null)
-  const judgeRef = useRef<MelodyJudge | null>(null)
-  const scoringRef = useRef(false)
 
   const [mode, setMode] = useState<Mode>('pick')
   const [libraryOpen, setLibraryOpen] = useState(true)
@@ -73,10 +54,7 @@ export function MelodySightreading() {
   const [playing, setPlaying] = useState(false)
   const [beat, setBeat] = useState(0)
   const [timeline, setTimeline] = useState<Timeline | null>(null)
-  const [feedback, setFeedback] = useState<Record<string, NoteResult>>({})
-  const [score, setScore] = useState<MelodyScore>(EMPTY_SCORE)
-  const [total, setTotal] = useState(0)
-  const [settings, setSettingsState] = useState<ReadingSettings>(() => loadJson(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings))
+  const [settings, setSettingsState] = useState<ReadingSettings>(() => loadJson(SETTINGS_KEY, DEFAULT_READING, isReadingSettings))
   const [styleId, setStyleId] = useState('swing')
   const [patternId, setPatternId] = useState<string | null>(defaultPatternForStyle('swing'))
   const [keyChoice, setKeyChoice] = useState<KeyChoice>('song')
@@ -103,37 +81,7 @@ export function MelodySightreading() {
     return next
   }
 
-  /** Show the notes whose time has ended as wrong or missed. */
-  const settleThrough = useCallback((targetBeat: number) => {
-    const judge = judgeRef.current
-    if (!judge) return
-    const settled = judge.expire(targetBeat)
-    if (!settled.length || !scoringRef.current) return
-    setFeedback((current) => {
-      const next = { ...current }
-      for (const { note, result } of settled) next[noteKey(note.measure, note.at)] = result
-      return next
-    })
-    setScore({ ...judge.score })
-  }, [])
-
-  /** Judge a key against the melody note due now, and sound it on the live piano. */
-  const onNoteOn = useCallback((note: number, _held: Set<number>, velocity: number) => {
-    const player = playerRef.current
-    player?.liveNoteOn(note, velocity)
-    const judge = judgeRef.current
-    if (!player?.isPlaying || !judge || !scoringRef.current) return
-    const press = judge.press(player.heardPosition * BASE_BPM / 60, note)
-    if (press.note && press.result !== 'extra') {
-      const key = noteKey(press.note.measure, press.note.at)
-      setFeedback((current) => ({ ...current, [key]: press.result as NoteResult }))
-    }
-    setScore({ ...judge.score })
-  }, [])
-  /** Release the live piano note when a key lifts. */
-  const onNoteOff = useCallback((note: number) => { playerRef.current?.liveNoteOff(note) }, [])
-  const keyboard = useMidiKeyboard(onNoteOn, onNoteOff)
-  useEffect(() => { scoringRef.current = keyboard.devices.length > 0 }, [keyboard.devices.length])
+  const { keyboard, feedback, score, total, settleThrough, begin, clear } = useMelodyJudging(playerRef)
 
   /** Arrange the song for the full band (with the melody only as a guide) and start judging. */
   const startPlayback = useCallback(async (
@@ -148,11 +96,8 @@ export function MelodySightreading() {
       const { midi, timeline } = arrange(nextSettings.guide ? nextChart : withoutMelody(nextChart), style,
         nextTranspose, nextChoruses, options, nextPattern)
       const notes = melodyOccurrences(nextChart, timeline, style.swing, nextTranspose, nextPractice.keyStep)
-      judgeRef.current = new MelodyJudge(notes, TIMING_WINDOWS[nextSettings.strictness], nextSettings.anyOctave)
+      begin(notes, nextSettings)
       setTimeline(timeline)
-      setFeedback({})
-      setScore(EMPTY_SCORE)
-      setTotal(notes.length)
       setBeat(0)
       await player.play(midi)
       player.setRate(liveBpm / BASE_BPM)
@@ -161,7 +106,7 @@ export function MelodySightreading() {
       setError(String(cause))
       reportError(cause, 'melody sight-reading playback')
     }
-  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm])
+  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm, begin])
 
   const readiness = usePlayer(playerRef, () => {
     settleThrough(Infinity)
@@ -195,7 +140,7 @@ export function MelodySightreading() {
   /** Open a lead sheet with its tempo and style. */
   const openTune = (next: Tune) => {
     stop()
-    judgeRef.current = null
+    clear()
     setTimeline(null)
     setBeat(0)
     setTune(next)
@@ -205,9 +150,6 @@ export function MelodySightreading() {
     setBpm(Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], next.chart.bpm)))
     setTranspose(transposeFor(keyChoice, next.chart))
     setPractice(NO_PRACTICE)
-    setFeedback({})
-    setScore(EMPTY_SCORE)
-    setTotal(0)
     setError('')
   }
 
@@ -265,8 +207,6 @@ export function MelodySightreading() {
   const heldKey = chart ? (chart.key + shownTranspose + 12) % 12 : 0
   const noteNames = [...keyboard.held].sort((a, b) => a - b).map((note) =>
     `${spellRoot(note % 12, heldKey).replace('b', '\u266d').replace('#', '\u266f')}${Math.floor(note / 12) - 1}`)
-  const percent = accuracy(score)
-  const offset = averageOffsetMs(score, liveBpm)
   const judged = score.correct + score.wrong + score.missed
   const positionLabel = !chart ? 'Choose a lead sheet' :
     playing && timeline && beat < timeline.countIn ? 'Count-in' :
@@ -297,12 +237,7 @@ export function MelodySightreading() {
         <Wordmark>Melody Sightreading</Wordmark>
         <span className="topbar-spacer" />
         <DisplayMenu autoScroll />
-        <button className="topbar-button" onClick={() => void keyboard.connect()} disabled={keyboard.connected}
-          aria-label={keyboard.connected ? undefined : 'Connect MIDI keyboard'}>
-          {keyboard.connected ? keyboard.devices.length ? keyboard.devices.join(', ')
-            : <>Waiting for<span className="topbar-long"> MIDI</span> keyboard</>
-            : <>Connect<span className="topbar-long"> MIDI keyboard</span><span className="topbar-short"> MIDI</span></>}
-        </button>
+        <MidiButton keyboard={keyboard} />
         {mode === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
           onClick={() => setLibraryOpen((current) => !current)}>Songs</button>}
       </header>
@@ -325,22 +260,7 @@ export function MelodySightreading() {
           <div className="sight-picker">
             {mode === 'random' && <button className="button button-primary" onClick={chooseRandomSong}
               disabled={!leadSheets.length}>Choose random song</button>}
-            <label className="control"><span className="label">Timing</span>
-              <select className="select" value={settings.strictness}
-                onChange={(event) => changeSettings({ strictness: event.target.value as Strictness })}>
-                <option value="easy">Easy (within 0.4 beat)</option>
-                <option value="normal">Normal (within 1/4 beat)</option>
-                <option value="strict">Strict (within 1/8 beat)</option>
-              </select>
-            </label>
-            <button className="chip" aria-pressed={settings.anyOctave} onClick={() => changeSettings({ anyOctave: !settings.anyOctave })}
-              title="Count a note played in another octave than written">
-              Any octave: {settings.anyOctave ? 'On' : 'Off'}
-            </button>
-            <button className="chip" aria-pressed={settings.guide} onClick={() => changeSettings({ guide: !settings.guide })}
-              title="The band also plays the melody, to follow along">
-              Guide melody: {settings.guide ? 'On' : 'Off'}
-            </button>
+            <ReadingControls settings={settings} onChange={changeSettings} />
           </div>
           {tune && <LeadSheet chart={tune.chart} style={style} transpose={shownTranspose}
             activeMeasure={position && position.measure >= 0 ? position.measure : null}
@@ -348,14 +268,7 @@ export function MelodySightreading() {
             range={typeof pickLoop === 'number' ? [pickLoop, pickLoop] : practice.loop}
             onBarClick={pickLoop === null ? undefined : chooseLoopBar} autoScroll={playing}
             noteFeedback={feedback} />}
-          {tune && <p className="melody-score" role="status" aria-label="Score">
-            <span><strong className="score-correct">{score.correct}</strong> right</span>
-            <span><strong className="score-wrong">{score.wrong}</strong> wrong note</span>
-            <span><strong className="score-missed">{score.missed}</strong> missed</span>
-            <span><strong>{score.extra}</strong> extra keys</span>
-            {percent !== null && <span><strong>{percent} %</strong> of {judged}{total ? ` / ${total}` : ''} notes</span>}
-            {offset !== null && <span>timing <strong>{offset > 0 ? `${offset} ms late` : offset < 0 ? `${-offset} ms early` : 'on time'}</strong> on average</span>}
-          </p>}
+          {tune && <MelodyScoreLine score={score} total={total} bpm={liveBpm} />}
           {tune && <p className="sight-hint">Play the melody on your keyboard as the band plays. Green: right; orange: wrong note; red: missed.</p>}
           {!tune && mode === 'pick' && <p className="sight-hint">Choose a lead sheet (the shipped OpenEWLD and Nottingham songs, or your own imported ones), or a lick or an exercise from the Licks and Exercises playlists.</p>}
           <p className="sight-midi-status" role="status">MIDI notes held: {noteNames.length ? noteNames.join(' \u00b7 ') : 'none'}</p>

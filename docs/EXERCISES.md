@@ -1,10 +1,10 @@
 # Exercises
 
-The app has three exercises: **Name the progression** (ear training),
-**Chord Sightreading** (playing chords on a MIDI keyboard) and **Melody
-Sightreading** (playing the melody of a lead sheet on a MIDI keyboard). All use
-real songs, and all remember your settings in the browser (or in the phone
-app).
+The app has four exercises: **Name the progression** (ear training),
+**Chord Sightreading** (playing chords on a MIDI keyboard), **Melody
+Sightreading** (playing the melody of a lead sheet on a MIDI keyboard) and
+**Lick Sightreading** (playing a lick over every chord of a song). All use real
+songs, and all remember your settings in the browser (or in the phone app).
 
 - [Name the progression](#name-the-progression)
   - [A question](#a-question)
@@ -21,6 +21,9 @@ app).
   - [Songs and the band](#songs-and-the-band)
   - [How notes are judged](#how-notes-are-judged)
   - [The score](#the-score)
+- [Lick Sightreading](#lick-sightreading)
+  - [Chords and licks](#chords-and-licks)
+  - [How the lick follows the chords](#how-the-lick-follows-the-chords)
 
 ## Name the progression
 
@@ -295,3 +298,59 @@ judging changes (style, key, choruses, Practice, Timing, Any octave, Guide
 melody).
 
 MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)).
+
+## Lick Sightreading
+
+Choose where the chords come from and a lick: the lick is written over every
+chord, as a lead sheet, and you play it on a MIDI keyboard with the band. Notes
+are judged and scored as in [Melody Sightreading](#how-notes-are-judged), with
+the same Timing, Any octave and Guide melody settings.
+
+### Chords and licks
+
+| Control | Choices |
+|---|---|
+| Chords | **Pick a song** (the catalog, the shipped lead sheets and your own tunes, their chords only), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break; the score goes on across chunks) |
+| Licks | the playlists of one-chord licks of the [lick database](LICKS.md): vocabulary, licks from standards, Weimar licks (major, minor, dominant, altered, half-diminished, diminished chord) |
+| Lick | one lick of that playlist; **Random lick** picks any one-chord lick |
+| Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
+| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Melody Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions) |
+
+The first lick starts on the first full bar. Notes over N.C. are left out.
+
+### How the lick follows the chords
+
+The lick is read as a **shape** relative to its own chord
+(`src/exercises/lickReading.ts`):
+
+1. Each chord has seven **slots**: root, 9th, 3rd, 11th, 5th, 13th, 7th, as its
+   scale alters them (`chordSlots`). Slots 1, 3, 5 and 7 are always the chord
+   tones.
+
+   | Chord | Slots (semitones above the root) |
+   |---|---|
+   | major, 6th, major 7th | 0 2 4 5 7 9 11 (#11 with a written #11) |
+   | minor, minor 7th | 0 2 3 5 7 9 10 (Dorian) |
+   | minor 6th, minor-major 7th | 0 2 3 5 7 9 11 (melodic minor) |
+   | dominant 7th | 0 2 4 5 7 9 10 (Mixolydian; #11 and b13 when written) |
+   | dominant with b9 | 0 1 4 5 7 8 10 (Phrygian dominant) |
+   | altered dominant (alt, #5, #9) | 0 1 4 6 8 8 10 (b9, #11, #5 = b13) |
+   | half-diminished | 0 1 3 5 6 8 10 (Locrian) |
+   | diminished 7th | 0 2 3 5 6 8 9 (whole-half) |
+   | augmented | 0 2 4 6 8 9 11 |
+   | sus | 0 2 5 5 7 9 10 |
+
+2. Each note of the lick becomes a slot of its chord in some octave, plus a
+   chromatic step when it lies between two slots (counted from the slot above:
+   a chromatic note is most often an approach from below).
+3. Each note is then written on the chord **sounding at its start**, with that
+   chord's slots: "The Lick" (C D Eb F D Bb C over C-7) reads C D E F D B C over
+   C^7, and over D-7 G7 it starts D E F G on D-7 and goes on A F G on G7 when
+   the chord changes in the middle of the lick.
+4. When the chord changes, the new chord's root is taken in the octave that
+   puts the next note closest to the note before, so the line stays smooth; a
+   new lick starts around middle C. Notes are kept between C3 and E6.
+5. A note held over a chord change keeps its pitch.
+
+Over its own chord a lick comes back unchanged (the tests check every
+one-chord lick of the database).

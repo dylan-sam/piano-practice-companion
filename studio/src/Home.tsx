@@ -34,6 +34,11 @@ const MENU: MenuItem[] = [
     description: 'Read a lead sheet and play its melody on a MIDI keyboard with the band. Every note is checked.',
     path: ROUTES.melodySightreading,
   },
+  {
+    title: 'Lick Sightreading',
+    description: 'Choose a lick and play it over every chord of a song or of endless progressions, on a MIDI keyboard. The lick follows each chord change.',
+    path: ROUTES.lickSightreading,
+  },
 ]
 
 /** The main menu: one entry per screen of the app, and the data and code credits. */

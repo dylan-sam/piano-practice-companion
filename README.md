@@ -26,7 +26,7 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The app opens on a menu of five screens.
+The app opens on a menu of six screens.
 
 ### Chord Accompaniment Player
 
@@ -140,7 +140,19 @@ the percentage and your average timing (early or late, in milliseconds).
 - **Any octave**: count a note played in another octave than written.
 - **Guide melody**: the band also plays the melody, to follow along.
 
-All three exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
+### Lick Sightreading
+
+Choose a **lick** (one of the 486 one-chord licks of the
+[database](#licks-and-exercises), or a random one) and where the chords come
+from: **Pick a song**, **Random song** or **Infinite progressions** (as in
+Chord Sightreading). The lick is written over every chord, and played again on
+the next bar line when it ends: chord tones stay chord tones, tensions stay
+tensions, and when the chord changes in the middle of the lick, the rest of it
+follows the new chord at once, in the octave closest to the note before. Play
+it on a MIDI keyboard with the band; it is judged as in Melody Sightreading.
+**Rest between licks** leaves a rest as long as the lick after each one.
+
+All four exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
 <img src="docs/images/phone.png" alt="The Chord Accompaniment Player on a phone" width="260">
 

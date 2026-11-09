@@ -44,7 +44,9 @@ The contexts, for every mined collection:
 
 The Lead Sheet Player and Melody Sightreading list them with the shipped lead
 sheets; the Chord Accompaniment Player does not (a lick has no use as a chord
-chart). **Random song** in Melody Sightreading picks songs only.
+chart). **Random song** in Melody Sightreading picks songs only. **Lick
+Sightreading** writes any one-chord lick over every chord of a song or of an
+endless line of progressions ([how](EXERCISES.md#lick-sightreading)).
 
 ## The rhythm rule
 

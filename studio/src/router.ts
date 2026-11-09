@@ -8,6 +8,7 @@ export const ROUTES = {
   nameProgression: '/exercises/name-progression',
   chordSightreading: '/exercises/chord-sightreading',
   melodySightreading: '/exercises/melody-sightreading',
+  lickSightreading: '/exercises/lick-sightreading',
 } as const
 
 const NAVIGATE = 'eartraining:navigate'
