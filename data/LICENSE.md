@@ -28,6 +28,21 @@ CC BY 4.0; the file is shared under CC BY 4.0 as well. Its sources,
 `openewld-ec03cbd.zip` and `choco-nottingham-raw-5fe168f.zip`, keep their own
 terms (OpenEWLD's license is in the zip).
 
+**Licks and exercises.** `studio/public/licks/licks.json` holds exercises and
+licks written or generated for this project (CC BY 4.0; the triad, interval
+and rhythm drills follow K. B. Kelly and E. Rasmussen, *A Guide to Exploring
+Jazz Improvisation - Book 1*, CC BY 4.0), licks from the OpenEWLD lead sheets
+(public domain) and from the Nottingham Music Database (CC BY 4.0, as above);
+the file is shared under CC BY 4.0. `studio/public/licks/licks_weimar.json`
+is derived from the [Weimar Jazz Database](https://jazzomat.hfm-weimar.de/)
+(M. Pfleiderer, K. Frieler, J. Abesser, W.-G. Zaddach and B. Burkhart (eds.),
+*Inside the Jazzomat*, Schott Campus, 2017), released under the
+[Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/),
+and is offered under the ODbL 1.0 as well. Each of its licks is a short
+excerpt of an improvisation, credited to its performer, tune and bar; the
+rights in the improvisations belong to their performers. See
+[docs/LICKS.md](../docs/LICKS.md#rights-and-credits).
+
 **Not included.** The ChoCo collections released under CC BY-NC-SA 4.0
 (Chordify Annotator Subjectivity Dataset, Mozart Piano Sonatas, Jazz
 Audio-Aligned Harmony) are left out, see [ChoCo's license](CHOCO_LICENSE.md).

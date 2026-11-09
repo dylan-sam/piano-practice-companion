@@ -5,6 +5,7 @@
 // markings a player reads: rehearsal marks, repeats, endings, D.C./D.S., coda.
 
 import { isMelody, type Melody } from './melody'
+import { isLickInfo, type LickInfo } from './licks'
 
 export type TimeSignature = [beats: number, unit: number]
 
@@ -56,6 +57,7 @@ export interface Chart {
   time: TimeSignature
   bars: ChartBar[]
   melody?: Melody // a melody line over the chords: the chart is then drawn as a lead sheet
+  lick?: LickInfo // a lick or an exercise from the lick database: what it is and where it comes from
 }
 
 export const ROW_CELLS = 16
@@ -97,6 +99,7 @@ export function isChart(value: unknown): value is Chart {
     typeof chart.bpm === 'number' && Number.isFinite(chart.bpm) && chart.bpm > 0 &&
     isTimeSignature(chart.time) &&
     (chart.melody === undefined || isMelody(chart.melody)) &&
+    (chart.lick === undefined || isLickInfo(chart.lick)) &&
     Array.isArray(chart.bars) && chart.bars.length > 0 && chart.bars.every((item: unknown) => {
       if (!item || typeof item !== 'object') return false
       const bar = item as Record<string, unknown>

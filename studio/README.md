@@ -87,7 +87,7 @@ tunes:
 
 | | Chord Accompaniment Player | Lead Sheet Player |
 |---|---|---|
-| tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets and saved tunes with a melody (no catalog search, no New) |
+| tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets, the licks and exercises ([docs/LICKS.md](../docs/LICKS.md)) and saved tunes with a melody (no catalog search, no New) |
 | a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
 | Mixer | bass, piano, drums | bass, piano, melody, drums |
 | Import | iReal Pro and Studio exports | MusicXML and Studio exports |
@@ -120,6 +120,7 @@ How it is drawn and played:
 | engraving | the chart is written as ABC notation and drawn by [abcjs](https://github.com/paulrosen/abcjs) (MIT), loaded the first time a lead sheet opens | `src/music/abc.ts`, `src/ui/LeadSheet.tsx` |
 | rhythm | each beat is written in sixteenths, or in triplet eighths when a note starts on a third of it; notes are cut and tied at bar lines, chord changes and odd beat crossings (a note crosses a beat only from an eighth to an eighth) | `melodyToAbc` |
 | key and spelling | the key signature of the key on the stand; chromatic notes take sharps in sharp keys and flats in flat keys (in C, flats except F#); an accidental lasts for the bar | `spellPitch` |
+| chord roots | spelled as on the chord chart: notes of the key's scale follow its signature, other roots take flats in sharp keys and C (Bb7 in C, not A#7) | `chordText`, `spellRoot` |
 | clef | bass clef when the middle note of the melody is below A3 | `melodyToAbc` |
 | layout | 4 bars a line (2 on upright phones); a rehearsal mark starts a line and is drawn boxed in the margin, as on the chord chart; a pickup bar stays on the first line | `melodyToAbc`, `sectionMarks` |
 | chords | above the staff, in the Display menu's notation (C−7 or Cm7, Roman numerals) | `chordText` |
@@ -206,6 +207,8 @@ Then start `python server.py` from the project root and open
 | `pnpm run sync` | build and copy, with the phone catalog already present |
 | `pnpm run android`, `pnpm run ios` | open the native project in Android Studio or Xcode |
 | `pnpm run catalog` | rebuild the phone catalog only (`build_mobile_catalog.py`) |
+| `pnpm run leadsheets` | rebuild the shipped lead sheets (`public/leadsheets/catalog.json`) |
+| `pnpm run licks` | rebuild the licks and exercises (`public/licks/`, [docs/LICKS.md](../docs/LICKS.md)) |
 
 See [docs/MOBILE.md](../docs/MOBILE.md) for the phone apps.
 
@@ -220,11 +223,12 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which Melody Sightreading also judges), timeline and count-in (`timeline.ts`) |
 | `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
-| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
+| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
 | `src/exercises/` | Name the progression, Chord Sightreading, Melody Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`) |
+| `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |
 
@@ -238,3 +242,5 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 - The Petaluma fonts: SIL Open Font License, `src/assets/fonts/Petaluma-OFL.txt`.
 - The song catalog in `public/catalog/` and `public/exercises/`: CC BY 4.0
   ([data license](../data/LICENSE.md)).
+- The licks and exercises: `public/licks/licks.json` CC BY 4.0,
+  `public/licks/licks_weimar.json` ODbL 1.0 ([docs/LICKS.md](../docs/LICKS.md)).

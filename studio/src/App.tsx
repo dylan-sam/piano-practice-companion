@@ -321,8 +321,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         reportError(err, 'library')
         return [] as Tune[]
       })
-      // Test lead sheets served with a local build, when there are any
-      const bundled = await loadBundledLeadSheets()
+      // Lead sheets served with the app; the lead sheet player also lists the licks and exercises
+      const bundled = await loadBundledLeadSheets({ licks: leadMode })
       let all = [...saved, ...bundled]
       const shared = await chartFromHash(window.location.hash)
       const sharedStyle = await labFromHash(window.location.hash)

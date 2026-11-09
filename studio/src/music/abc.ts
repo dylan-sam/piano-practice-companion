@@ -7,7 +7,7 @@
 // order, so the sheet can follow the player note by note.
 
 import { barMeters, type Chart, type ChartBar } from './chart'
-import { chordLabel, keyPrefersFlats, noteName, parseChord, transposeChord } from './chords'
+import { noteName, parseChord, spellRoot, transposeChord } from './chords'
 import { notesByBar, type MelodyNote } from './melody'
 import { displayText, type DisplaySettings } from '../ui/display'
 
@@ -75,7 +75,9 @@ export function chordText(symbol: string | null, transpose: number, keyPc: numbe
   if (symbol === null) return 'N.C.'
   const chord = parseChord(symbol)
   if (!chord) return symbol
-  const label = chordLabel(transposeChord(chord, transpose), keyPrefersFlats(keyPc))
+  // Roots are spelled as the chord chart spells them (spellRoot): Bb7 in C, not A#7
+  const moved = transposeChord(chord, transpose)
+  const label = spellRoot(moved.root, keyPc) + moved.suffix + (moved.bass !== moved.root ? `/${spellRoot(moved.bass, keyPc)}` : '')
   return displayText(label, display, display.roman ? keyPc : null)
     .replace(/\^/g, '\u0394').replace(/h/g, '\u00f8').replace(/(?<!n)o/g, '\u00b0')
 }

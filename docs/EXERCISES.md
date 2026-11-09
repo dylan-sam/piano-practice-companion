@@ -250,7 +250,7 @@ auto-scroller On/Off).
 | Control | Choices |
 |---|---|
 | Mode | **Pick a song** (search the lead sheets) or **Random song** |
-| Songs | the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody |
+| Songs | the 1,479 shipped lead sheets (OpenEWLD and Nottingham), every saved tune with a melody, and the licks and exercises ([licks and exercises](LICKS.md)); *Random song* picks songs only |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up) |

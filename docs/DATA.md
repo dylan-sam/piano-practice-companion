@@ -649,8 +649,11 @@ The catalog has chords only. To test the app's lead sheets (a melody over the
 chords) on real music, `weimar_playlist.py` turns the solos of the
 [Weimar Jazz Database](https://jazzomat.hfm-weimar.de/) into a Studio export
 that the app imports with **Import > Studio export**. The database and the
-files made from it are **not shipped** with the project (`data/weimar*` is
-ignored by git): it is a test tool.
+solo files made from it are **not shipped** with the project (`data/weimar*`
+is ignored by git): it is a test tool. Short licks and common patterns mined
+from these solos are shipped, under the database's ODbL
+([licks and exercises](LICKS.md)); `pnpm run licks` reads
+`data/weimar_solos.json` to rebuild them.
 
 ```sh
 # wjazzd.db is in the ChoCo repository (partitions/weimar/raw/) or on the Jazzomat site

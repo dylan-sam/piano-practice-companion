@@ -179,7 +179,7 @@ export function MelodySightreading() {
   useEffect(() => {
     // The shipped lead sheets and the saved tunes, once per visit
     let active = true
-    void Promise.all([loadTunes(), loadBundledLeadSheets()])
+    void Promise.all([loadTunes(), loadBundledLeadSheets({ licks: true })])
       .then(([saved, bundled]) => { if (active) setTunes([...saved, ...bundled]) })
       .catch((cause) => { if (active) setError(String(cause)) })
     return () => { active = false }
@@ -213,7 +213,8 @@ export function MelodySightreading() {
 
   /** Open a random lead sheet other than the one on the stand. */
   const chooseRandomSong = () => {
-    const others = leadSheets.filter((t) => t.id !== tune?.id)
+    // Songs only: licks and exercises are chosen from their playlists
+    const others = leadSheets.filter((t) => t.id !== tune?.id && !t.chart.lick)
     if (others.length) openTune(others[Math.floor(Math.random() * others.length)])
   }
 
@@ -356,7 +357,7 @@ export function MelodySightreading() {
             {offset !== null && <span>timing <strong>{offset > 0 ? `${offset} ms late` : offset < 0 ? `${-offset} ms early` : 'on time'}</strong> on average</span>}
           </p>}
           {tune && <p className="sight-hint">Play the melody on your keyboard as the band plays. Green: right; orange: wrong note; red: missed.</p>}
-          {!tune && mode === 'pick' && <p className="sight-hint">Choose a lead sheet: the shipped OpenEWLD and Nottingham songs, or your own imported ones.</p>}
+          {!tune && mode === 'pick' && <p className="sight-hint">Choose a lead sheet (the shipped OpenEWLD and Nottingham songs, or your own imported ones), or a lick or an exercise from the Licks and Exercises playlists.</p>}
           <p className="sight-midi-status" role="status">MIDI notes held: {noteNames.length ? noteNames.join(' \u00b7 ') : 'none'}</p>
         </main>
       </div>
