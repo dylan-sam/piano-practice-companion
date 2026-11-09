@@ -1,6 +1,6 @@
 import { DRUM_NOTES } from '../styles/drums'
 import type { DrumHit, DrumPart, Groove } from '../styles/types'
-import { chance, humanize, pick, place, toTicks, type NoteEvent } from './events'
+import { chance, humanize, pick, swingPlacer, toTicks, type NoteEvent } from './events'
 import { beatMap } from './meter'
 import type { Bar, Click } from './timeline'
 
@@ -9,12 +9,13 @@ export const DRUM_CHANNEL = 9
 // Render drum hits from a start beat, swung, keeping those between from and to that pass their probability
 function render(hits: DrumHit[], start: number, swing: number, from = 0, to = Infinity): NoteEvent[] {
   const out: NoteEvent[] = []
+  const placed = swingPlacer(hits.map(([at]) => at - from), swing)
   for (const [at, drum, vel, p = 1, dur = 0.25] of hits) {
     if (at < from || at >= to || !chance(p)) continue
     out.push(
       humanize(
         {
-          tick: toTicks(start + place(at - from, swing)),
+          tick: toTicks(start + placed(at - from)),
           channel: DRUM_CHANNEL,
           note: DRUM_NOTES[drum],
           velocity: vel,

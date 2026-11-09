@@ -262,6 +262,8 @@ auto-scroller On/Off).
 
 The notes you play sound through an acoustic piano. Swing and Blues play
 eighth-note "ands" late, and the notes are expected where the band swings them.
+A beat written in sixteenths is not swung: its four sixteenths stay even in
+every style (moving only its "and" would make them uneven).
 
 ### How notes are judged
 

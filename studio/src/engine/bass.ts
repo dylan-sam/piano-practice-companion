@@ -1,6 +1,6 @@
 import { chordTones, type Chord } from '../music/chords'
 import type { BassNote, BassPart } from '../styles/types'
-import { chance, humanize, place, rand, toTicks, type NoteEvent } from './events'
+import { chance, humanize, rand, swingPlacer, toTicks, type NoteEvent } from './events'
 import { patternFor } from './meter'
 import type { Slot } from './timeline'
 
@@ -160,13 +160,14 @@ function patternBass(slots: Slot[], reg: Register, patterns: Partial<Record<stri
     const pattern = patternFor(patterns, slot.beats, !!slot.compound, { at: 0, dur: 0.9, tone: 'R' })
     const root = reg.nearest(slot.chord.bass, reg.anchor(prev))
     const feel = slot.compound ? 0.5 : swing
+    const placed = swingPlacer(pattern.map((note) => note.at), feel)
 
     for (const note of pattern) {
       const n = resolveTone(reg, note, root, slot.chord, next)
       events.push(
         humanize(
           {
-            tick: toTicks(slot.start + place(note.at, feel)),
+            tick: toTicks(slot.start + placed(note.at)),
             channel: CHANNEL,
             note: n,
             velocity: note.vel ?? (note.at === 0 ? 96 : 86),

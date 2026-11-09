@@ -128,7 +128,7 @@ How it is drawn and played:
 | chords | above the staff, in the Display menu's notation (C−7 or Cm7, Roman numerals) | `chordText` |
 | playing | the bar being played gets the yellow highlighter and the note being played is coloured; the sheet scrolls like a chart (auto-scroller in the Display menu) | `src/ui/LeadSheet.tsx`, `src/ui/useAutoScroll.ts` |
 | loops | Practice > Choose bars: click a bar (or its chords) on the staff | `src/ui/LeadSheet.tsx` |
-| sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later); its own strip in the Mixer | `src/engine/melody.ts`, `src/engine/arrange.ts` |
+| sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later; a beat written in sixteenths stays straight, so its sixteenths stay even); its own strip in the Mixer. The band's grooves follow the same rule (a Style lab groove with sixteenths) | `src/engine/melody.ts` (`straightBeats`), `src/engine/events.ts` (`swingPlacer`), `src/engine/arrange.ts` |
 
 Charts with a melody are imported as MusicXML (**Import > MusicXML**,
 `src/formats/musicxml.ts`) or as a Studio export. From a MusicXML file:

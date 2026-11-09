@@ -1,6 +1,6 @@
 import { closeVoicingTones, rootlessVoicings, type Chord } from '../music/chords'
 import type { CompHit, CompPart } from '../styles/types'
-import { chance, humanize, place, rand, toTicks, type NoteEvent } from './events'
+import { chance, humanize, rand, swingPlacer, toTicks, type NoteEvent } from './events'
 import { patternFor } from './meter'
 import type { Slot } from './timeline'
 
@@ -83,13 +83,14 @@ export function generateComp(slots: Slot[], part: CompPart, swing: number, count
       hits[0] = [-0.5, hits[0][1] + (1 - feel), hits[0][2]]
     }
 
+    const placed = swingPlacer(hits.map(([at]) => at), feel)
     for (const [at, duration, vel] of hits) {
       const velocity = vel ?? rand(part.velocity[0], part.velocity[1])
       for (const note of voicing) {
         events.push(
           humanize(
             {
-              tick: toTicks(slot.start + place(at, feel)),
+              tick: toTicks(slot.start + placed(at)),
               channel: CHANNEL,
               note,
               velocity,

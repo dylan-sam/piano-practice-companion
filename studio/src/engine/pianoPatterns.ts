@@ -1,6 +1,6 @@
 import catalog from '../../../data/left_hand_patterns.json'
 import { chordTones, type Chord } from '../music/chords'
-import { place, toTicks, type NoteEvent } from './events'
+import { swingPlacer, toTicks, type NoteEvent } from './events'
 import type { Timeline, Slot } from './timeline'
 
 interface PatternStep {
@@ -230,12 +230,15 @@ export function generatePianoPattern(timeline: Timeline, pattern: PianoPattern, 
       .filter((step) => !SHELL_PATTERNS.has(pattern.id) || step.role !== 'upper_shell')
     if (SHELL_PATTERNS.has(pattern.id)) steps.push(...shellSteps(pattern, bar.beats, cycleIndex, barIndex))
     steps.sort((a, b) => a.position - b.position)
+    // Beats of this bar where the pattern plays sixteenths stay straight in a swung style
+    const placed = swingPlacer(steps.filter((step) => Math.floor(step.position) === cycleIndex)
+      .map((step) => (step.position - cycleIndex) * bar.beats), swing)
     steps.forEach((step, index) => {
       if (Math.floor(step.position) !== cycleIndex || step.role === 'rest') return
       if (step.initial_only && barIndex >= pattern.cycle_bars) return
       const local = step.position - cycleIndex
       const nominal = bar.start + local * bar.beats
-      const attack = bar.start + (pattern.fidelity === 'scored example' ? local * bar.beats : place(local * bar.beats, swing))
+      const attack = bar.start + (pattern.fidelity === 'scored example' ? local * bar.beats : placed(local * bar.beats))
       const active = activeSlot(timeline.slots, step.grace ? nominal : attack)
       if (!active) { walk.pitch = null; walk.chord = null; walk.index = null; return }
       const nextPosition = steps[index + 1]?.position ?? pattern.cycle_bars

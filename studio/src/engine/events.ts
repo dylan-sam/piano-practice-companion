@@ -26,6 +26,22 @@ export function place(at: number, swing: number): number {
   return Math.abs(at - beat - 0.5) < 1e-6 ? beat + swing : at
 }
 
+/** Whether a position lies on the second or fourth sixteenth of its beat. */
+export const onSixteenth = (at: number): boolean => {
+  const fraction = at - Math.floor(at + 1e-6)
+  return Math.abs(fraction - 0.25) < 1e-6 || Math.abs(fraction - 0.75) < 1e-6
+}
+
+/**
+ * place() for a group of positions played together (a groove, a bar of a pattern): a beat where
+ * one of them falls on a sixteenth stays straight, so its sixteenths stay even in every style;
+ * the "and" of the other beats swings.
+ */
+export function swingPlacer(positions: number[], swing: number): (at: number) => number {
+  const straight = new Set(positions.filter(onSixteenth).map((at) => Math.floor(at + 1e-6)))
+  return (at) => (straight.has(Math.floor(at + 1e-6)) ? at : place(at, swing))
+}
+
 // Small timing and velocity deviations make the band sound less mechanical
 export function humanize(e: NoteEvent, timing: number, velocity: number): NoteEvent {
   return {
