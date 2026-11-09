@@ -32,7 +32,7 @@ const MENUS: Record<string, MenuPage> = {
       },
       {
         title: 'Sightreading',
-        description: 'Plug in a MIDI keyboard and sightread chords, melodies, arpeggios or licks with the band. You can import your own charts!',
+        description: 'Plug in a MIDI keyboard and sightread chords, melodies, arpeggios or licks with the band. You can import your own charts! The key and tempo can be changed automatically at each repetition to practice in every key!',
         path: ROUTES.sightreading,
       },
     ],
@@ -70,22 +70,22 @@ const MENUS: Record<string, MenuPage> = {
     items: [
       {
         title: 'Chord Sightreading',
-        description: 'Pick a ChoCo chord chart and sightread it! The key and tempo can be changed automatically at each repetition to practice in every key! You can import your own iReal Pro charts! An infinite chord progression generator is also available.',
+        description: 'Pick a ChoCo chord chart and sightread it! You can import your own iReal Pro charts! An infinite chord progression generator is also available.',
         path: ROUTES.chordSightreading,
       },
       {
         title: 'Lead Sheet Sightreading',
-        description: 'Pick a lead sheet and sightread it! The key and tempo can be changed automatically at each repetition to practice in every key! You can import your own MuseScore MusicXML files!',
+        description: 'Pick a lead sheet and sightread it! You can import your own MuseScore MusicXML files!',
         path: ROUTES.leadSheetSightreading,
       },
       {
         title: 'Exercises Sightreading',
-        description: 'Pick a scale, arpeggio, rhythm or lick exercise over a few bars and practice it! The key and tempo can be changed automatically at each repetition to practice in every key!',
+        description: 'Pick a scale, arpeggio, rhythm or lick exercise over a few bars and practice it!',
         path: ROUTES.exerciseSightreading,
       },
       {
         title: 'Lick Sightreading',
-        description: 'Pick a ChoCo chord chart, pick a lick and practice sightreading the lick on top of the chord chart. The lick is automatically transposed at each chord change! The key and tempo can be changed automatically at each repetition to practice in every key! You can import your own iReal Pro charts! An infinite chord progression generator is also available.',
+        description: 'Pick a ChoCo chord chart, pick a lick and practice sightreading the lick on top of the chord chart. The lick is automatically transposed at each chord change! You can import your own iReal Pro charts! An infinite chord progression generator is also available.',
         path: ROUTES.lickSightreading,
       },
     ],

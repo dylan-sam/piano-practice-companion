@@ -1,7 +1,7 @@
 # Licks and exercises
 
-A database of **646 licks and improvisation exercises** for the Lead Sheet
-Player, Exercises Sightreading and Lick Sightreading: phrases to play over one chord or a chord
+A database of **646 licks and improvisation exercises** for Exercises
+Sightreading and Lick Sightreading: phrases to play over one chord or a chord
 progression, and drills (arpeggios, guide tones, scales, enclosures, intervals,
 rhythm) to build the vocabulary used when improvising.
 
@@ -47,9 +47,8 @@ The contexts, for every mined collection:
 | Blues I7-IV7 | C7 F7 | a bar each |
 | Major, minor, dominant, altered dominant, half-diminished, diminished chord | one chord held for a bar or more | its first bar |
 
-The Lead Sheet Player lists them with the shipped lead sheets, and
-**Exercises Sightreading** lists them alone; the Chord Player and Lead Sheet
-Sightreading do not. **Lick Sightreading** writes any of the 133 one-chord
+**Exercises Sightreading** lists them; the players and Lead Sheet
+Sightreading, which list songs, do not. **Lick Sightreading** writes any of the 133 one-chord
 licks (vocabulary and standards) over every chord of a chord chart or of an
 endless line of progressions ([how](EXERCISES.md#lick-sightreading)).
 

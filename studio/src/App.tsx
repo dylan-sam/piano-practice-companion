@@ -318,8 +318,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         reportError(err, 'library')
         return [] as Tune[]
       })
-      // Lead sheets served with the app; the lead sheet player also lists the licks and exercises
-      const bundled = await loadBundledLeadSheets({ licks: leadMode })
+      // Lead sheets served with the app (the licks and exercises are in Exercises Sightreading)
+      const bundled = await loadBundledLeadSheets()
       let all = [...saved, ...bundled]
       const shared = await chartFromHash(window.location.hash)
       const sharedStyle = await labFromHash(window.location.hash)

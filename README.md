@@ -93,13 +93,14 @@ or the chart's own instrument) and has its own fader in the Mixer.
   round. To try it with 450 transcribed jazz solos, see
   [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)
   (kept on your computer only, not shipped).
-- It also lists the **licks and exercises** below, in their own playlists.
+- It lists lead sheets only; the licks and exercises below are in Exercises
+  Sightreading.
 
 ### Licks and exercises
 
 A database of **646 licks and improvisation exercises**, all in C and
-playable in any key, in the Lead Sheet Player, Exercises Sightreading and Lick
-Sightreading ([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
+playable in any key, in Exercises Sightreading and Lick Sightreading
+([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
 sixteenth; eighth-note triplets are used.
 
 - **Exercises** (222): triads and seventh chords through the keys (with and

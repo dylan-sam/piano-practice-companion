@@ -96,7 +96,7 @@ tunes:
 
 | | Chord Player | Lead Sheet Player |
 |---|---|---|
-| tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets, the licks and exercises ([docs/LICKS.md](../docs/LICKS.md)) and saved tunes with a melody (no catalog search, no New) |
+| tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets and saved tunes with a melody (no catalog search, no New; the licks and exercises are in Exercises Sightreading) |
 | a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
 | Mixer | bass, piano, drums | bass, piano, melody, drums |
 | Import | iReal Pro and Studio exports | MusicXML and Studio exports |
