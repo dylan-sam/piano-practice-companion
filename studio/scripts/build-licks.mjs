@@ -1,4 +1,5 @@
-// Build the lick and exercise database (studio/public/licks/) and data/licks.log; see
+// Build the lick and exercise database (studio/public/licks/licks.json, and weimar/licks_weimar.json
+// when the Weimar solos are in weimar/) and data/licks.log; see
 // scripts/lickCatalog.ts. The app's TypeScript is loaded through Vite, so the database is built
 // and checked with exactly the code that plays it.
 //
@@ -14,9 +15,9 @@ try {
   const { buildLickCatalog } = await server.ssrLoadModule('/scripts/lickCatalog.ts')
   console.log(buildLickCatalog({
     leadSheets: resolve(studio, 'public/leadsheets/catalog.json'),
-    weimar: resolve(root, 'data/weimar_solos.json'),
+    weimar: resolve(root, 'weimar/weimar_solos.json'),
     out: resolve(studio, 'public/licks/licks.json'),
-    outWeimar: resolve(studio, 'public/licks/licks_weimar.json'),
+    outWeimar: resolve(root, 'weimar/licks_weimar.json'),
     log: resolve(root, 'data/licks.log'),
   }))
 } finally {

@@ -3,13 +3,13 @@ import { arrange, BASE_BPM, type Part } from './engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from './engine/pianoPatterns'
 import { warmUpMidi } from './engine/warmup'
 import { chorusTranspose, type Timeline } from './engine/timeline'
-import { parseIrealLinks } from './formats/ireal'
 import { irealLink } from './formats/irealWrite'
 import { reportError } from './errorReports'
 import { chartFromHash, labFromHash, shareUrl, styleShareUrl } from './formats/share'
 import { addTunes, loadTunes, removePlaylist, removeTune, saveTune } from './library/db'
+import { CHORD_SOURCES, importTunes, LEAD_SOURCES } from './library/importTunes'
 import { fetchChocoTune } from './library/choco'
-import { parseStudioPlaylists, playlistNames, serializeStudioPlaylists } from './library/playlistExport'
+import { playlistNames, serializeStudioPlaylists } from './library/playlistExport'
 import { loadMyStyles, myStyleId, removeMyStyle, saveMyStyle } from './library/myStyles'
 import { hasMelody, withoutMelody, type Chart as ChartData } from './music/chart'
 import { offsetToKey, prettyNoteName } from './music/chords'
@@ -21,7 +21,6 @@ import { labFromStyle, styleFromLab, styleSource, STEPS_PER_BEAT, type LabStyle 
 import { Chart } from './ui/Chart'
 import { Editor, EditorHeader } from './ui/Editor'
 import { ImportDialog, type ImportResult, type ImportSource } from './ui/ImportDialog'
-import { parseMusicXml } from './formats/musicxml'
 import { Library } from './ui/Library'
 import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
@@ -81,13 +80,10 @@ export type PlayerMode = 'chords' | 'lead'
 // Each player remembers its own last tune
 const lastTuneKey = (mode: PlayerMode) => (mode === 'lead' ? `${LAST_TUNE}:lead` : LAST_TUNE)
 const PLAYER_NAMES: Record<PlayerMode, { title: string; tag: string }> = {
-  chords: { title: 'Chord Accompaniment Player', tag: 'Practice with a band in your browser' },
+  chords: { title: 'Chord Player', tag: 'Practice with a band in your browser' },
   lead: { title: 'Lead Sheet Player', tag: 'Read and hear the melody with the band' },
 }
 // Import formats of each player: iReal Pro charts have no melody, MusicXML lead sheets do
-const CHORD_SOURCES: ImportSource[] = ['ireal', 'studio']
-const LEAD_SOURCES: ImportSource[] = ['musicxml', 'studio']
-const MUSICXML_PLAYLIST = 'MusicXML imports'
 const NO_LEAD_SHEETS = 'No lead sheets yet. Import a MusicXML lead sheet or a Studio export with melodies (Import).'
 
 // The style being made in the style lab is kept in the browser between visits
@@ -385,37 +381,12 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     if (first) showTune(first)
   }, [showTune, leadMode])
 
-  /** Import iReal Pro charts into their named playlists. */
-  const importText = useCallback(
-    async (text: string): Promise<ImportResult> => {
-      const lists = parseIrealLinks(text)
-      const added: Tune[] = []
-      for (const list of lists) added.push(...(await addTunes(list.charts, 'import', list.name)))
-      showAddedTunes(added)
-      return { tunes: added.length, playlists: [...new Set(lists.filter((l) => l.charts.length).map((l) => l.name))] }
-    },
-    [showAddedTunes],
-  )
-
-  /** Restore playlists and editable charts from a Studio export file. */
-  const importStudioText = useCallback(async (text: string): Promise<ImportResult> => {
-    const playlists = parseStudioPlaylists(text)
-    const added: Tune[] = []
-    for (const list of playlists) added.push(...(await addTunes(list.charts, 'import', list.name)))
+  /** Import charts in one of the formats; they are saved for every screen and shown here. */
+  const importFrom = useCallback(async (source: ImportSource, text: string): Promise<ImportResult> => {
+    const { added, result } = await importTunes(source, text)
     showAddedTunes(added)
-    return { tunes: added.length, playlists: playlists.map((list) => list.name) }
+    return result
   }, [showAddedTunes])
-
-  /** Import a MusicXML lead sheet (MuseScore, Audiveris, homr) into the MusicXML imports playlist. */
-  const importMusicXml = useCallback(async (text: string): Promise<ImportResult> => {
-    const added = await addTunes([parseMusicXml(text)], 'import', MUSICXML_PLAYLIST)
-    showAddedTunes(added)
-    return { tunes: added.length, playlists: [MUSICXML_PLAYLIST] }
-  }, [showAddedTunes])
-
-  // Each format with its reader
-  const importFrom = (source: ImportSource, text: string) =>
-    source === 'ireal' ? importText(text) : source === 'musicxml' ? importMusicXml(text) : importStudioText(text)
 
   /** Download a portable JSON copy of one or all saved playlists. */
   const downloadStudioExport = (selected?: string) => {
@@ -448,11 +419,11 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       const text = e.clipboardData?.getData('text') ?? ''
       if (!/irealb(ook)?:\/\//.test(text)) return
       e.preventDefault()
-      void importText(text)
+      void importFrom('ireal', text)
     }
     window.addEventListener('paste', onPaste)
     return () => window.removeEventListener('paste', onPaste)
-  }, [importText])
+  }, [importFrom])
 
   // Copy a text to the clipboard and show whether it worked
   const copy = async (text: () => Promise<string> | string, set: (s: 'idle' | 'copied' | 'failed') => void) => {

@@ -5,7 +5,7 @@ Franz Liszt Weimar; Pfleiderer et al. 2017, "Inside the Jazzomat") holds 456
 transcribed jazz solos with their beats and chord changes. This tool is for
 testing the Studio's lead-sheet reader against real, metrically annotated
 melodies: neither the database nor the playlists made from it are shipped with
-the project (data/weimar* is ignored by git). The database file, wjazzd.db, is
+the project (they go in weimar/, which git ignores). The database file, wjazzd.db, is
 in ChoCo's repository (partitions/weimar/raw/) or on the Jazzomat site.
 
 Free-time solos (transcribed without bars) are left out. Each solo becomes one chart of the Studio's export format

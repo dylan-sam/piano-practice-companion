@@ -74,11 +74,11 @@ describe('a lick over a chart', () => {
 })
 
 describe('the shipped one-chord licks', () => {
-  const charts = ['licks.json', 'licks_weimar.json'].flatMap((file) =>
+  const charts = ['licks.json'].flatMap((file) =>
     parseStudioPlaylists(readFileSync(new URL(`../public/licks/${file}`, import.meta.url), 'utf8')).flatMap((p) => p.charts))
   const licks = charts.filter(isOneChordLick)
   it('are many', () => {
-    expect(licks.length).toBeGreaterThan(400)
+    expect(licks.length).toBeGreaterThan(100)
   })
   it('come back unchanged when written over their own chord', () => {
     for (const lick of licks) {

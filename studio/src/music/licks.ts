@@ -1,5 +1,5 @@
 // Licks and improvisation exercises: short melodies over one chord or a progression. They are kept
-// as charts (a melody over chords), so the Lead Sheet Player and Melody Sightreading show, play
+// as charts (a melody over chords), so the Lead Sheet Player and the sightreaders show, play
 // and judge them like any lead sheet. A chart that is a lick or an exercise carries a `lick`
 // record saying what it is and where it comes from. The database is built by
 // scripts/lickCatalog.ts (pnpm run licks); docs/LICKS.md describes it.

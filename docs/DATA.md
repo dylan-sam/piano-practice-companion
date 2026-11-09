@@ -648,24 +648,21 @@ readings of the same files:
 The catalog has chords only. To test the app's lead sheets (a melody over the
 chords) on real music, `weimar_playlist.py` turns the solos of the
 [Weimar Jazz Database](https://jazzomat.hfm-weimar.de/) into a Studio export
-that the app imports with **Import > Studio export**. The database and the
-solo files made from it are **not shipped** with the project (`data/weimar*`
-is ignored by git): it is a test tool. Short licks and common patterns mined
-from these solos are shipped, under the database's ODbL
-([licks and exercises](LICKS.md)); `pnpm run licks` reads
-`data/weimar_solos.json` to rebuild them.
+that the app imports with **Import > Studio export**. The database, the solo
+files made from it and the licks mined from them are **not shipped** with the
+project and the app does not load them: they live in the `weimar/` folder of
+your copy, which git ignores. It is a test tool.
 
 ```sh
 # wjazzd.db is in the ChoCo repository (partitions/weimar/raw/) or on the Jazzomat site
-python weimar_playlist.py wjazzd.db data/weimar_solos.json            # all 450 solos
-python weimar_playlist.py wjazzd.db data/weimar_some.json --melid 1 3  # chosen solos
+python weimar_playlist.py wjazzd.db weimar/weimar_solos.json            # all 450 solos
+python weimar_playlist.py wjazzd.db weimar/weimar_some.json --melid 1 3  # chosen solos
 ```
 
-To test without importing, copy the file to
-`studio/public/leadsheets/weimar_solos.json` (also ignored by git) and build
-the app: both players then list its solos as a read-only playlist (edits are
-saved as a copy in My tunes). The published web demo is built from git, so it
-has none; an APK built locally does include the file (about 14 MB).
+| File in `weimar/` | What it is | Used by |
+|---|---|---|
+| `weimar_solos.json` | the 450 solos as lead sheets (about 14 MB) | **Import > Studio export** in the Lead Sheet Player or Lead Sheet Sightreading; `pnpm run licks` |
+| `licks_weimar.json` | 704 licks and 120 common patterns mined from the solos ([licks](LICKS.md)) | **Import > Studio export**, to try them |
 
 The database holds 456 transcribed solos (saxophones, trumpets, trombone,
 clarinet, vibraphone, piano, guitar) with every note's bar, beat and position

@@ -1,7 +1,7 @@
 // Links between the app's screens, and the music-stand mark shown in top bars and on the menu.
 
 import type { MouseEvent, ReactNode } from 'react'
-import { navigate, routeUrl, ROUTES } from '../router'
+import { navigate, parentRoute, routeUrl, usePath } from '../router'
 
 /** The music-stand mark. */
 export function StandIcon({ className }: { className?: string }) {
@@ -36,10 +36,11 @@ export function AppLink({ to, className, label, children }: AppLinkProps) {
   )
 }
 
-/** The top-bar title of a screen; it leads back to the main menu. */
+/** The top-bar title of a screen; it leads back to the menu of the screen's area. */
 export function Wordmark({ children }: { children: ReactNode }) {
+  const path = usePath()
   return (
-    <AppLink to={ROUTES.home} className="wordmark" label="Ear Training menu">
+    <AppLink to={parentRoute(path)} className="wordmark" label="Back to the menu">
       <StandIcon />
       <span className="wordmark-text">{children}</span>
     </AppLink>

@@ -12,7 +12,7 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 **[▶ Try it in your browser](https://dylan-sam.github.io/piano-practice-companion/)**
 (no install) · **[Download the Android app](https://github.com/dylan-sam/piano-practice-companion/releases/latest)**
 
-![The Chord Accompaniment Player](docs/images/player.png)
+![The Chord Player](docs/images/player.png)
 
 - [What you can do](#what-you-can-do)
 - [The data](#the-data)
@@ -26,9 +26,18 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The app opens on a menu of six screens.
+The main menu has three areas, each opening a menu of its screens:
 
-### Chord Accompaniment Player
+| Area | Screens |
+|---|---|
+| **Play along** | [Chord Player](#chord-player), [Lead Sheet Player](#lead-sheet-player) |
+| **Ear Training** | [Name the progression](#name-the-progression) |
+| **Sightreading** (with a MIDI keyboard) | [Chord Sightreading](#chord-sightreading), [Lead Sheet Sightreading](#lead-sheet-sightreading), [Exercises Sightreading](#exercises-sightreading), [Lick Sightreading](#lick-sightreading) |
+
+The back button (and the title at the top left of a screen) goes up one level:
+from a screen to its area's menu, then to the main menu.
+
+### Chord Player
 
 A band (bass, piano, drums) plays any chart of the catalog, or one of your own, so that you can play along !
 
@@ -76,20 +85,22 @@ or the chart's own instrument) and has its own fader in the Mixer.
   songs of the old Wikifonia site (OpenEWLD) and 981 folk tunes of the
   Nottingham Music Database, read and checked as described in
   [Lead sheets shipped with the app](docs/DATA.md#lead-sheets-shipped-with-the-app).
-  They also open in the Chord Accompaniment Player, as chord charts.
+  They also open in the Chord Player, as chord charts.
 - More lead sheets can be imported: a **MusicXML** file (`.musicxml`, `.xml`
   or `.mxl`, as MuseScore exports it, or a scanned or photographed sheet read
-  by Audiveris or homr and checked in MuseScore), or a Studio export. To try it
-  with 450 transcribed jazz solos, see
-  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database).
+  by Audiveris or homr and checked in MuseScore), or a Studio export. A lead
+  sheet imported here is also in Lead Sheet Sightreading, and the other way
+  round. To try it with 450 transcribed jazz solos, see
+  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)
+  (kept on your computer only, not shipped).
 - It also lists the **licks and exercises** below, in their own playlists.
 
 ### Licks and exercises
 
-A database of **1,470 licks and improvisation exercises**, all in C and
-playable in any key, in the Lead Sheet Player and Melody Sightreading
-([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a sixteenth;
-eighth-note triplets are used.
+A database of **646 licks and improvisation exercises**, all in C and
+playable in any key, in the Lead Sheet Player, Exercises Sightreading and Lick
+Sightreading ([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
+sixteenth; eighth-note triplets are used.
 
 - **Exercises** (222): triads and seventh chords through the keys (with and
   without the fifth, 3-5-7-9), guide-tone lines and chord-tone lines through
@@ -97,11 +108,12 @@ eighth-note triplets are used.
   the Coltrane cycle, 25 scales and scale patterns, approach notes and
   enclosures, intervals, and rhythm drills.
 - **Licks** over a ii-V-I, a minor ii-V-i, a ii-V, a V-I, a turnaround, the
-  blues, or one chord: 704 from the solos of the Weimar Jazz Database, 301 from
-  the melodies of the shipped standards, 99 from folk tunes, and 24 written for
-  the project. Each mined lick names its player, tune and bar.
-- **Common patterns** (120): runs of 7 notes played by at least 3 different
-  players of the Weimar Jazz Database.
+  blues, or one chord: 301 from the melodies of the shipped standards, 99 from
+  folk tunes, and 24 written for the project. Each mined lick names its tune
+  and bar.
+- Licks and common patterns mined from the Weimar Jazz Database solos can be
+  built on your computer for testing; they are not shipped
+  ([docs/LICKS.md](docs/LICKS.md#rights-and-credits)).
 
 ### Name the progression
 
@@ -125,14 +137,16 @@ while bass and drums play along. A chord turns green when you play it in time,
 red when its time runs out. Inversions and octave doublings count, and the
 fifth of a four-note chord may be left out. Three modes:
 
-- **Pick a song**: any chart of the catalog or of your playlists.
+- **Pick a song**: any chart of the catalog or of your playlists. **Import**
+  iReal Pro charts or a Studio export here: they are in the Chord Player and
+  Lick Sightreading too.
 - **Random song**: a random song, if you like one containing a chosen
   progression.
 - **Infinite progressions**: an endless line of short progressions chained
   through related keys, with a slider for how often seventh chords appear and
   **Focus on mistakes** for the chords you miss.
 
-### Melody Sightreading
+### Lead Sheet Sightreading
 
 Read a lead sheet and play its melody on a MIDI keyboard while bass, piano and
 drums play the chords. Every note is checked as it goes by: it turns **green**
@@ -141,27 +155,36 @@ when you miss it. The score shows right, wrong and missed notes, extra keys,
 the percentage and your average timing (early or late, in milliseconds).
 
 - **Pick a song** or **Random song**, from the 1,479 shipped lead sheets
-  (OpenEWLD and Nottingham) and your own imported ones; *Pick a song* also
-  lists the [licks and exercises](#licks-and-exercises).
+  (OpenEWLD and Nottingham) and your own imported ones. **Import** MuseScore
+  MusicXML files or a Studio export here: they are in the Lead Sheet Player
+  too.
 - **Timing**: Easy, Normal or Strict.
 - **Any octave**: count a note played in another octave than written.
 - **Guide melody**: the band also plays the melody, to follow along.
 
+### Exercises Sightreading
+
+The same screen with the [licks and exercises](#licks-and-exercises) of a few
+bars: scales, arpeggios, guide tones, approach notes, intervals, rhythm drills
+and licks. **Pick an exercise** or **Random exercise**; the key and tempo can
+change at each repetition with Practice.
+
 ### Lick Sightreading
 
-Choose a **lick** (one of the 486 one-chord licks of the
+Choose a **lick** (one of the 133 one-chord licks of the
 [database](#licks-and-exercises), or a random one) and where the chords come
-from: **Pick a song**, **Random song** or **Infinite progressions** (as in
-Chord Sightreading). The lick is written over every chord, and played again on
+from: a chord chart (**Pick a song**: the ChoCo catalog or your own imported
+iReal Pro charts, with **Import** here too), **Random song** or **Infinite
+progressions** (as in Chord Sightreading). The lick is written over every chord, and played again on
 the next bar line when it ends: chord tones stay chord tones, tensions stay
 tensions, and when the chord changes in the middle of the lick, the rest of it
 follows the new chord at once, in the octave closest to the note before. Play
-it on a MIDI keyboard with the band; it is judged as in Melody Sightreading.
+it on a MIDI keyboard with the band; it is judged as in Lead Sheet Sightreading.
 **Rest between licks** leaves a rest as long as the lick after each one.
 
 All four exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
-<img src="docs/images/phone.png" alt="The Chord Accompaniment Player on a phone" width="260">
+<img src="docs/images/phone.png" alt="The Chord Player on a phone" width="260">
 
 ## The data
 
@@ -502,7 +525,7 @@ pnpm run lint
 Put iReal Pro playlist files (`.txt` or `.html` with `irealb://` links, as
 iReal Pro exports them) in `data/ireal-playlists/` and build the data again
 (step 2). Their songs join the catalog as "iReal Pro playlists". The app can
-also import playlists itself (**Import** in the Chord Accompaniment Player); those
+also import playlists itself (**Import** in the Chord Player); those
 are kept in your browser only.
 
 ## Android and iOS apps
@@ -645,7 +668,7 @@ common_progressions.py   the catalog progressions; find_progressions.py finds th
 build_exercises.py       questions of Name the progression
 build_mobile_catalog.py  the catalog bundled in the phone apps
 build_nottingham_fix.py  rebuilds the Nottingham correction file from the ChoCo repository
-weimar_playlist.py       turns Weimar Jazz Database solos into lead sheets (test files, not shipped; the source of the Weimar licks)
+weimar_playlist.py       turns Weimar Jazz Database solos into lead sheets in weimar/ (test files, not shipped, not in git)
 left_hand_patterns.py    the piano patterns (data/left_hand_patterns.json)
 server.py                serves the app and the song search on http://127.0.0.1:8765/
 score_search.py          song search, versions and their order
@@ -657,7 +680,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
   src/engine/            arranges a chart into MIDI: bass, piano, drums, melody
   src/audio/             synthesizer (SpessaSynth), mixer, MIDI input
   src/music/             chords, charts, melodies and their ABC notation, Roman numerals, practice
-  src/exercises/         Name the progression, Chord and Melody Sightreading
+  src/exercises/         Name the progression, Chord, Lead Sheet, Exercises and Lick Sightreading
   scripts/               builds the shipped lead sheets and the licks and exercises (docs/LICKS.md)
   src/ui/                screens and controls
   src/formats/           iReal Pro import and export, share links
@@ -668,7 +691,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
 
 - [docs/DATA.md](docs/DATA.md): sources, database layout, curation, every correction, rebuilding.
 - [docs/CHORD_NOTATION.md](docs/CHORD_NOTATION.md): how chords are written, read from iReal Pro cells and played.
-- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression, Chord and Melody Sightreading in detail.
+- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression and the four sightreading screens in detail.
 - [docs/LICKS.md](docs/LICKS.md): the licks and exercises, how they are made and mined, and their rights.
 - [docs/MOBILE.md](docs/MOBILE.md): the Android and iOS apps, building and troubleshooting.
 - [studio/README.md](studio/README.md): the app, its styles and piano patterns.
@@ -695,10 +718,9 @@ composers and keys only: no melodies, lyrics or recordings.
 
 **Licks** ([docs/LICKS.md](docs/LICKS.md#rights-and-credits)): the exercises,
 the vocabulary and the folk licks in `studio/public/licks/licks.json` are
-CC BY 4.0, the licks from standards public domain;
-`studio/public/licks/licks_weimar.json` is derived from the Weimar Jazz
-Database and offered under its license, the
-[ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+CC BY 4.0, the licks from standards public domain. The licks mined from the
+Weimar Jazz Database (ODbL 1.0) are not shipped: they are built only in the
+`weimar/` folder of your own copy, which git ignores.
 
 **Libraries, sound bank and fonts** keep their own licenses: abcjs (MIT), GeneralUser GS
 (`studio/public/soundfonts/GeneralUser-GS-LICENSE.txt`, free to use, also
@@ -730,12 +752,12 @@ authors. Google Play has no such restriction. This is not legal advice.
   F. Simonetta (public domain Wikifonia scores; Discogs data CC0), and the
   Nottingham Music Database by E. Foxley, revised by J. Allwright, as kept by
   ChoCo (CC BY 4.0).
-- **Weimar licks and test melodies**: the Weimar Jazz Database (ODbL 1.0),
+- **Test melodies and test licks** (not shipped): the Weimar Jazz Database (ODbL 1.0),
   M. Pfleiderer, K. Frieler, J. Abesser, W.-G. Zaddach and B. Burkhart (eds.),
   *Inside the Jazzomat: New Perspectives for Jazz Research*, Schott Campus
   (2017). [Jazzomat Research Project](https://jazzomat.hfm-weimar.de/). The
   common patterns follow the Dig That Lick project (K. Frieler, F. Hoeger,
-  M. Pfleiderer and S. Dixon, ISMIR 2018). The full solos are not shipped.
+  M. Pfleiderer and S. Dixon, ISMIR 2018).
 - **Exercises**: the triad, interval and rhythm drills follow K. B. Kelly and
   E. Rasmussen, *A Guide to Exploring Jazz Improvisation - Book 1* (Maricopa
   Open Digital Press, 2023, CC BY 4.0).

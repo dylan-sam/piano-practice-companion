@@ -26,13 +26,20 @@ OpenStand's example songs, telemetry and submission action.
 
 | Screen | Address | Code |
 |---|---|---|
-| Menu | `/` | `src/Home.tsx` |
-| Chord Accompaniment Player (Studio) | `/studio` | `src/App.tsx` (`mode="chords"`) |
-| Lead Sheet Player | `/lead-sheet` | `src/App.tsx` (`mode="lead"`) |
-| Name the progression | `/exercises/name-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
-| Chord Sightreading | `/exercises/chord-sightreading` | `src/exercises/ChordSightreading.tsx` |
-| Melody Sightreading | `/exercises/melody-sightreading` | `src/exercises/MelodySightreading.tsx`, note judging in `src/exercises/melodyReading.ts` |
-| Lick Sightreading | `/exercises/lick-sightreading` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; both melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` |
+| Main menu, and the menus of its three areas | `/`, `/play-along`, `/ear-training`, `/sightreading` | `src/Home.tsx` (`Menu`, texts in `MENUS`) |
+| Chord Player (Studio) | `/play-along/chords` | `src/App.tsx` (`mode="chords"`) |
+| Lead Sheet Player | `/play-along/lead-sheets` | `src/App.tsx` (`mode="lead"`) |
+| Name the progression | `/ear-training/name-the-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
+| Chord Sightreading | `/sightreading/chords` | `src/exercises/ChordSightreading.tsx` |
+| Lead Sheet Sightreading | `/sightreading/lead-sheets` | `src/exercises/MelodySightreading.tsx` (`kind="lead-sheets"`), note judging in `src/exercises/melodyReading.ts` |
+| Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
+| Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` |
+
+The back button and a screen's title go up one level (`parentRoute` in
+`src/router.ts`): a screen to its area's menu, an area's menu to the main menu.
+Import works the same on every screen that offers it (`src/library/importTunes.ts`):
+charts are saved in the one library of saved tunes, so a chart imported in a
+sightreader is in the matching player too, and the other way round.
 
 Routes live in `src/router.ts` and `src/Root.tsx`. The exercises are described
 in [docs/EXERCISES.md](../docs/EXERCISES.md).
@@ -87,7 +94,7 @@ Charts from the catalog arrive in iReal Pro chord notation, written by
 The two players are one screen (`src/App.tsx`) in two modes, sharing the saved
 tunes:
 
-| | Chord Accompaniment Player | Lead Sheet Player |
+| | Chord Player | Lead Sheet Player |
 |---|---|---|
 | tunes | the catalog, the shipped lead sheets and every saved tune | the 1,479 shipped lead sheets, the licks and exercises ([docs/LICKS.md](../docs/LICKS.md)) and saved tunes with a melody (no catalog search, no New) |
 | a lead sheet | drawn as a chord chart, played without its melody | drawn on a staff, played with its melody |
@@ -147,7 +154,7 @@ Nottingham tunes only. A bar shorter than its meter (a pickup) is a `partial`
 bar: `time` is its length and the meter goes on unchanged (`barMeters` in
 `src/music/chart.ts`). The shipped lead sheets and how they were checked:
 [docs/DATA.md](../docs/DATA.md#lead-sheets-shipped-with-the-app). To test with real solos, `weimar_playlist.py` turns the Weimar Jazz
-Database into such a file ([the data](../docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)).
+Database into a Studio export in `weimar/` (not shipped, not in git) to import ([the data](../docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)).
 
 ## The Display menu
 
@@ -222,14 +229,14 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 
 | Folder | Holds |
 |---|---|
-| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which Melody Sightreading also judges), timeline and count-in (`timeline.ts`) |
+| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which the melody sightreaders also judge), timeline and count-in (`timeline.ts`) |
 | `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
-| `src/exercises/` | Name the progression, Chord Sightreading, Melody Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
+| `src/exercises/` | Name the progression, Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |
@@ -244,5 +251,4 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 - The Petaluma fonts: SIL Open Font License, `src/assets/fonts/Petaluma-OFL.txt`.
 - The song catalog in `public/catalog/` and `public/exercises/`: CC BY 4.0
   ([data license](../data/LICENSE.md)).
-- The licks and exercises: `public/licks/licks.json` CC BY 4.0,
-  `public/licks/licks_weimar.json` ODbL 1.0 ([docs/LICKS.md](../docs/LICKS.md)).
+- The licks and exercises: `public/licks/licks.json` CC BY 4.0 ([docs/LICKS.md](../docs/LICKS.md)).

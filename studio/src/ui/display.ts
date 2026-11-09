@@ -1,5 +1,5 @@
 // How chord charts are drawn, chosen in the Display menu and kept between visits. The same
-// settings apply to every chart (Accompaniment Player, Chord Sightreading, Name the progression).
+// settings apply to every chart (Chord Player, Chord Sightreading, Name the progression).
 
 import { useSyncExternalStore } from 'react'
 import { loadJson, saveJson } from '../library/storage'

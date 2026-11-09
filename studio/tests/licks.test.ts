@@ -150,7 +150,7 @@ describe('lick mining', () => {
 })
 
 describe('shipped lick files', () => {
-  for (const file of ['licks.json', 'licks_weimar.json']) {
+  for (const file of ['licks.json']) {
     it(`${file} is read by the app and keeps to the lick grid`, () => {
       const playlists = parseStudioPlaylists(readFileSync(new URL(`../public/licks/${file}`, import.meta.url), 'utf8'))
       const charts = playlists.flatMap((p) => p.charts)

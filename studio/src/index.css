@@ -2180,6 +2180,30 @@ input.fader::-moz-range-thumb {
   stroke-linejoin: round;
 }
 
+/* An area's menu leads back to the main menu */
+.home-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.home-back:hover {
+  color: var(--ink);
+}
+
+.home-back svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .home-footer {
   margin-top: auto;
   color: var(--muted);

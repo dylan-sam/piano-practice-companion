@@ -21,6 +21,8 @@ import { Chart } from '../ui/Chart'
 import { DisplayMenu } from '../ui/DisplayMenu'
 import { displayText, useDisplay } from '../ui/display'
 import { Wordmark } from '../ui/AppLink'
+import { ImportDialog, type ImportResult, type ImportSource } from '../ui/ImportDialog'
+import { CHORD_SOURCES, importTunes } from '../library/importTunes'
 import { Library } from '../ui/Library'
 import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
@@ -86,6 +88,7 @@ export function ChordSightreading() {
   const [mode, setMode] = useState<Mode>('pick')
   const [libraryOpen, setLibraryOpen] = useState(true)
   const [tunes, setTunes] = useState<Tune[]>([])
+  const [importOpen, setImportOpen] = useState(false)
   const [tune, setTune] = useState<Tune | null>(null)
   const [line, setLine] = useState<InfiniteLine | null>(null)
   const [bank, setBank] = useState<QuestionBank | null>(null)
@@ -308,6 +311,15 @@ export function ChordSightreading() {
     openTune(loaded)
   }
 
+  /** Import chord charts (saved for every screen, the Chord Player too) and open the first one. */
+  const importFrom = async (source: ImportSource, text: string): Promise<ImportResult> => {
+    const { added, result } = await importTunes(source, text)
+    const ids = new Set(added.map((item) => item.id))
+    setTunes((current) => [...current.filter((item) => !ids.has(item.id)), ...added])
+    if (added[0]) openTune(added[0])
+    return result
+  }
+
   /** Ask the server for one random distinct song containing an optional progression. */
   const chooseRandomSong = async () => {
     try {
@@ -339,7 +351,7 @@ export function ChordSightreading() {
 
   /** Change the screen mode without leaving the previous band playing; picking and random songs keep the current song. */
   const chooseMode = (next: Mode) => {
-    // Pick a song again only opens or closes the song list, as the Tunes button of the Accompaniment Player
+    // Pick a song again only opens or closes the song list, as the Tunes button of the Chord Player
     if (next === 'pick' && mode === 'pick') {
       setLibraryOpen((current) => !current)
       return
@@ -491,7 +503,7 @@ export function ChordSightreading() {
       <div className={mode === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
         {mode === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
           onSelect={(id) => { const selected = tunes.find((item) => item.id === id); if (selected) openTune(selected) }}
-          onLoadChoco={loadChoco} />}
+          onLoadChoco={loadChoco} onImport={() => setImportOpen(true)} />}
         <main className="stage exercise-stage sight-stage" onClick={() => setLibraryOpen(false)}>
           {error && <p className="exercise-error" role="alert">{error}</p>}
           {readiness.kind === 'loading' && <p className="sight-hint">Loading sounds {Math.round(readiness.progress * 100)}%...</p>}
@@ -564,6 +576,7 @@ export function ChordSightreading() {
           onPickLoop={() => setPickLoop('first')} />}
         <Mixer {...mixerProps} parts={[...MIDI_PARTS]} />
       </Transport>}
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} sources={CHORD_SOURCES} onImport={importFrom} />
     </div>
   )
 }

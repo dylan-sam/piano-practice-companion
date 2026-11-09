@@ -18,6 +18,8 @@ import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { DisplayMenu } from '../ui/DisplayMenu'
 import { Wordmark } from '../ui/AppLink'
+import { ImportDialog, type ImportResult, type ImportSource } from '../ui/ImportDialog'
+import { importTunes, LEAD_SOURCES } from '../library/importTunes'
 import { LeadSheet } from '../ui/LeadSheet'
 import { Library } from '../ui/Library'
 import { Mixer } from '../ui/Mixer'
@@ -32,6 +34,25 @@ import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSetti
 type Mode = 'pick' | 'random'
 
 const SETTINGS_KEY = 'eartraining:melody-reading'
+
+/** What is read on this screen: lead sheets (songs), or the exercises and licks of the lick database. */
+export type ReadingKind = 'lead-sheets' | 'exercises'
+
+// The words of each kind
+const KINDS: Record<ReadingKind, { title: string; item: string; items: string; empty: string; choose: string }> = {
+  'lead-sheets': {
+    title: 'Lead Sheet Sightreading', item: 'song', items: 'Songs', empty: 'No lead sheets found.',
+    choose: 'Choose a lead sheet: the shipped OpenEWLD and Nottingham songs, or your own imported ones (Import: MuseScore MusicXML files).',
+  },
+  exercises: {
+    title: 'Exercises Sightreading', item: 'exercise', items: 'Exercises', empty: 'No exercises found.',
+    choose: 'Choose an exercise: triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, or a lick.',
+  },
+}
+
+/** Whether a tune belongs on a reading screen: a lead sheet (with a melody, not a lick), or an exercise or lick. */
+const readable = (kind: ReadingKind) => (tune: Tune) =>
+  kind === 'exercises' ? !!tune.chart.lick : hasMelody(tune.chart) && !tune.chart.lick
 const BPM_RANGE: [number, number] = [40, 300]
 const BAND_PARTS: Part[] = ['bass', 'comp', 'drums']
 const GUIDE_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
@@ -43,7 +64,8 @@ function playbackPosition(timeline: Timeline, beat: number) {
 }
 
 /** Practice reading lead sheet melodies by playing them on a MIDI keyboard with the band. */
-export function MelodySightreading() {
+export function MelodySightreading({ kind }: { kind: ReadingKind }) {
+  const words = KINDS[kind]
   const playerRef = useRef<Player | null>(null)
 
   const [mode, setMode] = useState<Mode>('pick')
@@ -65,7 +87,8 @@ export function MelodySightreading() {
   const [pickLoop, setPickLoop] = useState<number | 'first' | null>(null)
 
   // Only lead sheets can be read: the shipped ones and saved charts with a melody
-  const leadSheets = useMemo(() => tunes.filter((t) => hasMelody(t.chart)), [tunes])
+  const leadSheets = useMemo(() => tunes.filter(readable(kind)), [tunes, kind])
+  const [importOpen, setImportOpen] = useState(false)
   const chart = tune?.chart ?? null
   const style = getStyle(styleId)
   const position = timeline ? playbackPosition(timeline, beat) : null
@@ -130,11 +153,12 @@ export function MelodySightreading() {
   useEffect(() => {
     // The shipped lead sheets and the saved tunes, once per visit
     let active = true
-    void Promise.all([loadTunes(), loadBundledLeadSheets({ licks: true })])
+    // Lead sheets: the shipped ones and the saved tunes; exercises: the lick database
+    void Promise.all([kind === 'lead-sheets' ? loadTunes() : Promise.resolve([]), loadBundledLeadSheets({ licks: kind === 'exercises' })])
       .then(([saved, bundled]) => { if (active) setTunes([...saved, ...bundled]) })
       .catch((cause) => { if (active) setError(String(cause)) })
     return () => { active = false }
-  }, [])
+  }, [kind])
 
   /** Stop the band; the notes already due are settled. */
   const stop = () => {
@@ -159,10 +183,19 @@ export function MelodySightreading() {
     setError('')
   }
 
-  /** Open a random lead sheet other than the one on the stand. */
+  /** Import lead sheets (saved for every screen, the Lead Sheet Player too) and open the first one. */
+  const importFrom = async (source: ImportSource, text: string): Promise<ImportResult> => {
+    const { added, result } = await importTunes(source, text)
+    const ids = new Set(added.map((item) => item.id))
+    setTunes((current) => [...current.filter((item) => !ids.has(item.id)), ...added])
+    const first = added.find(readable(kind))
+    if (first) openTune(first)
+    return result
+  }
+
+  /** Open a random lead sheet (or exercise) other than the one on the stand. */
   const chooseRandomSong = () => {
-    // Songs only: licks and exercises are chosen from their playlists
-    const others = leadSheets.filter((t) => t.id !== tune?.id && !t.chart.lick)
+    const others = leadSheets.filter((t) => t.id !== tune?.id)
     if (others.length) openTune(others[Math.floor(Math.random() * others.length)])
   }
 
@@ -267,23 +300,23 @@ export function MelodySightreading() {
   return (
     <div className="app sightreading">
       <header className="topbar">
-        <Wordmark>Melody Sightreading</Wordmark>
+        <Wordmark>{words.title}</Wordmark>
         <span className="topbar-spacer" />
         <DisplayMenu autoScroll />
         <MidiButton keyboard={keyboard} />
         {mode === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
-          onClick={() => setLibraryOpen((current) => !current)}>Songs</button>}
+          onClick={() => setLibraryOpen((current) => !current)}>{words.items}</button>}
       </header>
 
       <div className="sight-mode" role="group" aria-label="Sight-reading mode">
-        <button className="chip" aria-pressed={mode === 'pick'} onClick={() => chooseMode('pick')}>Pick a song</button>
-        <button className="chip" aria-pressed={mode === 'random'} onClick={() => chooseMode('random')}>Random song</button>
+        <button className="chip" aria-pressed={mode === 'pick'} onClick={() => chooseMode('pick')}>Pick {words.item === 'song' ? 'a' : 'an'} {words.item}</button>
+        <button className="chip" aria-pressed={mode === 'random'} onClick={() => chooseMode('random')}>Random {words.item}</button>
       </div>
 
       <div className={mode === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
         {mode === 'pick' && <Library tunes={leadSheets} selectedId={tune?.id ?? ''}
           onSelect={(id) => { const selected = leadSheets.find((item) => item.id === id); if (selected) openTune(selected) }}
-          emptyText="No lead sheets found." />}
+          emptyText={words.empty} onImport={kind === 'lead-sheets' ? () => setImportOpen(true) : undefined} />}
         <main className="stage exercise-stage sight-stage" onClick={() => setLibraryOpen(false)}>
           {error && <p className="exercise-error" role="alert">{error}</p>}
           {readiness.kind === 'loading' && <p className="sight-hint">Loading sounds {Math.round(readiness.progress * 100)}%...</p>}
@@ -292,7 +325,7 @@ export function MelodySightreading() {
           {!keyboard.supported && <p className="sight-hint">This browser does not expose Web MIDI. A compatible browser or native MIDI input is needed to score notes.</p>}
           <div className="sight-picker">
             {mode === 'random' && <button className="button button-primary" onClick={chooseRandomSong}
-              disabled={!leadSheets.length}>Choose random song</button>}
+              disabled={!leadSheets.length}>Choose random {words.item}</button>}
             <ReadingControls settings={settings} onChange={changeSettings} />
           </div>
           {tune && <LeadSheet chart={tune.chart} style={style} transpose={shownTranspose}
@@ -303,7 +336,7 @@ export function MelodySightreading() {
             noteFeedback={feedback} />}
           {tune && <MelodyScoreLine score={score} total={total} bpm={liveBpm} />}
           {tune && <p className="sight-hint">Play the melody on your keyboard as the band plays. Green: right; orange: wrong note; red: missed.</p>}
-          {!tune && mode === 'pick' && <p className="sight-hint">Choose a lead sheet (the shipped OpenEWLD and Nottingham songs, or your own imported ones), or a lick or an exercise from the Licks and Exercises playlists.</p>}
+          {!tune && mode === 'pick' && <p className="sight-hint">{words.choose}</p>}
           <p className="sight-midi-status" role="status">MIDI notes held: {noteNames.length ? noteNames.join(' \u00b7 ') : 'none'}</p>
         </main>
       </div>
@@ -323,6 +356,8 @@ export function MelodySightreading() {
           onPickLoop={() => setPickLoop('first')} />
         <Mixer {...mixer(style.comp.program)} parts={settings.guide ? GUIDE_PARTS : BAND_PARTS} />
       </Transport>}
+      {kind === 'lead-sheets' && <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}
+        sources={LEAD_SOURCES} onImport={importFrom} />}
     </div>
   )
 }

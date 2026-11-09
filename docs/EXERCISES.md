@@ -1,10 +1,12 @@
 # Exercises
 
-The app has four exercises: **Name the progression** (ear training),
-**Chord Sightreading** (playing chords on a MIDI keyboard), **Melody
-Sightreading** (playing the melody of a lead sheet on a MIDI keyboard) and
-**Lick Sightreading** (playing a lick over every chord of a song). All use real
-songs, and all remember your settings in the browser (or in the phone app).
+The app has five exercises. In the **Ear Training** menu: **Name the
+progression**. In the **Sightreading** menu, with a MIDI keyboard: **Chord
+Sightreading** (playing chords), **Lead Sheet Sightreading** (playing the
+melody of a lead sheet), **Exercises Sightreading** (playing an exercise or a
+lick of a few bars) and **Lick Sightreading** (playing a lick over every chord
+of a chord chart). All remember your settings in the browser (or in the phone
+app).
 
 - [Name the progression](#name-the-progression)
   - [A question](#a-question)
@@ -17,7 +19,7 @@ songs, and all remember your settings in the browser (or in the phone app).
   - [Scoring](#scoring)
   - [Infinite progressions](#infinite-progressions)
   - [MIDI keyboards](#midi-keyboards)
-- [Melody Sightreading](#melody-sightreading)
+- [Lead Sheet and Exercises Sightreading](#lead-sheet-and-exercises-sightreading)
   - [Songs and the band](#songs-and-the-band)
   - [How notes are judged](#how-notes-are-judged)
   - [The score](#the-score)
@@ -139,7 +141,7 @@ while bass and drums play along.
 
 | Mode | What it plays |
 |---|---|
-| **Pick a song** | any chart: search the catalog (with versions and the progression filter) or your saved playlists |
+| **Pick a song** | any chart: search the catalog (with versions and the progression filter) or your saved playlists; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Lick Sightreading too |
 | **Random song** | a random song of the catalog, if you like one containing a chosen progression |
 | **Infinite progressions** | an endless line of short catalog progressions (see below) |
 
@@ -241,10 +243,11 @@ The line scrolls to the left on large screens, and upwards on phones.
 In a browser, Web MIDI needs a secure page (`localhost` or HTTPS); the
 *Connect MIDI keyboard* button asks for access to the devices.
 
-## Melody Sightreading
+## Lead Sheet and Exercises Sightreading
 
-Connect a MIDI keyboard, choose a lead sheet, and play its melody while the
-band plays the chords. The sheet is the one of the Lead Sheet Player: the
+Connect a MIDI keyboard, choose a lead sheet (Lead Sheet Sightreading) or an
+exercise (Exercises Sightreading), and play its melody while the band plays
+the chords. The two screens are one screen in two modes and work the same. The sheet is the one of the Lead Sheet Player: the
 playing note is highlighted and the sheet scrolls by itself (Display → Sheet
 auto-scroller On/Off).
 
@@ -252,8 +255,9 @@ auto-scroller On/Off).
 
 | Control | Choices |
 |---|---|
-| Mode | **Pick a song** (search the lead sheets) or **Random song** |
-| Songs | the 1,479 shipped lead sheets (OpenEWLD and Nottingham), every saved tune with a melody, and the licks and exercises ([licks and exercises](LICKS.md)); *Random song* picks songs only |
+| Mode | **Pick a song** or **Random song** (Lead Sheet Sightreading), **Pick an exercise** or **Random exercise** (Exercises Sightreading) |
+| Songs | Lead Sheet Sightreading: the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody. **Import** MuseScore MusicXML files or a Studio export: they are saved for the Lead Sheet Player too |
+| Exercises | Exercises Sightreading: the 646 exercises and licks of the [lick database](LICKS.md) (triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, licks) |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
@@ -308,18 +312,18 @@ MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)
 
 Choose where the chords come from and a lick: the lick is written over every
 chord, as a lead sheet, and you play it on a MIDI keyboard with the band. Notes
-are judged and scored as in [Melody Sightreading](#how-notes-are-judged), with
+are judged and scored as in [Lead Sheet Sightreading](#how-notes-are-judged), with
 the same Timing, Any octave and Guide melody settings.
 
 ### Chords and licks
 
 | Control | Choices |
 |---|---|
-| Chords | **Pick a song** (the catalog, the shipped lead sheets and your own tunes, their chords only), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break (the band never plays an ending between them); the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
-| Licks | the playlists of one-chord licks of the [lick database](LICKS.md): vocabulary, licks from standards, Weimar licks (major, minor, dominant, altered, half-diminished, diminished chord) |
+| Chords | **Pick a song** (chord charts: search the ChoCo catalog, or your own saved chord charts; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Chord Sightreading too; lead sheets are not offered), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break (the band never plays an ending between them); the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
+| Licks | the playlists of one-chord licks of the [lick database](LICKS.md) (133): vocabulary, and licks from standards over a major, minor, dominant or diminished chord |
 | Lick | one lick of that playlist; **Random lick** picks any one-chord lick (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
-| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Melody Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
+| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Lead Sheet Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 
 The first lick starts on the first full bar. Notes over N.C. are left out.
 

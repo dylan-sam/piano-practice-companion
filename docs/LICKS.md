@@ -1,7 +1,7 @@
 # Licks and exercises
 
-A database of **1,470 licks and improvisation exercises** for the Lead Sheet
-Player and Melody Sightreading: phrases to play over one chord or a chord
+A database of **646 licks and improvisation exercises** for the Lead Sheet
+Player, Exercises Sightreading and Lick Sightreading: phrases to play over one chord or a chord
 progression, and drills (arpeggios, guide tones, scales, enclosures, intervals,
 rhythm) to build the vocabulary used when improvising.
 
@@ -27,8 +27,13 @@ listed in its own playlist:
 | | Licks: vocabulary | 24 | CC BY 4.0 |
 | | Licks from standards (OpenEWLD melodies), by context | 301 | public domain |
 | | Licks from folk tunes (Nottingham Music Database), by context | 99 | CC BY 4.0 |
-| `studio/public/licks/licks_weimar.json` | Weimar licks, by context | 704 | ODbL 1.0 |
+| `weimar/licks_weimar.json` (not shipped, not in git) | Weimar licks, by context | 704 | ODbL 1.0 |
 | | Weimar licks: common patterns | 120 | ODbL 1.0 |
+
+The Weimar licks are built only on a computer that has the Weimar solos
+([Testing lead sheets](DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)),
+in the `weimar/` folder, which git ignores; the app does not load them. They
+can be tried with **Import > Studio export**.
 
 The contexts, for every mined collection:
 
@@ -42,10 +47,10 @@ The contexts, for every mined collection:
 | Blues I7-IV7 | C7 F7 | a bar each |
 | Major, minor, dominant, altered dominant, half-diminished, diminished chord | one chord held for a bar or more | its first bar |
 
-The Lead Sheet Player and Melody Sightreading list them with the shipped lead
-sheets; the Chord Accompaniment Player does not (a lick has no use as a chord
-chart). **Random song** in Melody Sightreading picks songs only. **Lick
-Sightreading** writes any one-chord lick over every chord of a song or of an
+The Lead Sheet Player lists them with the shipped lead sheets, and
+**Exercises Sightreading** lists them alone; the Chord Player and Lead Sheet
+Sightreading do not. **Lick Sightreading** writes any of the 133 one-chord
+licks (vocabulary and standards) over every chord of a chord chart or of an
 endless line of progressions ([how](EXERCISES.md#lick-sightreading)).
 
 ## The rhythm rule
@@ -202,10 +207,9 @@ cd studio
 pnpm run licks
 ```
 
-This writes both files and `data/licks.log`. The Weimar file is rebuilt only
-when `data/weimar_solos.json` is present (made by `weimar_playlist.py` from
-`wjazzd.db`, see [Testing lead sheets](DATA.md#testing-lead-sheets-with-the-weimar-jazz-database));
-otherwise the shipped one is kept. The other licks come from the shipped lead
+This writes `studio/public/licks/licks.json` and `data/licks.log`, and
+`weimar/licks_weimar.json` when `weimar/weimar_solos.json` is present (made by
+`weimar_playlist.py` from `wjazzd.db`, see [Testing lead sheets](DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)). The other licks come from the shipped lead
 sheets (`studio/public/leadsheets/catalog.json`), so rebuild those first
 (`pnpm run leadsheets`) when their sources change.
 
@@ -232,12 +236,13 @@ sheets (`studio/public/leadsheets/catalog.json`), so rebuild those first
   public domain scores.
 - **Licks from folk tunes**: from the Nottingham Music Database (E. Foxley,
   revised by J. Allwright), as kept by ChoCo under CC BY 4.0.
-- **Weimar licks and common patterns** (`licks_weimar.json`): derived from the
+- **Weimar licks and common patterns** (`weimar/licks_weimar.json`, not
+  shipped and not in git): derived from the
   [Weimar Jazz Database](https://jazzomat.hfm-weimar.de/), released under the
   [Open Database License (ODbL 1.0)](https://opendatacommons.org/licenses/odbl/1-0/),
-  so this file is offered under the ODbL 1.0 too. Credit: M. Pfleiderer,
+  so the file is under the ODbL 1.0 too. Credit: M. Pfleiderer,
   K. Frieler, J. Abesser, W.-G. Zaddach and B. Burkhart (eds.), *Inside the
   Jazzomat: New Perspectives for Jazz Research*, Schott Campus, Mainz (2017).
   The ODbL covers the database; each lick is a short excerpt (one to three
   bars) of an improvisation whose rights belong to its performer, credited by
-  name, tune and bar. The full solos are still not shipped.
+  name, tune and bar.

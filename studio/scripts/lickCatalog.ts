@@ -1,15 +1,15 @@
-// Build the lick and exercise database shipped with the app (pnpm run licks):
+// Build the lick and exercise database (pnpm run licks):
 //
-//   studio/public/licks/licks.json         generated exercises and vocabulary, and licks from the
-//                                          shipped lead sheets (OpenEWLD melodies, Nottingham
-//                                          folk tunes); CC BY 4.0 like the project's data
-//   studio/public/licks/licks_weimar.json  licks and common patterns from the Weimar Jazz
-//                                          Database solos (ODbL 1.0, kept apart for its license)
-//   data/licks.log                         what was kept and turned down, and why
+//   studio/public/licks/licks.json  shipped with the app: generated exercises and vocabulary, and
+//                                   licks from the shipped lead sheets (OpenEWLD melodies,
+//                                   Nottingham folk tunes); CC BY 4.0 like the project's data
+//   weimar/licks_weimar.json        not shipped (weimar/ is ignored by git): licks and common
+//                                   patterns from the Weimar Jazz Database solos (ODbL 1.0)
+//   data/licks.log                  what was kept and turned down, and why
 //
-// The Weimar licks are built only when data/weimar_solos.json is there (made by
-// weimar_playlist.py from wjazzd.db, see docs/DATA.md); otherwise the shipped file is left as it
-// is. Every chart is checked: chart format, chord symbols, the lick grid (onLickGrid) and range.
+// The Weimar licks are built only when weimar/weimar_solos.json is there (made by
+// weimar_playlist.py from wjazzd.db, see docs/DATA.md). Every chart is checked: chart format,
+// chord symbols, the lick grid (onLickGrid) and range.
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
@@ -36,7 +36,7 @@ const CATEGORIES = ['ii-V-I major', 'minor ii-V-i', 'ii-V', 'V-I', 'I-vi-ii-V tu
 /** Paths of the inputs and outputs. */
 export interface LickPaths {
   leadSheets: string // the shipped lead sheet catalog (OpenEWLD and Nottingham)
-  weimar: string // data/weimar_solos.json (optional)
+  weimar: string // weimar/weimar_solos.json (optional, not in git)
   out: string
   outWeimar: string
   log: string
@@ -138,7 +138,7 @@ export function buildLickCatalog(paths: LickPaths): string {
     const count = writePlaylists(paths.outWeimar, weimar, log, false)
     summary += `, ${count} in ${paths.outWeimar}`
   } else {
-    log.push(`No ${paths.weimar}: the Weimar licks were left as they are`)
+    log.push(`No ${paths.weimar}: no Weimar licks built`)
   }
   writeFileSync(paths.log, log.join('\n') + '\n')
   return summary

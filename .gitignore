@@ -19,6 +19,9 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Test playlists made by weimar_playlist.py from the Weimar Jazz Database (not shipped)
+# Weimar Jazz Database solos (weimar_playlist.py) and the licks mined from them (pnpm run licks):
+# kept aside in weimar/, not shipped and not in git
+weimar/
 data/weimar*
 studio/public/leadsheets/weimar*
+studio/public/licks/licks_weimar*

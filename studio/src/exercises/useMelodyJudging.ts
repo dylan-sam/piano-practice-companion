@@ -1,4 +1,4 @@
-// Judging a melody played on a MIDI keyboard, shared by Melody Sightreading and Lick
+// Judging a melody played on a MIDI keyboard, shared by Lead Sheet, Exercises and Lick
 // Sightreading: the judge and its feedback on the sheet, and the reading settings. Their controls
 // and the score line are in ReadingControls.tsx.
 

@@ -15,12 +15,14 @@ import { loadTunes } from '../library/db'
 import type { CatalogProgression } from '../library/scoreSearch'
 import { loadJson, saveJson } from '../library/storage'
 import { prettyNoteName, spellRoot } from '../music/chords'
-import { withoutMelody, type Chart as ChartData } from '../music/chart'
+import { hasMelody, withoutMelody, type Chart as ChartData } from '../music/chart'
 import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from '../music/practice'
 import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { DisplayMenu } from '../ui/DisplayMenu'
 import { Wordmark } from '../ui/AppLink'
+import { ImportDialog, type ImportResult, type ImportSource } from '../ui/ImportDialog'
+import { CHORD_SOURCES, importTunes } from '../library/importTunes'
 import { LeadSheet } from '../ui/LeadSheet'
 import { Library } from '../ui/Library'
 import { Mixer } from '../ui/Mixer'
@@ -100,6 +102,7 @@ export function LickSightreading() {
   const [mode, setMode] = useState<Mode>('pick')
   const [libraryOpen, setLibraryOpen] = useState(true)
   const [tunes, setTunes] = useState<Tune[]>([])
+  const [importOpen, setImportOpen] = useState(false)
   const [licks, setLicks] = useState<Tune[]>([])
   const [tune, setTune] = useState<Tune | null>(null)
   const [line, setLine] = useState<InfiniteLine | null>(null)
@@ -235,13 +238,14 @@ export function LickSightreading() {
   })
 
   useEffect(() => {
-    // Saved tunes and shipped lead sheets (their chords), the licks, the catalog's progressions and the progression bank
+    // Saved chord charts, the licks, the catalog's progressions and the progression bank
     let active = true
     const controller = new AbortController()
     void Promise.all([loadTunes(), loadBundledLeadSheets({ licks: true })])
       .then(([saved, bundled]) => {
         if (!active) return
-        setTunes([...saved, ...bundled.filter((t) => !t.chart.lick)])
+        // Chord charts only: the saved ones (lead sheets are left out) and the catalog, searched in the list
+        setTunes(saved.filter((t) => !hasMelody(t.chart)))
         setLicks(bundled.filter((t) => isOneChordLick(t.chart)))
       })
       .catch((cause) => { if (active) setError(String(cause)) })
@@ -285,6 +289,15 @@ export function LickSightreading() {
     const loaded = await fetchChocoTune(id)
     setTunes((current) => [...current.filter((item) => item.id !== loaded.id), loaded])
     openTune(loaded)
+  }
+
+  /** Import chord charts (saved for every screen, the Chord Player too) and open the first one. */
+  const importFrom = async (source: ImportSource, text: string): Promise<ImportResult> => {
+    const { added, result } = await importTunes(source, text)
+    const ids = new Set(added.map((item) => item.id))
+    setTunes((current) => [...current.filter((item) => !ids.has(item.id)), ...added])
+    if (added[0]) openTune(added[0])
+    return result
   }
 
   /** Open a random song of the catalog, containing a chosen progression if one is chosen. */
@@ -473,7 +486,7 @@ export function LickSightreading() {
       <div className={mode === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
         {mode === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
           onSelect={(id) => { const selected = tunes.find((item) => item.id === id); if (selected) openTune(selected) }}
-          onLoadChoco={loadChoco} />}
+          onLoadChoco={loadChoco} onImport={() => setImportOpen(true)} />}
         <main className="stage exercise-stage sight-stage" onClick={() => setLibraryOpen(false)}>
           {error && <p className="exercise-error" role="alert">{error}</p>}
           {readiness.kind === 'loading' && <p className="sight-hint">Loading sounds {Math.round(readiness.progress * 100)}%...</p>}
@@ -529,7 +542,7 @@ export function LickSightreading() {
             noteFeedback={feedback} />}
           {chart && <MelodyScoreLine score={score} total={total} bpm={liveBpm} />}
           {chart && <p className="sight-hint">Play the lick on your keyboard over each chord as the band plays. Green: right; orange: wrong note; red: missed.</p>}
-          {!chart && mode === 'pick' && <p className="sight-hint">Choose a song (the catalog, the shipped lead sheets or your own tunes) and a lick: the lick is written over every chord of the song.</p>}
+          {!chart && mode === 'pick' && <p className="sight-hint">Choose a chord chart (search the ChoCo catalog, or your own imported iReal Pro charts) and a lick: the lick is written over every chord of the chart.</p>}
           {!licks.length && <p className="sight-hint">Loading the licks...</p>}
           <p className="sight-midi-status" role="status">MIDI notes held: {noteNames.length ? noteNames.join(' \u00b7 ') : 'none'}</p>
         </main>
@@ -550,6 +563,7 @@ export function LickSightreading() {
           onPickLoop={() => setPickLoop('first')} />}
         <Mixer {...mixer(style.comp.program)} parts={settings.guide ? GUIDE_PARTS : BAND_PARTS} />
       </Transport>}
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} sources={CHORD_SOURCES} onImport={importFrom} />
     </div>
   )
 }
