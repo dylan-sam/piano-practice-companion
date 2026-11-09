@@ -1,9 +1,10 @@
 # Exercises
 
-The app has two exercises built on the catalog: **Name the progression** (ear
-training) and **Chord Sightreading** (playing chords on a MIDI keyboard). Both
-use real songs, and both remember your settings and progress in the browser (or
-in the phone app).
+The app has three exercises: **Name the progression** (ear training),
+**Chord Sightreading** (playing chords on a MIDI keyboard) and **Melody
+Sightreading** (playing the melody of a lead sheet on a MIDI keyboard). All use
+real songs, and all remember your settings in the browser (or in the phone
+app).
 
 - [Name the progression](#name-the-progression)
   - [A question](#a-question)
@@ -16,6 +17,10 @@ in the phone app).
   - [Scoring](#scoring)
   - [Infinite progressions](#infinite-progressions)
   - [MIDI keyboards](#midi-keyboards)
+- [Melody Sightreading](#melody-sightreading)
+  - [Songs and the band](#songs-and-the-band)
+  - [How notes are judged](#how-notes-are-judged)
+  - [The score](#the-score)
 
 ## Name the progression
 
@@ -232,3 +237,61 @@ The line scrolls to the left on large screens, and upwards on phones.
 
 In a browser, Web MIDI needs a secure page (`localhost` or HTTPS); the
 *Connect MIDI keyboard* button asks for access to the devices.
+
+## Melody Sightreading
+
+Connect a MIDI keyboard, choose a lead sheet, and play its melody while the
+band plays the chords. The sheet is the one of the Lead Sheet Player: the
+playing note is highlighted and the sheet scrolls by itself (Display → Sheet
+auto-scroller On/Off).
+
+### Songs and the band
+
+| Control | Choices |
+|---|---|
+| Mode | **Pick a song** (search the lead sheets) or **Random song** |
+| Songs | the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody |
+| Style, piano pattern | as in the players |
+| Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
+| Tempo, choruses, Practice | as in the players (loop, keys, speed up) |
+| Mixer | bass, piano, drums, and melody when the guide melody is on |
+| Guide melody | Off (default): the band plays the chords only. On: it also plays the melody |
+
+The notes you play sound through an acoustic piano. Swing and Blues play
+eighth-note "ands" late, and the notes are expected where the band swings them.
+
+### How notes are judged
+
+Every written note gets a window around its start (`TIMING_WINDOWS` in
+`studio/src/exercises/melodyReading.ts`):
+
+| Timing | Window, each side |
+|---|---|
+| Easy | 0.4 beat |
+| Normal (default) | 1/4 beat |
+| Strict | 1/8 beat |
+
+- A window never reaches past half the gap to the next or previous note, so
+  fast runs stay fair: a key always belongs to the nearest note.
+- A key with the right pitch inside the window makes the note **right**
+  (green).
+- A key with a wrong pitch marks the note **wrong** (orange), but it can still
+  be put right by the right key before the window ends.
+- A note not played when its window ends is **missed** (red).
+- A key pressed where no note is due is an **extra key**.
+- **Any octave** (On by default): a note played in another octave than written
+  counts. Off: the written octave is required.
+- Repeats, endings and choruses are followed: each pass through a bar is judged
+  again, and the colours show the last pass.
+- Without a MIDI keyboard you can still listen; nothing is counted.
+
+### The score
+
+The line under the settings shows, for the play-through so far: notes right,
+wrong notes, missed notes, extra keys, the percentage of judged notes played
+right, and the average timing of the right notes in milliseconds (early or
+late). It starts again with each play, and whenever the arrangement or the
+judging changes (style, key, choruses, Practice, Timing, Any octave, Guide
+melody).
+
+MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)).

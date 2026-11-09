@@ -21,6 +21,8 @@ interface LeadSheetProps {
   range?: [number, number] | null // looped bars
   onBarClick?: (index: number) => void
   autoScroll?: boolean
+  // Results of a melody played on a keyboard, by written note (melodyReading.ts noteKey: "bar:at")
+  noteFeedback?: Record<string, 'correct' | 'wrong' | 'missed'>
 }
 
 // The engraver is loaded with the first lead sheet, so chord charts don't download it
@@ -33,6 +35,7 @@ const PHONE_STAFF_WIDTH = 520
 const CLICK_ABOVE = 50 // a bar can be picked from this far above its staff (its chord symbols)...
 const CLICK_BELOW = 20 // ...and below it
 const LOOP_GAP = 10 // the pencil line under looped bars, this far below the staff
+const FEEDBACK_REACH = 0.2 // a result marks a drawn note starting this close to it, in beats
 const NOTE_LEAD = 2 // the highlight reaches a note just before its head
 const MARGIN_GAP = 6 // a rehearsal mark before a staff line ends this far left of it
 
@@ -203,7 +206,7 @@ function sectionMarks(root: HTMLElement, chart: ChartData, notes: DrawnNote[], b
 }
 
 /** Render a chart that has a melody as an engraved lead sheet that follows playback. */
-export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll }: LeadSheetProps) {
+export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll, noteFeedback }: LeadSheetProps) {
   const display = useDisplay()
   const phone = useTwoBarRows()
   const keyPc = (chart.key + transpose + 12) % 12
@@ -273,6 +276,24 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     current.element.classList.add('lead-note-playing')
     return () => current.element.classList.remove('lead-note-playing')
   }, [current])
+
+  // Colour the notes a player has played right, wrong or missed: each result goes to the drawn
+  // note of its bar that starts nearest to it (the drawing rounds starts to its grid)
+  useEffect(() => {
+    if (!noteFeedback) return
+    const marked: Element[] = []
+    for (const [key, result] of Object.entries(noteFeedback)) {
+      const [bar, at] = key.split(':').map(Number)
+      const drawn = notes.filter((n) => n.bar === bar && !n.rest && Math.abs(n.at - at) < FEEDBACK_REACH)
+        .sort((a, b) => Math.abs(a.at - at) - Math.abs(b.at - at))[0]
+      if (!drawn) continue
+      drawn.element.classList.add(`lead-note-${result}`)
+      marked.push(drawn.element)
+    }
+    return () => {
+      for (const element of marked) element.classList.remove('lead-note-correct', 'lead-note-wrong', 'lead-note-missed')
+    }
+  }, [notes, noteFeedback])
 
   // Where each bar and rehearsal mark is drawn, measured again after each layout
   const [boxes, setBoxes] = useState<Boxes>(NO_BOXES)

@@ -31,6 +31,7 @@ OpenStand's example songs, telemetry and submission action.
 | Lead Sheet Player | `/lead-sheet` | `src/App.tsx` (`mode="lead"`) |
 | Name the progression | `/exercises/name-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
 | Chord Sightreading | `/exercises/chord-sightreading` | `src/exercises/ChordSightreading.tsx` |
+| Melody Sightreading | `/exercises/melody-sightreading` | `src/exercises/MelodySightreading.tsx`, note judging in `src/exercises/melodyReading.ts` |
 
 Routes live in `src/router.ts` and `src/Root.tsx`. The exercises are described
 in [docs/EXERCISES.md](../docs/EXERCISES.md).
@@ -216,14 +217,14 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 
 | Folder | Holds |
 |---|---|
-| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`), timeline and count-in (`timeline.ts`) |
+| `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which Melody Sightreading also judges), timeline and count-in (`timeline.ts`) |
 | `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
-| `src/exercises/` | Name the progression and Chord Sightreading |
+| `src/exercises/` | Name the progression, Chord Sightreading, Melody Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`) |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |
 

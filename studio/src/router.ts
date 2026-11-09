@@ -7,6 +7,7 @@ export const ROUTES = {
   leadSheet: '/lead-sheet',
   nameProgression: '/exercises/name-progression',
   chordSightreading: '/exercises/chord-sightreading',
+  melodySightreading: '/exercises/melody-sightreading',
 } as const
 
 const NAVIGATE = 'eartraining:navigate'

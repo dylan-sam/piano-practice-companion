@@ -690,6 +690,41 @@ button:disabled {
   stroke: var(--note-playing);
 }
 
+/* Melody sightreading: notes played right, with a wrong pitch, or not at all (same colours as chords) */
+.lead-note-correct path {
+  fill: #2e9d55;
+  stroke: #2e9d55;
+}
+
+.lead-note-wrong path {
+  fill: #d9822b;
+  stroke: #d9822b;
+}
+
+.lead-note-missed path {
+  fill: #d95757;
+  stroke: #d95757;
+}
+
+/* The score of a melody played through */
+.melody-score {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 0 0;
+  font-family: var(--sans);
+  color: var(--ink-2);
+}
+
+.melody-score strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.melody-score .score-correct { color: #2e9d55; }
+.melody-score .score-wrong { color: #d9822b; }
+.melody-score .score-missed { color: #d95757; }
+
 .lead-score-clickable {
   cursor: pointer;
 }

@@ -26,7 +26,7 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The app opens on a menu of four screens.
+The app opens on a menu of five screens.
 
 ### Chord Accompaniment Player
 
@@ -105,7 +105,21 @@ fifth of a four-note chord may be left out. Three modes:
   through related keys, with a slider for how often seventh chords appear and
   **Focus on mistakes** for the chords you miss.
 
-Both exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
+### Melody Sightreading
+
+Read a lead sheet and play its melody on a MIDI keyboard while bass, piano and
+drums play the chords. Every note is checked as it goes by: it turns **green**
+when you play the right pitch in time, **orange** for a wrong pitch, **red**
+when you miss it. The score shows right, wrong and missed notes, extra keys,
+the percentage and your average timing (early or late, in milliseconds).
+
+- **Pick a song** or **Random song**, from the 1,479 shipped lead sheets
+  (OpenEWLD and Nottingham) and your own imported ones.
+- **Timing**: Easy, Normal or Strict.
+- **Any octave**: count a note played in another octave than written.
+- **Guide melody**: the band also plays the melody, to follow along.
+
+All three exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
 <img src="docs/images/phone.png" alt="The Chord Accompaniment Player on a phone" width="260">
 
@@ -603,7 +617,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
   src/engine/            arranges a chart into MIDI: bass, piano, drums, melody
   src/audio/             synthesizer (SpessaSynth), mixer, MIDI input
   src/music/             chords, charts, melodies and their ABC notation, Roman numerals, practice
-  src/exercises/         Name the progression and Chord Sightreading
+  src/exercises/         Name the progression, Chord and Melody Sightreading
   src/ui/                screens and controls
   src/formats/           iReal Pro import and export, share links
   tests/                 app tests
@@ -613,7 +627,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
 
 - [docs/DATA.md](docs/DATA.md): sources, database layout, curation, every correction, rebuilding.
 - [docs/CHORD_NOTATION.md](docs/CHORD_NOTATION.md): how chords are written, read from iReal Pro cells and played.
-- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression and Chord Sightreading in detail.
+- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression, Chord and Melody Sightreading in detail.
 - [docs/MOBILE.md](docs/MOBILE.md): the Android and iOS apps, building and troubleshooting.
 - [studio/README.md](studio/README.md): the app, its styles and piano patterns.
 - [PATTERN_AUDIT.md](PATTERN_AUDIT.md): the piano patterns and their sources.

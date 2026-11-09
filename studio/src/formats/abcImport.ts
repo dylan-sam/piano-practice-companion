@@ -249,7 +249,7 @@ export function partPlan(order: string): string | null {
       } else if (plan[i] === '(') {
         let depth = 1
         let j = i + 1
-        while (j < plan.length && depth) depth += plan[j] === '(' ? 1 : plan[j] === ')' ? -1 : 0, j++
+        for (; j < plan.length && depth; j++) depth += plan[j] === '(' ? 1 : plan[j] === ')' ? -1 : 0
         if (depth) return null
         const inner = expand(plan.slice(i + 1, j - 1))
         const count = /^\d+/.exec(plan.slice(j))?.[0] ?? '1'

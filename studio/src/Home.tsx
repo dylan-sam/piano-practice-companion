@@ -29,6 +29,11 @@ const MENU: MenuItem[] = [
     description: 'Practice playing chords by plugging in a MIDI keyboard! The chord progressions come from real songs!',
     path: ROUTES.chordSightreading,
   },
+  {
+    title: 'Melody Sightreading',
+    description: 'Read a lead sheet and play its melody on a MIDI keyboard with the band. Every note is checked.',
+    path: ROUTES.melodySightreading,
+  },
 ]
 
 /** The main menu: one entry per screen of the app, and the data and code credits. */
