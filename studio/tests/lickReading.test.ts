@@ -61,6 +61,10 @@ describe('a lick over a chart', () => {
     const chart = withLick(chordChart('C-7:4 F7:4 Bb^7:4'), lickShape(theLick)!, { rest: true })
     expect([...new Set(chart.melody!.notes.map((n) => n.bar))]).toEqual([0, 2])
   })
+  it('starts after the bars of rest asked for (the top of an infinite sheet)', () => {
+    const chart = withLick(chordChart('C-7:4 F7:4 Bb^7:4'), lickShape(theLick)!, { rest: false, leadIn: 1 })
+    expect([...new Set(chart.melody!.notes.map((n) => n.bar))]).toEqual([1, 2])
+  })
   it('keeps a held note when the chord changes under it and leaves out notes over N.C.', () => {
     const held = makeLickChart({ title: 'x', chords: parseChords('C7:4'), notes: parseNotes('E4:2 G4:2'), info })
     const chart = withLick(chordChart('C7:1 F7:3 N.C.:4'), lickShape(held)!, { rest: false })

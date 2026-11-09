@@ -79,6 +79,7 @@ export function ChordSightreading() {
   const pendingRef = useRef<PreparedChunk | null>(null)
   const chunkEndRef = useRef(Infinity) // beat at which the playing infinite chunk ends
   const switchedRef = useRef(false) // the current chunk already handed over to the next one
+  const chunkCountInRef = useRef(true) // whether the chart or chunk on the stand began with a count-in
   const [mistakes, setMistakes] = useState<Mistakes>(() => loadJson(MISTAKES_KEY, {}, isMistakes))
   const mistakesRef = useRef(mistakes)
 
@@ -174,6 +175,7 @@ export function ChordSightreading() {
         setBeat(0)
       }
       judgeRef.current = judge
+      chunkCountInRef.current = countIn
       chunkEndRef.current = arrangement.timeline.totalBeats
       switchedRef.current = false
       setTimeline(arrangement.timeline)
@@ -218,6 +220,7 @@ export function ChordSightreading() {
     pendingRef.current = null
     infiniteRef.current = pending.line
     judgeRef.current = new ChordJudge(pending.arrangement.timeline)
+    chunkCountInRef.current = false
     chunkEndRef.current = pending.arrangement.timeline.totalBeats
     setLine(pending.line)
     setTimeline(pending.arrangement.timeline)
@@ -359,7 +362,10 @@ export function ChordSightreading() {
     if (next !== 'infinite') setTune(null)
   }
 
-  /** Restart the current arrangement only when a sound-affecting control changes. */
+  /**
+   * Arrange again when a sound-affecting control changes: a new style or bass pattern goes on from
+   * where the band is, other changes start the chart again.
+   */
   const changeArrangement = (nextStyle: string, nextPattern: BassPatternId, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice) => {
     setStyleId(nextStyle)
@@ -367,7 +373,14 @@ export function ChordSightreading() {
     setTranspose(nextTranspose)
     setChoruses(nextChoruses)
     setPractice(nextPractice)
-    if (playing && chart) void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice)
+    const player = playerRef.current
+    if (playing && chart && player) {
+      // A new style or bass pattern goes on from where the band is, with the chunk's own count-in
+      const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice
+      if (soundOnly) finalizeThrough(player.heardPosition * BASE_BPM / 60)
+      void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice,
+        soundOnly ? chunkCountInRef.current : true, soundOnly ? player.position : 0)
+    }
     if (mode === 'infinite' && line) prepareNext(line, nextStyle, nextPattern)
   }
 

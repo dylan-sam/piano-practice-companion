@@ -43,7 +43,11 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   fourth, a half step or a whole step each chorus), speed up each chorus. Keys
   and speed-up apply while the band plays, without starting over, in every
   player and exercise (with the choruses needed to go round the keys); a new
-  loop starts over.
+  loop starts over. A new style or piano pattern also goes on from where the
+  band is, and a melody then swings as the new style does.
+- **Swing marking**: a sheet whose style swings its eighths shows the usual
+  marking (two eighths = a triplet quarter and eighth) under the style, at the
+  top left.
 - **Mixer**: volume and mute for bass, piano and drums, and a master volume.
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the

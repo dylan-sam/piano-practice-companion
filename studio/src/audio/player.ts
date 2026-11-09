@@ -132,6 +132,9 @@ export class Player {
   async play(midi: Uint8Array, fromSeconds = 0): Promise<void> {
     const seq = this.requireSeq()
     this.playRequested = true
+    // A song replacing a playing one (the next chunk of an endless exercise, a new arrangement
+    // going on from where the band is) never sends the note-offs of the notes still sounding
+    this.releaseBand()
     const resumed = this.ctx.resume()
     await this.load(midi, 'arrangement.mid')
     await resumed
@@ -215,6 +218,16 @@ export class Player {
   /** Release a player's monitored MIDI key without changing the backing track. */
   liveNoteOff(note: number): void {
     this.synth?.noteOff(LIVE_PIANO_CHANNEL, note)
+  }
+
+  /** Release every note of the band (all channels but the live piano) and lift the sustain pedal. */
+  private releaseBand(): void {
+    if (!this.synth) return
+    for (let channel = 0; channel < 16; channel++) {
+      if (channel === LIVE_PIANO_CHANNEL) continue
+      this.synth.controllerChange(channel, MIDIControllers.sustainPedal, 0)
+      this.synth.controllerChange(channel, MIDIControllers.allNotesOff, 0)
+    }
   }
 
   private applyVolumes(): void {

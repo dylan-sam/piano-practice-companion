@@ -75,6 +75,7 @@ The patterns, their sources and how they follow the chords:
 | chords sharing beats in tuplets (three in four beats, five in a bar) | a bracket with the count over them, as in printed music: up to 7 notes, at most two a beat | `tuplets` in `src/music/chart.ts` |
 | a time signature at the start of a line (the first bar, or a change starting a line) | in the margin before the bar line, so the chords keep their room | `src/ui/Chart.tsx` |
 | a time signature change inside a line | at the start of its bar | `src/ui/Chart.tsx` |
+| a style that swings its eighths (swing above 0.5) | the swing marking (two eighths = a triplet quarter and eighth) under the style at the top left, on chord charts and lead sheets | `SwingMark` in `src/ui/Chart.tsx` |
 | upright phones | 2 bars per row instead of 4 | `src/ui/useNarrowScreen.ts`, [mobile](../docs/MOBILE.md) |
 | playing a chart taller than the screen (player and sightreader) | once the highlight reaches the middle of the visible area, the sheet scrolls so it stays there: the reading point moves down the row as the highlight runs along it, so the speed follows the tempo and the beats in a row. Scrolling by hand (wheel, swipe, arrow keys) pauses it for 3 seconds | `src/ui/useAutoScroll.ts` |
 

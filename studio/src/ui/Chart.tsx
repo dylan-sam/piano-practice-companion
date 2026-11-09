@@ -252,10 +252,39 @@ export function SheetHead({ chart, style, keyPc }: { chart: ChartData; style: St
   const keyName = prettyNoteName(keyPc) + (chart.minor ? '\u2212' : '')
   return (
     <header className="sheet-head">
-      <span className="sheet-meta">{`(${chart.sourceStyle || style.name})`}</span>
+      <span className="sheet-meta">
+        {`(${chart.sourceStyle || style.name})`}
+        {style.swing > 0.5 && <SwingMark />}
+      </span>
       <h1 className="sheet-title">{chart.title}</h1>
       <span className="sheet-meta sheet-meta-right">{chart.composer ?? `Key of ${keyName}`}</span>
     </header>
+  )
+}
+
+/**
+ * The swing marking written at the top left of a sheet whose style swings its eighths: two
+ * eighth notes are played as a quarter and an eighth of a triplet.
+ */
+function SwingMark() {
+  const label = 'Swing eighths: two eighth notes are played as a triplet quarter and eighth'
+  return (
+    <svg className="swing-mark" viewBox="0 0 96 34" role="img" aria-label={label}>
+      <title>{label}</title>
+      {/* Two eighth notes under a beam */}
+      <ellipse cx="7" cy="28" rx="4.2" ry="3" transform="rotate(-20 7 28)" />
+      <ellipse cx="21" cy="28" rx="4.2" ry="3" transform="rotate(-20 21 28)" />
+      <path className="swing-mark-line" d="M10.6 27V9M24.6 27V9" />
+      <path d="M10 8h15.2v3.4H10z" />
+      {/* = */}
+      <path className="swing-mark-line" d="M33 17h9M33 22h9" />
+      {/* A quarter and an eighth under a triplet bracket */}
+      <ellipse cx="54" cy="28" rx="4.2" ry="3" transform="rotate(-20 54 28)" />
+      <ellipse cx="74" cy="28" rx="4.2" ry="3" transform="rotate(-20 74 28)" />
+      <path className="swing-mark-line" d="M57.6 27V11M77.6 27V11M77.6 11c1 4 6 5 5 11" />
+      <path className="swing-mark-line" d="M50 6V3h10M72 3h10v3" />
+      <text x="66" y="7" textAnchor="middle">3</text>
+    </svg>
   )
 }
 

@@ -159,7 +159,7 @@ notes you play sound through an acoustic piano.
 
 | Control | Choices |
 |---|---|
-| Style | the drum groove: Swing, Bossa Nova, Latin, Ballad, Blues, Straight Pop/Rock |
+| Style | the drum groove: Swing, Bossa Nova, Latin, Ballad, Blues, Straight Pop/Rock; a new style or bass pattern goes on from where the band is (in infinite mode too), and the chords already played keep their colours |
 | Bass pattern | Walking Bass, Boogie Walking Bass, Latin Bassline, Ballad Bassline, Root-Fifth Bassline, for any style |
 | Key | the song's key, a random key (chosen when a song loads), or any key |
 | Tempo, choruses, Practice | as in the player (loop, keys, speed up); choosing keys or a speed-up while the band plays goes on from where it is, with the choruses needed to go round the keys, and the chords already played keep their colours; a new loop starts over |
@@ -294,9 +294,11 @@ The line under the settings shows, for the play-through so far: notes right,
 wrong notes, missed notes, extra keys, the percentage of judged notes played
 right, and the average timing of the right notes in milliseconds (early or
 late). It starts again with each play, and whenever the arrangement or the
-judging changes (style, key, choruses, a Practice loop, Timing, Any octave,
-Guide melody). Practice > Keys and the speed-up go on from where the band is
-and keep the score: the notes still to come are judged in their new keys.
+judging changes (key, choruses, a Practice loop, Timing, Any octave, Guide
+melody). A new style or piano pattern goes on from where the band is and keeps
+the score; the notes still to come are judged where the new style swings them.
+Practice > Keys and the speed-up go on from where the band is and keep the
+score: the notes still to come are judged in their new keys.
 
 MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)).
 
@@ -311,11 +313,11 @@ the same Timing, Any octave and Guide melody settings.
 
 | Control | Choices |
 |---|---|
-| Chords | **Pick a song** (the catalog, the shipped lead sheets and your own tunes, their chords only), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break; the score goes on across chunks) |
+| Chords | **Pick a song** (the catalog, the shipped lead sheets and your own tunes, their chords only), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break; the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
 | Licks | the playlists of one-chord licks of the [lick database](LICKS.md): vocabulary, licks from standards, Weimar licks (major, minor, dominant, altered, half-diminished, diminished chord) |
 | Lick | one lick of that playlist; **Random lick** picks any one-chord lick (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
-| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Melody Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions) |
+| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Melody Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 
 The first lick starts on the first full bar. Notes over N.C. are left out.
 

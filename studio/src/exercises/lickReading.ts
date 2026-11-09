@@ -113,6 +113,7 @@ export function shapePitch(note: ShapeNote, chord: Chord, root: number): number 
 /** How the lick is laid over a chart. */
 export interface LickLayout {
   rest: boolean // a rest as long as the lick between two licks
+  leadIn?: number // bars of rest before the first lick (the band plays them), to find the top of a new sheet
 }
 
 const LOW = 48 // C3
@@ -143,7 +144,7 @@ function chordSpans(chart: Chart, barStarts: number[], meters: { beats: number }
 
 /**
  * The chart with the lick written over it as its melody: the lick starts on the first full bar
- * and again on the next bar line after it ends (after a rest as long as the lick with
+ * (after `layout.leadIn` bars of rest) and again on the next bar line after it ends (after a rest as long as the lick with
  * `layout.rest`). Each note takes the chord sounding at its start; when the chord changes, the
  * lick is written on the new chord in the octave closest to the note before. Notes over N.C. are
  * left out.
@@ -156,7 +157,7 @@ export function withLick(chart: Chart, shape: LickShape, layout: LickLayout): Ch
   const total = time
   const spans = chordSpans(chart, barStarts, meters)
   const spanAt = (t: number) => spans.find((s) => s.start <= t + 1e-6 && t < s.end - 1e-6)
-  const firstBar = Math.max(0, chart.bars.findIndex((bar) => !bar.partial))
+  const firstBar = Math.min(chart.bars.length - 1, Math.max(0, chart.bars.findIndex((bar) => !bar.partial)) + (layout.leadIn ?? 0))
   const notes: MelodyNote[] = []
   let start = barStarts[firstBar] ?? 0
   while (start < total - 1e-6) {

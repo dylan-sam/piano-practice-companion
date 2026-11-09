@@ -48,6 +48,7 @@ const BAND_PARTS: Part[] = ['bass', 'comp', 'drums']
 const GUIDE_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
 // An infinite chunk: progressions joined from the catalog, short enough to draw on the staff
 const CHUNK_GROUPS = 12
+const CHUNK_LEAD_IN = 1 // bars of rest at the top of each sheet of an infinite line, while the band plays
 // The next chunk starts this much MIDI time before the current one ends (as in Chord Sightreading)
 const SWITCH_LEAD_SECONDS = 0.06
 
@@ -69,6 +70,7 @@ interface Prepared {
   arrangement: Arrangement
   notes: MelodyOccurrence[]
   line?: InfiniteLine
+  countIn?: boolean // an infinite chunk: whether it begins with a count-in
 }
 
 /** Arrange a chart with its lick: the band plays the chords (and the lick when it guides). */
@@ -88,6 +90,7 @@ export function LickSightreading() {
   const lineRef = useRef<InfiniteLine | null>(null)
   const pendingRef = useRef<Prepared | null>(null)
   const chunkEndRef = useRef(Infinity)
+  const chunkCountInRef = useRef(true) // whether the playing infinite chunk began with a count-in
   const switchedRef = useRef(false)
 
   const [mode, setMode] = useState<Mode>('pick')
@@ -123,12 +126,14 @@ export function LickSightreading() {
    * A song or a chunk with the lick of `layout` written over it. The lick is read from the
    * settings passed in, so a new lick chosen while the band plays is the one heard at once.
    */
-  const withShape = useCallback((chart: ChartData, layout: LickSettings = settings) => {
+  const withShape = useCallback((chart: ChartData, layout: LickSettings = settings, leadIn = 0) => {
     const chosen = lickFor(layout)
     const shape: LickShape | null = chosen ? lickShape(chosen.chart) : null
-    return shape ? withLick(chart, shape, layout) : chart
+    return shape ? withLick(chart, shape, { ...layout, leadIn }) : chart
   }, [lickFor, settings])
-  const chart = useMemo(() => (source ? withShape(source) : null), [source, withShape])
+  // Each sheet of an infinite line starts with a bar of rest: time to look back at the top
+  const leadIn = mode === 'infinite' ? CHUNK_LEAD_IN : 0
+  const chart = useMemo(() => (source ? withShape(source, settings, leadIn) : null), [source, withShape, settings, leadIn])
 
   const style = getStyle(styleId)
   const position = timeline ? playbackPosition(timeline, beat) : null
@@ -159,6 +164,7 @@ export function LickSightreading() {
       setBeat(0)
     }
     chunkEndRef.current = prepared.arrangement.timeline.totalBeats
+    chunkCountInRef.current = prepared.countIn ?? true
     switchedRef.current = false
     setTimeline(prepared.arrangement.timeline)
     await player.play(prepared.arrangement.midi, fromSeconds)
@@ -179,11 +185,12 @@ export function LickSightreading() {
   }, [styleId, patternId, transpose, choruses, practice, settings, startPrepared])
 
   /** The next chunk of an infinite line, with the lick written over it. */
-  const nextChunk = useCallback((after: InfiniteLine | null, layout: LickSettings, countIn: boolean): Prepared | null => {
+  const nextChunk = useCallback((after: InfiniteLine | null, layout: LickSettings, countIn: boolean,
+    nextStyle = styleId, nextPattern = patternId): Prepared | null => {
     if (!bank) return null
     const next = infiniteLine(bank.progressions, {}, false, Math.random, after?.steps.at(-1), CHUNK_GROUPS, 1)
-    const prepared = prepare(withShape(next.chart, layout), styleId, patternId, 0, 1, NO_PRACTICE, layout, !countIn)
-    return { ...prepared, line: next }
+    const prepared = prepare(withShape(next.chart, layout, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, layout, !countIn)
+    return { ...prepared, line: next, countIn }
   }, [bank, styleId, patternId, withShape])
 
   /** Hand over to the next chunk of the infinite line (prepared while the band plays, when it could be). */
@@ -326,7 +333,11 @@ export function LickSightreading() {
     if (next !== 'infinite') setTune(null)
   }
 
-  /** Change what the band plays, how notes are judged or the lick; a playing song starts again with it. */
+  /**
+   * Change what the band plays, how notes are judged or the lick. A new style or piano pattern
+   * goes on from where the band is (the lick's eighths swing as the new style does); any other
+   * change starts the song again, so the score stays fair.
+   */
   const changeArrangement = (nextStyle: string, nextPattern: string | null, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice, nextSettings = settings) => {
     setStyleId(nextStyle)
@@ -334,9 +345,25 @@ export function LickSightreading() {
     setTranspose(nextTranspose)
     setChoruses(nextChoruses)
     setPractice(nextPractice)
-    if (!playing) return
+    const player = playerRef.current
+    if (!playing || !source || !player) return
+    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice && nextSettings === settings
+    if (soundOnly) {
+      settleThrough(player.heardPosition * BASE_BPM / 60)
+      const from = player.position
+      if (mode === 'infinite') {
+        // The chunk on the stand is arranged again in the new style; the next one is prepared again
+        pendingRef.current = null
+        const current = prepare(withShape(source, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, settings, !chunkCountInRef.current)
+        void startPrepared({ ...current, line: lineRef.current ?? undefined, countIn: chunkCountInRef.current }, true, settings, from).then(() => {
+          const playingLine = lineRef.current
+          if (continueRef.current && playingLine) pendingRef.current = nextChunk(playingLine, settings, false, nextStyle, nextPattern)
+        })
+      } else void startPlayback(withShape(source), nextStyle, nextPattern, transpose, choruses, practice, settings, from)
+      return
+    }
     if (mode === 'infinite') void startInfinite(nextSettings)
-    else if (source) void startPlayback(withShape(source, nextSettings), nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings)
+    else void startPlayback(withShape(source, nextSettings), nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings)
   }
 
   /**

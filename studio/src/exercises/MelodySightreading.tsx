@@ -176,7 +176,10 @@ export function MelodySightreading() {
     setLibraryOpen(next === 'pick')
   }
 
-  /** Change what the band plays or how notes are judged; a playing song starts again with it. */
+  /**
+   * Change what the band plays or how notes are judged. A new style or piano pattern goes on from
+   * where the band is; any other change starts the song again, so the score stays fair.
+   */
   const changeArrangement = (nextStyle: string, nextPattern: string | null, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice, nextSettings = settings) => {
     setStyleId(nextStyle)
@@ -184,7 +187,12 @@ export function MelodySightreading() {
     setTranspose(nextTranspose)
     setChoruses(nextChoruses)
     setPractice(nextPractice)
-    if (playing && chart) void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings)
+    const player = playerRef.current
+    if (!playing || !chart || !player) return
+    // A new style or piano pattern goes on from where the band is (the melody swings as the new style does)
+    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice && nextSettings === settings
+    if (soundOnly) settleThrough(player.heardPosition * BASE_BPM / 60)
+    void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings, soundOnly ? player.position : 0)
   }
 
   /**

@@ -380,6 +380,27 @@ button:disabled {
   color: var(--ink-2);
 }
 
+/* The swing marking, under the style at the top left of a sheet */
+.swing-mark {
+  display: block;
+  width: 76px;
+  height: auto;
+  margin-top: 6px;
+  fill: currentColor;
+  overflow: visible;
+}
+
+.swing-mark .swing-mark-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.swing-mark text {
+  font: 600 9px/1 var(--mono);
+}
+
 .sheet-meta-right {
   text-align: right;
 }
