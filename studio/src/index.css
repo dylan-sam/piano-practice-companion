@@ -2573,6 +2573,15 @@ input.fader::-moz-range-thumb {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* The lick buttons line up with the lick menus (not with their labels above them) */
+.lick-picker {
+  align-items: flex-end;
+}
+
+.lick-picker > .chip {
+  height: 32px;
+}
+
 .lick-picker .lick-source {
   flex-basis: 100%;
   margin: 0;
