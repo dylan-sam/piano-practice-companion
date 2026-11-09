@@ -33,7 +33,7 @@ import { useDrawerScreen } from '../ui/useNarrowScreen'
 import { isOneChordLick, lickChord, lickShape, withLick, type LickShape } from './lickReading'
 import { BANK_URL, transposeFor, type KeyChoice, type QuestionBank } from './nameProgression'
 import { infiniteLine, type InfiniteLine } from './sightReading'
-import { MelodyScoreLine, MidiButton, ReadingControls } from './ReadingControls'
+import { MelodyScoreLine, MidiButton, ReadingPopover } from './ReadingControls'
 import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 
 type Mode = 'pick' | 'random' | 'infinite'
@@ -53,6 +53,10 @@ const CHUNK_GROUPS = 12
 const CHUNK_LEAD_IN = 1 // bars of rest at the top of each sheet of an infinite line, while the band plays
 // The next chunk starts this much MIDI time before the current one ends (as in Chord Sightreading)
 const SWITCH_LEAD_SECONDS = 0.06
+
+/** A lick playlist's name, short enough for the menu: "Licks from standards: V-I" is "Standards: V-I". */
+const shortGroup = (name: string) =>
+  name.replace(/^Licks: /, '').replace(/^Licks from standards: /, 'Standards: ').replace(/^Licks from folk tunes: /, 'Folk: ')
 
 /** Whether stored settings are usable. */
 function isSettings(value: unknown): value is LickSettings {
@@ -512,12 +516,12 @@ export function LickSightreading() {
                 const first = licks.find((item) => (item.playlist ?? '') === event.target.value)
                 if (first) changeSettings({ lickId: first.id })
               }}>
-                {groups.map((name) => <option key={name} value={name}>{name.replace(/^Licks: /, '')}</option>)}
+                {groups.map((name) => <option key={name} value={name}>{shortGroup(name)}</option>)}
               </select>
             </label>
             <label className="control"><span className="label">Lick</span>
               <select className="select" value={lick?.id ?? ''} aria-label="Lick" onChange={(event) => changeSettings({ lickId: event.target.value })}>
-                {inGroup.map((item) => <option key={item.id} value={item.id}>{item.chart.title}{item.chart.composer ? ` (${item.chart.composer})` : ''}</option>)}
+                {inGroup.map((item) => <option key={item.id} value={item.id} title={item.chart.composer}>{item.chart.title}</option>)}
               </select>
             </label>
             <button className="chip" onClick={randomLick} disabled={licks.length < 2}>Random lick</button>
@@ -525,14 +529,11 @@ export function LickSightreading() {
               title="Leave a rest as long as the lick after each lick">
               Rest between licks: {settings.rest ? 'On' : 'Off'}
             </button>
-          </div>
-          {lick && <p className="sight-hint lick-source">
-            {lickInfo?.performer ? `${lickInfo.performer}, ${lickInfo.tune} (bar ${lickInfo.bar})` : lick.chart.title}
-            {lickSymbol ? `, over ${lickSymbol.replace(/\^/g, '\u0394').replace(/h7/, '\u00f87')}` : ''}
-            {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones.' : ''}
-          </p>}
-          <div className="sight-picker">
-            <ReadingControls settings={settings} onChange={changeSettings} />
+            {lick && <p className="sight-hint lick-source">
+              {lick.chart.title}{lickInfo?.tune ? ` (${lickInfo.performer ? `${lickInfo.performer}, ` : ''}${lickInfo.tune}, bar ${lickInfo.bar})` : ''}
+              {lickSymbol ? `, over ${lickSymbol.replace(/\^/g, '\u0394').replace(/h7/, '\u00f87')}` : ''}
+              {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones.' : ''}
+            </p>}
           </div>
           {chart && <LeadSheet chart={chart} style={style} transpose={shownTranspose}
             activeMeasure={position && position.measure >= 0 ? position.measure : null}
@@ -558,6 +559,7 @@ export function LickSightreading() {
         bpm={bpm} bpmRange={BPM_RANGE} onBpm={setBpm}
         choruses={mode === 'infinite' ? 1 : choruses} maxChoruses={mode === 'infinite' ? 1 : 24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
+        <ReadingPopover settings={settings} onChange={changeSettings} />
         {mode !== 'infinite' && <Practice chart={chart} settings={practice}
           onChange={changePractice}
           onPickLoop={() => setPickLoop('first')} />}

@@ -33,7 +33,7 @@ OpenStand's example songs, telemetry and submission action.
 | Chord Sightreading | `/sightreading/chords` | `src/exercises/ChordSightreading.tsx` |
 | Lead Sheet Sightreading | `/sightreading/lead-sheets` | `src/exercises/MelodySightreading.tsx` (`kind="lead-sheets"`), note judging in `src/exercises/melodyReading.ts` |
 | Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
-| Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` |
+| Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` (the Reading button of the bottom bar) |
 
 The back button and a screen's title go up one level (`parentRoute` in
 `src/router.ts`): a screen to its area's menu, an area's menu to the main menu.

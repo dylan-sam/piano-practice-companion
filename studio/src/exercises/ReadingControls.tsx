@@ -1,7 +1,8 @@
-// The controls shared by the melody reading screens: how notes are judged, the score line and
-// the MIDI keyboard button.
+// The controls shared by the melody reading screens: how notes are judged (in the Reading button
+// of the bottom bar), the score line and the MIDI keyboard button.
 
 import type { useMidiKeyboard } from '../audio/useMidiKeyboard'
+import { Popover } from '../ui/Popover'
 import { accuracy, averageOffsetMs, type MelodyScore, type Strictness } from './melodyReading'
 import type { ReadingSettings } from './useMelodyJudging'
 
@@ -29,6 +30,36 @@ export function ReadingControls({ settings, onChange }: {
         Guide melody: {settings.guide ? 'On' : 'Off'}
       </button>
     </>
+  )
+}
+
+/**
+ * The Reading button of the bottom bar, next to Practice and Mixer: how notes are judged. It keeps
+ * the page for the sheet, which matters most on phones held sideways.
+ */
+export function ReadingPopover({ settings, onChange }: {
+  settings: ReadingSettings
+  onChange: (change: Partial<ReadingSettings>) => void
+}) {
+  // A dot on the button when a setting differs from the usual one
+  const active = settings.strictness !== 'normal' || !settings.anyOctave || settings.guide
+  return (
+    <Popover id="reading" className="reading" active={active} title="How notes are judged" label={
+      <>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M6 12.5V3l7-1.5V11" />
+          <circle cx="4.5" cy="12.5" r="1.8" />
+          <circle cx="11.5" cy="11" r="1.8" />
+        </svg>
+        Reading
+      </>
+    }>
+      {() => (
+        <div className="practice-panel reading-panel">
+          <ReadingControls settings={settings} onChange={onChange} />
+        </div>
+      )}
+    </Popover>
   )
 }
 

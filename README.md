@@ -37,6 +37,8 @@ The main menu has three areas, each opening a menu of its screens:
 The back button (and the title at the top left of a screen) goes up one level:
 from a screen to its area's menu, then to the main menu.
 
+<img src="docs/images/home.png" alt="The main menu" width="640">
+
 ### Chord Player
 
 A band (bass, piano, drums) plays any chart of the catalog, or one of your own, so that you can play along !
@@ -71,6 +73,8 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   and the band plays it without its melody.
 
 ### Lead Sheet Player
+
+![The Lead Sheet Player](docs/images/lead-sheet.png)
 
 The same band plays a **lead sheet**: a chart with a melody, drawn on a staff
 with the chords above it. The melody plays with the band (alto sax by default,
@@ -159,9 +163,10 @@ the percentage and your average timing (early or late, in milliseconds).
   (OpenEWLD and Nottingham) and your own imported ones. **Import** MuseScore
   MusicXML files or a Studio export here: they are in the Lead Sheet Player
   too.
-- **Timing**: Easy, Normal or Strict.
-- **Any octave**: count a note played in another octave than written.
-- **Guide melody**: the band also plays the melody, to follow along.
+- **Reading** (a button of the bottom bar, next to Practice and Mixer):
+  - **Timing**: Easy, Normal or Strict.
+  - **Any octave**: count a note played in another octave than written.
+  - **Guide melody**: the band also plays the melody, to follow along.
 
 ### Exercises Sightreading
 
@@ -171,6 +176,8 @@ and licks. **Pick an exercise** or **Random exercise**; the key and tempo can
 change at each repetition with Practice.
 
 ### Lick Sightreading
+
+![Lick Sightreading](docs/images/lick-sightreading.png)
 
 Choose a **lick** (one of the 133 one-chord licks of the
 [database](#licks-and-exercises), or a random one) and where the chords come
@@ -468,7 +475,7 @@ behind each fix: [docs/DATA.md](docs/DATA.md).
 - About 1 GB of disk space for the ChoCo download and the database.
 
 What Node.js and pnpm are, and how to install them: see the
-[tools to install](#android) for the Android app, the same for every use.
+[tools to install](#android-build-it-yourself) for the Android app, the same for every use.
 
 On Windows, if PowerShell refuses to run `pnpm` ("running scripts is
 disabled"), run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or
@@ -676,6 +683,7 @@ score_search.py          song search, versions and their order
 studio_bridge.py         turns a song of the database into an app chart
 tests/                   Python tests
 data/                    sources list, licenses; the database and catalogs once built
+weimar/                  Weimar Jazz Database solos and licks for testing (made locally, not in git)
 docs/                    documentation and screenshots
 studio/                  the app (React, TypeScript, Vite) and its Android and iOS projects
   src/engine/            arranges a chart into MIDI: bass, piano, drums, melody

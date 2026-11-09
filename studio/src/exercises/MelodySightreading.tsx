@@ -28,7 +28,7 @@ import { Transport } from '../ui/Transport'
 import { useBackClose } from '../ui/backButton'
 import { useDrawerScreen } from '../ui/useNarrowScreen'
 import { transposeFor, type KeyChoice } from './nameProgression'
-import { MelodyScoreLine, MidiButton, ReadingControls } from './ReadingControls'
+import { MelodyScoreLine, MidiButton, ReadingPopover } from './ReadingControls'
 import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 
 type Mode = 'pick' | 'random'
@@ -323,11 +323,10 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
           {readiness.kind === 'error' && <p className="exercise-error" role="alert">{readiness.message}</p>}
           {keyboard.error && <p className="exercise-error" role="alert">{keyboard.error}</p>}
           {!keyboard.supported && <p className="sight-hint">This browser does not expose Web MIDI. A compatible browser or native MIDI input is needed to score notes.</p>}
-          <div className="sight-picker">
-            {mode === 'random' && <button className="button button-primary" onClick={chooseRandomSong}
-              disabled={!leadSheets.length}>Choose random {words.item}</button>}
-            <ReadingControls settings={settings} onChange={changeSettings} />
-          </div>
+          {mode === 'random' && <div className="sight-picker">
+            <button className="button button-primary" onClick={chooseRandomSong}
+              disabled={!leadSheets.length}>Choose random {words.item}</button>
+          </div>}
           {tune && <LeadSheet chart={tune.chart} style={style} transpose={shownTranspose}
             activeMeasure={position && position.measure >= 0 ? position.measure : null}
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4}
@@ -351,6 +350,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
         bpm={bpm} bpmRange={BPM_RANGE} onBpm={setBpm}
         choruses={choruses} maxChoruses={24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
+        <ReadingPopover settings={settings} onChange={changeSettings} />
         <Practice chart={chart} settings={practice}
           onChange={changePractice}
           onPickLoop={() => setPickLoop('first')} />

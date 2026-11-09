@@ -1054,6 +1054,19 @@ input[type='range']::-moz-range-thumb {
   padding: 4px 6px;
 }
 
+.reading-panel {
+  justify-items: start;
+}
+
+.reading-panel .control {
+  width: 100%;
+}
+
+.reading-panel .chip[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
 .practice-row {
   display: grid;
   gap: 8px;
@@ -2556,6 +2569,31 @@ input.fader::-moz-range-thumb {
 .sight-picker .control {
   flex: 1;
   min-width: min(250px, 100%);
+  /* A select as wide as its longest option would push the row past the screen */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lick-picker .lick-source {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Phones held sideways: less room between the blocks, so more of the sheet shows */
+@media (max-height: 500px) {
+  .sight-stage {
+    gap: 10px;
+  }
+
+  .sight-picker {
+    padding: 6px 10px;
+  }
+}
+
+.sight-picker .control .select {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 
 .sight-hint,

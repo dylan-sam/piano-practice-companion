@@ -109,7 +109,7 @@ web view's storage) runs unchanged.
 |---|---|---|
 | Computer | Windows, macOS or Linux | a Mac |
 | Tools | [Android Studio](https://developer.android.com/studio) 2025.2.1 or newer, with its own JDK 21 and the Android SDK platform 36 | Xcode 26 or newer and its command line tools (`xcode-select --install`) |
-| For both | Node.js 22 or newer, pnpm, Python 3.10 or newer (how to install them: [README](../README.md#android)) | |
+| For both | Node.js 22 or newer, pnpm, Python 3.10 or newer (how to install them: [README](../README.md#android-build-it-yourself)) | |
 | To install on a phone | USB debugging, or copy the APK and allow installing it | an Apple account (free for your own device, paid for the App Store) |
 
 ### Steps

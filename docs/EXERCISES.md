@@ -271,6 +271,9 @@ every style (moving only its "and" would make them uneven).
 
 ### How notes are judged
 
+The reading settings are in the **Reading** button of the bottom bar, next to
+Practice and Mixer (on phones, under Settings), so the sheet keeps the page.
+
 Every written note gets a window around its start (`TIMING_WINDOWS` in
 `studio/src/exercises/melodyReading.ts`):
 
@@ -313,7 +316,9 @@ MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)
 Choose where the chords come from and a lick: the lick is written over every
 chord, as a lead sheet, and you play it on a MIDI keyboard with the band. Notes
 are judged and scored as in [Lead Sheet Sightreading](#how-notes-are-judged), with
-the same Timing, Any octave and Guide melody settings.
+the same Timing, Any octave and Guide melody settings (the Reading button). The
+lick picker sits above the sheet, with the lick's source and chord on the line
+below it.
 
 ### Chords and licks
 
