@@ -73,11 +73,15 @@ interface Prepared {
   countIn?: boolean // an infinite chunk: whether it begins with a count-in
 }
 
-/** Arrange a chart with its lick: the band plays the chords (and the lick when it guides). */
+/**
+ * Arrange a chart with its lick: the band plays the chords (and the lick when it guides). A chunk
+ * of an infinite line (`chunk`) never ends like a song, since the next one follows at the top; only
+ * the first chunk has a count-in.
+ */
 function prepare(chart: ChartData, styleId: string, patternId: string | null, transpose: number, choruses: number,
-  practice: PracticeSettings, settings: LickSettings, endless = false): Prepared {
+  practice: PracticeSettings, settings: LickSettings, chunk?: { countIn: boolean }): Prepared {
   const style = getStyle(styleId)
-  const options = { loop: practice.loop, keyStep: practice.keyStep, ...(endless ? { ending: false, countIn: false } : {}) }
+  const options = { loop: practice.loop, keyStep: practice.keyStep, ...(chunk ? { ending: false, countIn: chunk.countIn } : {}) }
   const arrangement = arrange(settings.guide ? chart : withoutMelody(chart), style, transpose, choruses, options, patternId)
   const notes = melodyOccurrences(chart, arrangement.timeline, style.swing, transpose, practice.keyStep)
   return { chart, arrangement, notes }
@@ -189,7 +193,7 @@ export function LickSightreading() {
     nextStyle = styleId, nextPattern = patternId): Prepared | null => {
     if (!bank) return null
     const next = infiniteLine(bank.progressions, {}, false, Math.random, after?.steps.at(-1), CHUNK_GROUPS, 1)
-    const prepared = prepare(withShape(next.chart, layout, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, layout, !countIn)
+    const prepared = prepare(withShape(next.chart, layout, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, layout, { countIn })
     return { ...prepared, line: next, countIn }
   }, [bank, styleId, patternId, withShape])
 
@@ -354,7 +358,7 @@ export function LickSightreading() {
       if (mode === 'infinite') {
         // The chunk on the stand is arranged again in the new style; the next one is prepared again
         pendingRef.current = null
-        const current = prepare(withShape(source, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, settings, !chunkCountInRef.current)
+        const current = prepare(withShape(source, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, settings, { countIn: chunkCountInRef.current })
         void startPrepared({ ...current, line: lineRef.current ?? undefined, countIn: chunkCountInRef.current }, true, settings, from).then(() => {
           const playingLine = lineRef.current
           if (continueRef.current && playingLine) pendingRef.current = nextChunk(playingLine, settings, false, nextStyle, nextPattern)
