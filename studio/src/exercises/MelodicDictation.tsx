@@ -24,7 +24,7 @@ import { Popover } from '../ui/Popover'
 import { Transport } from '../ui/Transport'
 import {
   answerChart, fromSource, GUESS_CHOICES, judge, melodyAloneMidi, pickExcerpt, spellingOf, transposeGuesses,
-  type DictationSource, type Excerpt, type Guess, type Guesses, type NoteResult,
+  type Alterations, type DictationSource, type Excerpt, type Guess, type Guesses, type NoteResult,
 } from './melodicDictation'
 import { keyReferenceMidi, keyReferences, measureAt, transposeFor, type KeyChoice, type KeyReference } from './nameProgression'
 import { MidiButton } from './ReadingControls'
@@ -42,18 +42,22 @@ interface DictationSettings {
   source: DictationSource
   chords: boolean // chord symbols written over the staff
   band: boolean // the band plays along (else the melody alone, after a count-in)
+  alterations: Alterations // with or without notes outside the key signature
+  sound: boolean // a note sounds as it is placed (off: hearing it would give the answer away)
 }
-const DEFAULT_SETTINGS: DictationSettings = { guesses: 3, source: 'both', chords: false, band: false }
+const DEFAULT_SETTINGS: DictationSettings = { guesses: 3, source: 'both', chords: false, band: true, alterations: 'any', sound: false }
 
 /** Whether stored settings are usable (they may be old or edited by hand). */
 function isSettings(value: unknown): value is DictationSettings {
   const v = value as Partial<DictationSettings> | null
   return !!v && GUESS_CHOICES.includes(v.guesses as Guesses) && ['both', 'songs', 'licks'].includes(v.source as string) &&
-    typeof v.chords === 'boolean' && typeof v.band === 'boolean'
+    typeof v.chords === 'boolean' && typeof v.band === 'boolean' && typeof v.sound === 'boolean' &&
+    ['any', 'none', 'with'].includes(v.alterations as string)
 }
 
 // The words of each source in the settings
 const SOURCE_NAMES: Record<DictationSource, string> = { both: 'Songs and licks', songs: 'Songs', licks: 'Licks' }
+const ALTERATION_NAMES: Record<Alterations, string> = { any: 'With or without alterations', none: 'No alterations', with: 'With alterations' }
 // Button text and keyboard shortcut of each key reference
 const REFERENCE_LABELS: Record<KeyReference, string> = { tonic: 'Tonic', 'major cadence': 'Cadence', 'minor cadence': 'Cadence' }
 const REFERENCE_KEYS = ['T', 'Y']
@@ -124,14 +128,14 @@ export function MelodicDictation() {
     if (!from) return
     stop()
     const pool = from.filter(fromSource(choice.source))
-    const next = pickExcerpt(pool, choice.guesses, Math.random, excerpt?.id)
+    const next = pickExcerpt(pool, choice.guesses, Math.random, excerpt?.id, choice.alterations)
     setExcerpt(next)
     setGuesses({})
     setResults(null)
     setShowMine(false)
     setSelected(next?.hidden[0] ?? null)
     if (!next) {
-      setError(pool.length ? 'No excerpt has enough notes for this setting. Choose fewer notes to write.' : 'No songs or licks found.')
+      setError(pool.length ? 'No excerpt fits these options. Choose fewer notes to guess, or other alterations.' : 'No songs or licks found.')
       return
     }
     setError('')
@@ -239,10 +243,10 @@ export function MelodicDictation() {
 
   // ---- Writing the notes ----
 
-  /** Sound a note on the piano, as it is placed. */
+  /** Sound a note on the piano as it is placed, when that option is on. */
   const sound = (pitch: number) => {
     const player = playerRef.current
-    if (!player || readiness.kind !== 'ready') return
+    if (!settings.sound || !player || readiness.kind !== 'ready') return
     player.liveNoteOn(pitch, 90)
     window.setTimeout(() => player.liveNoteOff(pitch), NOTE_SOUND_MS)
   }
@@ -427,12 +431,12 @@ export function MelodicDictation() {
         <span className="topbar-spacer" />
         <MidiButton keyboard={keyboard} />
         <Popover id="dictation-options" className="share exercise-display" label="Options"
-          title="Choose how many notes to write, where excerpts come from and what is shown"
-          active={settings.chords || settings.band || settings.source !== 'both'}>
+          title="Choose how many notes to guess, where excerpts come from and what is shown"
+          active={settings.chords || !settings.band || settings.sound || settings.source !== 'both' || settings.alterations !== 'any'}>
           {() => (
             <div className="share-panel">
               <label className="control">
-                <span className="label">Notes to write</span>
+                <span className="label">Nb of notes to guess</span>
                 <select className="select" value={String(settings.guesses)} onChange={(e) => {
                   const value = e.target.value === 'all' ? 'all' : Number(e.target.value)
                   nextExcerpt(tunes, setSettings({ guesses: value }))
@@ -453,6 +457,15 @@ export function MelodicDictation() {
                   ))}
                 </select>
               </label>
+              <label className="control">
+                <span className="label">Alterations</span>
+                <select className="select" value={settings.alterations} onChange={(e) =>
+                  nextExcerpt(tunes, setSettings({ alterations: e.target.value as Alterations }))}>
+                  {(Object.keys(ALTERATION_NAMES) as Alterations[]).map((choice) => (
+                    <option key={choice} value={choice}>{ALTERATION_NAMES[choice]}</option>
+                  ))}
+                </select>
+              </label>
               <button className="share-option" aria-pressed={settings.chords} onClick={() => setSettings({ chords: !settings.chords })}>
                 <span className="share-name">Show the chords {settings.chords ? 'On' : 'Off'}</span>
                 <span className="share-desc">Write the chord symbols over the staff while you write the notes.</span>
@@ -463,6 +476,10 @@ export function MelodicDictation() {
               }}>
                 <span className="share-name">Play with the band {settings.band ? 'On' : 'Off'}</span>
                 <span className="share-desc">Bass, piano and drums play the chords under the melody.</span>
+              </button>
+              <button className="share-option" aria-pressed={settings.sound} onClick={() => setSettings({ sound: !settings.sound })}>
+                <span className="share-name">Sound of placed notes {settings.sound ? 'On' : 'Off'}</span>
+                <span className="share-desc">Play each note as you place it on the staff (it makes finding the notes easier).</span>
               </button>
               <DisplayOptions roman={false} />
             </div>

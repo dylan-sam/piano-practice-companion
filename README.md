@@ -143,11 +143,13 @@ ones are drawn as slashes, so the rhythm is written for you and only the
 pitches are missing. Place a note as in a score editor: tap the staff above or
 below a slash (or click it), tap again or drag to move it, and use the sharp,
 flat and natural buttons. Letters A–G, the arrow keys and a MIDI keyboard write
-notes too. **Check** colours each note (green right, orange wrong, red left
+notes too. Placed notes are silent unless you turn their sound on. **Check** colours each note (green right, orange wrong, red left
 empty) and shows the song or lick it came from; the octave counts, the spelling
-does not. In **Options**, choose how many notes to write (1 to 12, or all but
-the first and last), songs, licks or both, whether the chords are written
-(hidden by default) and whether the band plays along. You can play the tonic
+does not. In **Options**, choose the number of notes to guess (1 to 12, or all
+but the first and last), songs, licks or both, with or without alterations
+(notes outside the key signature), whether the chords are written (hidden by
+default), whether the band plays along (on by default) and whether placed notes
+sound (off by default). You can play the tonic
 or a cadence of the key first, and choose the key and tempo.
 
 ### Chord Sightreading

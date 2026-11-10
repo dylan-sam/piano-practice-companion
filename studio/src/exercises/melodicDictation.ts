@@ -8,7 +8,8 @@
 
 import { barMeters, type Chart, type ChartBar } from '../music/chart'
 import { onLickGrid } from '../music/licks'
-import { spellPitch, type Spelled } from '../music/abc'
+import { signature, spellPitch, type Spelled } from '../music/abc'
+import { signatureKey } from '../music/staff'
 import type { MelodyNote } from '../music/melody'
 import type { Tune } from '../music/songs'
 import type { StyleDefinition } from '../styles/types'
@@ -27,6 +28,11 @@ export const GUESS_CHOICES: Guesses[] = [1, 2, 3, 4, 5, 6, 8, 10, 12, 'all']
 export const MAX_ALL_NOTES = 16
 /** Where excerpts come from: songs (lead sheets), licks, or both. */
 export type DictationSource = 'both' | 'songs' | 'licks'
+/**
+ * Alterations (notes outside the key signature): any excerpt, excerpts without any, or excerpts
+ * where at least one note to guess is altered.
+ */
+export type Alterations = 'any' | 'none' | 'with'
 
 /** An excerpt to write down: its chart (bars from 0), where it comes from, and the notes to find. */
 export interface Excerpt {
@@ -178,6 +184,13 @@ export function excerptAt(chart: Chart, first: number, guesses: Guesses, random:
   return null
 }
 
+/** The indexes of the notes outside the key signature of a chart's key (its alterations). */
+export function alteredNotes(chart: Chart): number[] {
+  const sig = signature(signatureKey(chart.key, !!chart.minor))
+  const inKey = new Set([...'CDEFGAB'].map((letter, i) => ([0, 2, 4, 5, 7, 9, 11][i] + sig[letter] + 12) % 12))
+  return (chart.melody?.notes ?? []).flatMap((note, index) => (inKey.has(((note.pitch % 12) + 12) % 12) ? [] : [index]))
+}
+
 /** The run of notes to hide: `guesses` notes in a row between the first note and the last. */
 export function hiddenRun(noteCount: number, guesses: Guesses, random: () => number = Math.random): number[] {
   const middle = Math.max(0, noteCount - 2)
@@ -203,7 +216,7 @@ function excerptDetail(chart: Chart, first: number, last: number): string {
 
 /** Pick a random excerpt from some tunes, other than the one just asked; null when none fits. */
 export function pickExcerpt(tunes: Tune[], guesses: Guesses, random: () => number = Math.random,
-  avoid = '', attempts = 400): Excerpt | null {
+  avoid = '', alterations: Alterations = 'any', attempts = 600): Excerpt | null {
   if (!tunes.length) return null
   for (let i = 0; i < attempts; i++) {
     const tune = tunes[Math.floor(random() * tunes.length)]
@@ -214,12 +227,22 @@ export function pickExcerpt(tunes: Tune[], guesses: Guesses, random: () => numbe
     const last = first + excerpt.bars.length - 1
     const id = `${tune.id}:${first}`
     if (id === avoid && tunes.length > 1) continue
+    const altered = alterations === 'any' ? [] : alteredNotes(excerpt)
+    if (alterations === 'none' && altered.length) continue
+    const hidden = hiddenRun(excerpt.melody.notes.length, guesses, random)
+    if (alterations === 'with') {
+      // A run of hidden notes holding at least one altered note
+      const runs = Array.from({ length: excerpt.melody.notes.length }, (_, start) => hidden.map((_, i) => start + 1 + i))
+        .filter((run) => run.length && run.at(-1)! < excerpt.melody!.notes.length - 1 && run.some((index) => altered.includes(index)))
+      if (!runs.length) continue
+      hidden.splice(0, hidden.length, ...runs[Math.floor(random() * runs.length)])
+    }
     return {
       id,
       chart: excerpt,
       title: chart.title,
       detail: excerptDetail(chart, first, last),
-      hidden: hiddenRun(excerpt.melody.notes.length, guesses, random),
+      hidden,
     }
   }
   return null

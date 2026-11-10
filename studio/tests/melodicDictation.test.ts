@@ -10,7 +10,7 @@ import type { Tune } from '../src/music/songs'
 import { getStyle } from '../src/styles'
 import { DEFAULT_DISPLAY } from '../src/ui/display'
 import {
-  answerChart, cutExcerpt, excerptAt, fromSource, hiddenRun, judge, MAX_ALL_NOTES, MAX_BARS, melodyAloneMidi, pickExcerpt,
+  alteredNotes, answerChart, cutExcerpt, excerptAt, fromSource, hiddenRun, judge, MAX_ALL_NOTES, MAX_BARS, melodyAloneMidi, pickExcerpt,
   transposeGuesses, type Excerpt,
 } from '../src/exercises/melodicDictation'
 import { makeLickChart, parseChords, parseNotes } from '../scripts/lickCharts'
@@ -120,6 +120,15 @@ describe('the staff', () => {
   })
 })
 
+describe('alterations', () => {
+  it('are the notes outside the key signature', () => {
+    // C major: F# and Bb; A minor uses the same signature, so G# is altered too
+    expect(alteredNotes(song('C:4', 'C4:4 F#4:4 G4:4 Bb4:4'))).toEqual([1, 3])
+    expect(alteredNotes({ ...song('Am:4', 'A4:4 G#4:4 A4:2'), key: 9, minor: true })).toEqual([1])
+    expect(alteredNotes({ ...song('F:4', 'F4:4 Bb4:4 B4:2'), key: 5 })).toEqual([2])
+  })
+})
+
 describe('answers', () => {
   const chart = song('C:4', 'C4:4 D4:4 E4:4 G4:4')
   const excerpt: Excerpt = { id: 'x', chart, title: 'Song', detail: 'bar 1', hidden: [1, 2] }
@@ -202,6 +211,18 @@ describe('excerpts of the shipped songs and licks', () => {
           else expect(excerpt.hidden).toHaveLength(guesses)
         }
       }
+    }
+  })
+
+  it('can have no alterations, or alterations among the notes to guess', () => {
+    const random = seeded(11)
+    for (let i = 0; i < 40; i++) {
+      const plain = pickExcerpt(licks.filter(fromSource('licks')), 3, random, '', 'none')!
+      expect(alteredNotes(plain.chart)).toEqual([])
+      const altered = pickExcerpt(songs.filter(fromSource('songs')), 3, random, '', 'with')!
+      expect(altered.hidden.some((index) => alteredNotes(altered.chart).includes(index))).toBe(true)
+      expect(altered.hidden).toHaveLength(3)
+      expect(altered.hidden).not.toContain(altered.chart.melody!.notes.length - 1)
     }
   })
 
