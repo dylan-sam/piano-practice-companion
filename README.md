@@ -31,7 +31,7 @@ The main menu has three areas, each opening a menu of its screens:
 | Area | Screens |
 |---|---|
 | **Play along** | [Chord Player](#chord-player), [Lead Sheet Player](#lead-sheet-player) |
-| **Ear Training** | [Name the progression](#name-the-progression) |
+| **Ear Training** | [Name the progression](#name-the-progression), [Melodic Dictation](#melodic-dictation) |
 | **Sightreading** (with a MIDI keyboard) | [Chord Sightreading](#chord-sightreading), [Lead Sheet Sightreading](#lead-sheet-sightreading), [Exercises Sightreading](#exercises-sightreading), [Lick Sightreading](#lick-sightreading) |
 
 The back button (and the title at the top left of a screen) goes up one level:
@@ -132,6 +132,23 @@ A round has 10 questions; 8 right answers pass the level. You can play the
 key's tonic or a cadence for reference, hear every answer in the gap once you
 have answered, hide the key or every chord, choose the key, and turn on
 **Focus on mistakes** to be asked more often what you get wrong.
+
+### Melodic Dictation
+
+![Melodic Dictation](docs/images/melodic-dictation.png)
+
+You hear a few bars (at most four) of a lead sheet or a lick and write the
+notes that are hidden. The first and last notes are always shown; the hidden
+ones are drawn as slashes, so the rhythm is written for you and only the
+pitches are missing. Place a note as in a score editor: tap the staff above or
+below a slash (or click it), tap again or drag to move it, and use the sharp,
+flat and natural buttons. Letters A–G, the arrow keys and a MIDI keyboard write
+notes too. **Check** colours each note (green right, orange wrong, red left
+empty) and shows the song or lick it came from; the octave counts, the spelling
+does not. In **Options**, choose how many notes to write (1 to 12, or all but
+the first and last), songs, licks or both, whether the chords are written
+(hidden by default) and whether the band plays along. You can play the tonic
+or a cadence of the key first, and choose the key and tempo.
 
 ### Chord Sightreading
 
@@ -689,7 +706,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
   src/engine/            arranges a chart into MIDI: bass, piano, drums, melody
   src/audio/             synthesizer (SpessaSynth), mixer, MIDI input
   src/music/             chords, charts, melodies and their ABC notation, Roman numerals, practice
-  src/exercises/         Name the progression, Chord, Lead Sheet, Exercises and Lick Sightreading
+  src/exercises/         Name the progression, Melodic Dictation, Chord, Lead Sheet, Exercises and Lick Sightreading
   scripts/               builds the shipped lead sheets and the licks and exercises (docs/LICKS.md)
   src/ui/                screens and controls
   src/formats/           iReal Pro import and export, share links
@@ -700,7 +717,7 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
 
 - [docs/DATA.md](docs/DATA.md): sources, database layout, curation, every correction, rebuilding.
 - [docs/CHORD_NOTATION.md](docs/CHORD_NOTATION.md): how chords are written, read from iReal Pro cells and played.
-- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression and the four sightreading screens in detail.
+- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression, Melodic Dictation and the four sightreading screens in detail.
 - [docs/LICKS.md](docs/LICKS.md): the licks and exercises, how they are made and mined, and their rights.
 - [docs/MOBILE.md](docs/MOBILE.md): the Android and iOS apps, building and troubleshooting.
 - [studio/README.md](studio/README.md): the app, its styles and piano patterns.

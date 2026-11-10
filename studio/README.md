@@ -30,6 +30,7 @@ OpenStand's example songs, telemetry and submission action.
 | Chord Player (Studio) | `/play-along/chords` | `src/App.tsx` (`mode="chords"`) |
 | Lead Sheet Player | `/play-along/lead-sheets` | `src/App.tsx` (`mode="lead"`) |
 | Name the progression | `/ear-training/name-the-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
+| Melodic Dictation | `/ear-training/melodic-dictation` | `src/exercises/MelodicDictation.tsx`, excerpts and answers in `src/exercises/melodicDictation.ts`; notes are written on the staff with `src/ui/useStaffInput.ts` (places on the staff in `src/music/staff.ts`) |
 | Chord Sightreading | `/sightreading/chords` | `src/exercises/ChordSightreading.tsx` |
 | Lead Sheet Sightreading | `/sightreading/lead-sheets` | `src/exercises/MelodySightreading.tsx` (`kind="lead-sheets"`), note judging in `src/exercises/melodyReading.ts` |
 | Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
@@ -232,11 +233,11 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which the melody sightreaders also judge), timeline and count-in (`timeline.ts`) |
 | `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
-| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
+| `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), places on the staff (`staff.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
-| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`), transport, mixer, menus, editor, Style lab |
-| `src/exercises/` | Name the progression, Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
+| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Style lab |
+| `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's tests |
 | `android/`, `ios/` | the native projects |

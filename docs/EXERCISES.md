@@ -1,7 +1,7 @@
 # Exercises
 
-The app has five exercises. In the **Ear Training** menu: **Name the
-progression**. In the **Sightreading** menu, with a MIDI keyboard: **Chord
+The app has six exercises. In the **Ear Training** menu: **Name the
+progression** and **Melodic Dictation**. In the **Sightreading** menu, with a MIDI keyboard: **Chord
 Sightreading** (playing chords), **Lead Sheet Sightreading** (playing the
 melody of a lead sheet), **Exercises Sightreading** (playing an exercise or a
 lick of a few bars) and **Lick Sightreading** (playing a lick over every chord
@@ -13,6 +13,11 @@ app).
   - [Options](#options)
   - [Levels](#levels)
   - [The question bank](#the-question-bank)
+- [Melodic Dictation](#melodic-dictation)
+  - [An excerpt](#an-excerpt)
+  - [Writing the notes](#writing-the-notes)
+  - [Checking](#checking)
+  - [Melodic Dictation options](#melodic-dictation-options)
 - [Chord Sightreading](#chord-sightreading)
   - [Modes](#modes)
   - [The band](#the-band)
@@ -131,6 +136,72 @@ or end inside a bar; the line still starts and ends on bar lines, holds at most
 a progression may open or close the song), and may be in a key of unknown
 mode. This adds 35 questions to six progressions; they carry
 `"relaxed": true` in the file.
+
+## Melodic Dictation
+
+### An excerpt
+
+You hear a few bars of a song or a lick and write the notes that are hidden.
+
+- An excerpt is **at most four bars** of one simple meter (2/4, 3/4, 4/4...),
+  cut from a shipped or saved lead sheet, or from a lick or pattern of the lick
+  database (its drills, such as scales, are left out). Its notes keep to the
+  lick grid: no value shorter than a sixteenth, and eighth-note triplets
+  ([LICKS.md](LICKS.md)).
+- It never starts in the middle of a held note, and it does not cross a key
+  change, a repeat sign or an ending.
+- The **first and last notes are always shown**. The notes to write are one run
+  in between; the other notes around it are shown too.
+- Hidden notes are drawn as **slashes**, with their real stems, beams, ties and
+  triplets: the rhythm is written, only the pitch is missing. The title stays
+  hidden until you check.
+- Each new excerpt **plays by itself** (after a first tap on the page, as
+  browsers ask), with a count-in, in the source's style.
+
+### Writing the notes
+
+As in a score editor:
+
+| Action | How |
+|---|---|
+| Put a note | tap (or click) the staff above or below its slash, on the line or space you want; a grey note with its name shows where it goes |
+| Move it | tap again elsewhere, or press and drag it up and down, then let go |
+| Sharp, flat, natural | the ♯ ♭ ♮ buttons, or the + − = keys |
+| Up or down a step | the ↑ ↓ buttons or keys (Ctrl ↑ ↓: an octave) |
+| Choose the note | tap its slash, or the ← → buttons or keys |
+| Type it | a letter A–G writes that note nearest to the note before, then moves on |
+| Play it | a note played on a MIDI keyboard is written, then the next note is selected |
+| Clear it | the *Clear* button, or Delete |
+
+- A placed note takes the key signature's sharp or flat for its line, as on
+  paper; accidentals then follow the usual rules (a natural sign where needed).
+- Every placed note sounds on the piano. *Play my notes* plays the excerpt with
+  your notes (empty ones are left out).
+- On a phone the staff does not scroll the page, so a drag always moves the
+  note; scroll from the buttons under it.
+
+### Checking
+
+*Check* (or Enter) judges every hidden note: **green** right, **orange** wrong,
+**red** left empty. A note is right when its pitch, **with the octave**, is
+the hidden note's; the spelling does not count (G♯ and A♭ are the same).
+
+The sheet then shows the right notes with the chords, the song or lick, its
+composer or source and the bars. *Show mine* shows your notes again, with the
+same colours; *Play mine* plays them. The count of right notes this session is
+kept under the result.
+
+### Melodic Dictation options
+
+| Option | What it does |
+|---|---|
+| **Options → Notes to write** | 1 to 12 notes in a row, or every note but the first and last (excerpts then have at most 16 notes). An excerpt is the shortest run of at least two bars with enough notes. |
+| **Options → Excerpts from** | songs and licks, songs only, or licks only |
+| **Options → Show the chords** (Off) | writes the chord symbols over the staff while you write; they are always shown once you check |
+| **Options → Play with the band** (Off) | bass, piano and drums play the chords under the melody; off, the melody plays alone after a count-in |
+| **Hear the key**: *Tonic* (T) and *Cadence* (Y) | the tonic triad, and I-IV-V-I in major or i-iv-V-i in minor |
+| **Key** | the source's key, a random key for each excerpt, or one fixed tonic. Placed notes move with a key change. |
+| **Style**, **Tempo**, **Choruses** | the band's style (with or without the band, it sets the swing), the tempo (excerpts start at most at 100), and how many times the excerpt plays |
 
 ## Chord Sightreading
 

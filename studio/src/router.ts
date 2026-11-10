@@ -10,6 +10,7 @@ export const ROUTES = {
   chordPlayer: '/play-along/chords',
   leadSheetPlayer: '/play-along/lead-sheets',
   nameProgression: '/ear-training/name-the-progression',
+  melodicDictation: '/ear-training/melodic-dictation',
   chordSightreading: '/sightreading/chords',
   leadSheetSightreading: '/sightreading/lead-sheets',
   exerciseSightreading: '/sightreading/exercises',

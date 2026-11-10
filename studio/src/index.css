@@ -3273,3 +3273,160 @@ input.fader::-moz-range-thumb {
     text-overflow: ellipsis;
   }
 }
+
+/* Melodic Dictation: hidden notes are slashes; a placed note is blue, the selected one glows */
+.dictation {
+  --dictation-ink: #2f6fbf;
+  --dictation-ghost: rgba(47, 111, 191, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dictation {
+    --dictation-ink: #79aef0;
+    --dictation-ghost: rgba(121, 174, 240, 0.45);
+  }
+}
+
+/* Notes are written by tapping and dragging on the staff, so the page does not scroll from there */
+.lead-score-input {
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dict-hidden path {
+  fill: var(--muted);
+  stroke: var(--muted);
+}
+
+.dict-placed path {
+  fill: var(--dictation-ink);
+  stroke: var(--dictation-ink);
+}
+
+.dict-selected path {
+  fill: var(--dictation-ink);
+  stroke: var(--dictation-ink);
+  filter: drop-shadow(0 0 2.5px var(--dictation-ink));
+}
+
+/* The grey note under the pointer, with its ledger lines and its name */
+.staff-ghost {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.staff-ghost-head {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--dictation-ghost);
+  box-shadow: 0 0 0 1px var(--dictation-ink);
+  transform: rotate(-20deg);
+}
+
+.staff-ghost-dragging .staff-ghost-head {
+  background: var(--dictation-ink);
+}
+
+.staff-ghost-ledger {
+  position: absolute;
+  height: 0;
+  border-top: 1.5px solid var(--dictation-ghost);
+}
+
+.staff-ghost-name {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--dictation-ink);
+  font: 600 13px/1.3 var(--sans);
+  white-space: nowrap;
+}
+
+.dictation-pad {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dictation-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.dictation-tools .band-toggle {
+  justify-content: center;
+  min-width: 36px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.dictation-tools .band-toggle:disabled {
+  opacity: 0.45;
+}
+
+.dictation-selected {
+  min-width: 9.5em;
+  font-family: var(--sans);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.dictation-selected strong {
+  color: var(--dictation-ink);
+}
+
+.dictation-divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: var(--line);
+}
+
+.dictation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dictation-count {
+  margin-right: auto;
+  font-family: var(--sans);
+  color: var(--ink-2);
+}
+
+.dictation-hint {
+  margin: 0;
+}
+
+.dictation .share-panel > .control {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .dictation-divider {
+    display: none;
+  }
+
+  /* The selected note's name gets its own row above the buttons */
+  .dictation-selected {
+    order: -1;
+    flex-basis: 100%;
+    text-align: left;
+  }
+
+  .dictation-hint {
+    font-size: 13px;
+  }
+}

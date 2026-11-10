@@ -55,12 +55,17 @@ const MENUS: Record<string, MenuPage> = {
   },
   [ROUTES.earTraining]: {
     title: 'Ear Training',
-    description: 'Ear training exercises on real songs.',
+    description: 'Ear training exercises on real songs and licks.',
     items: [
       {
         title: 'Name the progression',
         description: 'Hear a line from a real song and choose the chord progression that fills the gap.',
         path: ROUTES.nameProgression,
+      },
+      {
+        title: 'Melodic Dictation',
+        description: 'Hear a few bars of a song or a lick and write the hidden notes on the staff. The rhythm is written for you; you can hear the tonic or a cadence first.',
+        path: ROUTES.melodicDictation,
       },
     ],
   },

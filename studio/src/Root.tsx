@@ -1,5 +1,6 @@
 import App from './App'
 import { NameProgression } from './exercises/NameProgression.tsx'
+import { MelodicDictation } from './exercises/MelodicDictation.tsx'
 import { ChordSightreading } from './exercises/ChordSightreading.tsx'
 import { MelodySightreading } from './exercises/MelodySightreading.tsx'
 import { LickSightreading } from './exercises/LickSightreading.tsx'
@@ -20,6 +21,7 @@ export default function Root() {
   if (path === ROUTES.chordPlayer) return <App key="chords" mode="chords" />
   if (path === ROUTES.leadSheetPlayer) return <App key="lead" mode="lead" />
   if (path === ROUTES.nameProgression) return <NameProgression />
+  if (path === ROUTES.melodicDictation) return <MelodicDictation />
   if (path === ROUTES.chordSightreading) return <ChordSightreading />
   // Lead sheets and exercises are read on one screen in two modes
   if (path === ROUTES.leadSheetSightreading) return <MelodySightreading key="lead-sheets" kind="lead-sheets" />

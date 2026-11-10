@@ -1,15 +1,20 @@
 // A chart with a melody, engraved as a lead sheet by abcjs (MIT, Paul Rosen and Gregory Dyke):
 // the melody on a staff with the chord symbols above it. While the band plays, the bar being
 // played gets the yellow highlighter of the chord chart and the note being played is coloured.
+// Exercises can write some notes their own way (as slashes, or as placed) and let notes be
+// written on the staff (useStaffInput).
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { barMeters, type Chart as ChartData } from '../music/chart'
-import { melodyToAbc, type DrawnEvent } from '../music/abc'
+import { melodyToAbc, type DrawnEvent, type NoteWriting } from '../music/abc'
 import type { StyleDefinition } from '../styles/types'
 import { useDisplay } from './display'
 import { SheetHead } from './Chart'
 import { useAutoScroll, type ReadingRow } from './useAutoScroll'
+import { boxIn, classNumber, lineOf, staffBoxes, symbolBox, union, type Box, type DrawnNote } from './engraving'
 import { useTwoBarRows } from './useNarrowScreen'
+import { useStaffInput, type Ghost, type StaffInput } from './useStaffInput'
+import { spelledName } from '../music/staff'
 
 interface LeadSheetProps {
   chart: ChartData
@@ -23,6 +28,10 @@ interface LeadSheetProps {
   autoScroll?: boolean
   // Results of a melody played on a keyboard, by written note (melodyReading.ts noteKey: "bar:at")
   noteFeedback?: Record<string, 'correct' | 'wrong' | 'missed'>
+  writing?: NoteWriting // how some notes are written (exercises)
+  noteClasses?: Record<number, string> // a class for the drawing of some melody notes, by index
+  staffInput?: StaffInput | null // notes that can be written on the staff
+  zoom?: number // draw the music larger (short excerpts): the layout width is divided by it
 }
 
 // The engraver is loaded with the first lead sheet, so chord charts don't download it
@@ -38,21 +47,6 @@ const LOOP_GAP = 10 // the pencil line under looped bars, this far below the sta
 const FEEDBACK_REACH = 0.2 // a result marks a drawn note starting this close to it, in beats
 const NOTE_LEAD = 2 // the highlight reaches a note just before its head
 const MARGIN_GAP = 6 // a rehearsal mark before a staff line ends this far left of it
-
-/** A drawn note or rest with its SVG element and the staff line it sits on. */
-interface DrawnNote extends DrawnEvent {
-  element: SVGGraphicsElement
-  line: number
-}
-
-/** A number from an abcjs class of an element: abcjs-l<n> is its staff line, abcjs-mm<n> its bar. */
-function classNumber(element: Element, prefix: string): number {
-  const match = new RegExp(`(?:^|\\s)${prefix}(\\d+)(?:\\s|$)`).exec(element.getAttribute('class') ?? '')
-  return match ? Number(match[1]) : -1
-}
-
-/** The staff line (0, 1...) an abcjs element was drawn on. */
-const lineOf = (element: Element) => Math.max(0, classNumber(element, 'abcjs-l'))
 
 /**
  * Pair the writer's notes and rests with the elements abcjs drew for them. abcjs numbers the
@@ -75,48 +69,8 @@ function pairNotes(root: HTMLElement, events: DrawnEvent[], drawnBars: number[])
   })
 }
 
-/** A box in the coordinates of a container element. */
-interface Box { left: number; top: number; width: number; height: number }
-
-/** The box of an element relative to a container. */
-function boxIn(element: Element, container: Element): Box {
-  const r = element.getBoundingClientRect()
-  const c = container.getBoundingClientRect()
-  return { left: r.left - c.left, top: r.top - c.top, width: r.width, height: r.height }
-}
-
 /** Where a bar is drawn, and whether it starts its staff line. */
 interface BarBox extends Box { lineStart: boolean }
-
-/** The smallest box around several boxes. */
-function union(boxes: Box[]): Box | null {
-  if (!boxes.length) return null
-  const left = Math.min(...boxes.map((b) => b.left))
-  const top = Math.min(...boxes.map((b) => b.top))
-  const right = Math.max(...boxes.map((b) => b.left + b.width))
-  const bottom = Math.max(...boxes.map((b) => b.top + b.height))
-  return { left, top, width: right - left, height: bottom - top }
-}
-
-/**
- * The box of a note or rest symbol (head, stem, flags, accidentals), without the chord symbol
- * drawn in its group, which may stick out past the bar line.
- */
-function symbolBox(element: Element, root: Element): Box {
-  return union([...element.querySelectorAll('path')].map((path) => boxIn(path, root)).filter((b) => b.width > 0)) ??
-    boxIn(element, root)
-}
-
-/** The vertical extent of each staff line: the box around its five staff lines. */
-function staffBoxes(root: HTMLElement): Map<number, Box> {
-  const out = new Map<number, Box>()
-  for (const staff of root.querySelectorAll('.abcjs-staff')) {
-    const line = lineOf(staff)
-    const box = boxIn(staff, root)
-    out.set(line, union([box, ...(out.has(line) ? [out.get(line)!] : [])])!)
-  }
-  return out
-}
 
 /**
  * The box of a written bar: across from the barline before it to the barline after it, over its
@@ -206,11 +160,12 @@ function sectionMarks(root: HTMLElement, chart: ChartData, notes: DrawnNote[], b
 }
 
 /** Render a chart that has a melody as an engraved lead sheet that follows playback. */
-export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll, noteFeedback }: LeadSheetProps) {
+export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll, noteFeedback,
+  writing, noteClasses, staffInput, zoom = 1 }: LeadSheetProps) {
   const display = useDisplay()
   const phone = useTwoBarRows()
   const keyPc = (chart.key + transpose + 12) % 12
-  const { abc, events } = useMemo(() => melodyToAbc(chart, transpose, display, phone ? 2 : 4), [chart, transpose, display, phone])
+  const { abc, events } = useMemo(() => melodyToAbc(chart, transpose, display, phone ? 2 : 4, writing), [chart, transpose, display, phone, writing])
   // The chart bars abcjs draws, in order (spacers are left out)
   const drawnBars = useMemo(() => chart.bars.flatMap((bar, index) => (bar.spacer ? [] : [index])), [chart])
   const sheetRef = useRef<HTMLElement>(null)
@@ -231,7 +186,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
       abcjs.renderAbc(score, abc, {
         add_classes: true,
         responsive: 'resize',
-        staffwidth: phone ? PHONE_STAFF_WIDTH : STAFF_WIDTH,
+        staffwidth: (phone ? PHONE_STAFF_WIDTH : STAFF_WIDTH) / zoom,
         jazzchords: true,
         selectTypes: false, // clicks pick bars (loops); abcjs does not select notes
         foregroundColor: 'currentColor',
@@ -253,7 +208,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     return () => {
       cancelled = true
     }
-  }, [abc, events, drawnBars, phone, chart.title])
+  }, [abc, events, drawnBars, phone, chart.title, zoom])
 
   // The drawing scales with the sheet: measure the highlight again after a resize
   useEffect(() => {
@@ -294,6 +249,25 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
       for (const element of marked) element.classList.remove('lead-note-correct', 'lead-note-wrong', 'lead-note-missed')
     }
   }, [notes, noteFeedback])
+
+  // Classes an exercise gives some notes (hidden, selected, placed, right or wrong)
+  useEffect(() => {
+    if (!noteClasses) return
+    const marked: [Element, string][] = []
+    for (const note of notes) {
+      const name = note.note === undefined ? undefined : noteClasses[note.note]
+      if (!name) continue
+      for (const part of name.split(' ')) {
+        note.element.classList.add(part)
+        marked.push([note.element, part])
+      }
+    }
+    return () => {
+      for (const [element, name] of marked) element.classList.remove(name)
+    }
+  }, [notes, noteClasses])
+
+  const input = useStaffInput(scoreRef, notes, staffInput)
 
   // Where each bar and rehearsal mark is drawn, measured again after each layout
   const [boxes, setBoxes] = useState<Boxes>(NO_BOXES)
@@ -345,7 +319,8 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
   return (
     <article className="sheet lead-sheet" ref={sheetRef} aria-label={`${chart.title} lead sheet`}>
       <SheetHead chart={chart} style={style} keyPc={keyPc} />
-      <div className={onBarClick ? 'lead-score lead-score-clickable' : 'lead-score'} onClick={onClick}>
+      <div className={`lead-score${onBarClick ? ' lead-score-clickable' : ''}${staffInput ? ' lead-score-input' : ''}`}
+        onClick={onClick} {...input.handlers}>
         {boxes.sections.map((mark, i) => (
           <span key={`s${i}`} className={mark.margin ? 'mark-section lead-section lead-section-margin' : 'mark-section lead-section'}
             style={{ left: mark.left, top: mark.top }}>{mark.text}</span>
@@ -360,7 +335,24 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
           />
         )}
         <div ref={scoreRef} className="lead-engraving" />
+        {input.ghost && <GhostNote ghost={input.ghost} />}
       </div>
     </article>
+  )
+}
+
+/** The grey note of the staff input: its head, the ledger lines it needs and its name. */
+function GhostNote({ ghost }: { ghost: Ghost }) {
+  const width = ghost.space * 1.35
+  return (
+    <span className={`staff-ghost${ghost.dragging ? ' staff-ghost-dragging' : ''}`} aria-hidden="true">
+      {ghost.ledgers.map((y) => (
+        <span key={y} className="staff-ghost-ledger" style={{ left: ghost.x - width, top: y, width: width * 2 }} />
+      ))}
+      <span className="staff-ghost-head" style={{ left: ghost.x - width / 2, top: ghost.y - ghost.space / 2, width, height: ghost.space }} />
+      <span className="staff-ghost-name" style={{ left: ghost.x, top: Math.min(ghost.y, ...ghost.ledgers) - ghost.space * 2.2 }}>
+        {spelledName(ghost.note)}
+      </span>
+    </span>
   )
 }

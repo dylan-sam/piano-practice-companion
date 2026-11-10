@@ -17,6 +17,21 @@ export interface DrawnEvent {
   at: number
   beats: number
   rest: boolean
+  note?: number // the index of the melody note it draws (a tied note is drawn in several pieces)
+}
+
+/** A note as written: a letter, an accidental (-1 flat, 0 natural, +1 sharp) and an octave (4 holds middle C). */
+export interface Spelled { letter: string; accidental: number; octave: number }
+
+/** The clef a melody is written in. */
+export type Clef = 'treble' | 'bass'
+
+/** How some melody notes are written (by index in the chart's melody), for exercises. */
+export interface NoteWriting {
+  rhythmOnly?: (index: number) => boolean // drawn as a slash on the middle line: the rhythm without the pitch
+  spelling?: (index: number) => Spelled | undefined // written with this letter and accidental instead of the key's spelling
+  chords?: boolean // false: no chord symbols (and notes are not cut where chords change)
+  clef?: Clef // instead of the clef chosen from the melody's range
 }
 
 export interface LeadSheetAbc {
@@ -36,7 +51,7 @@ const LETTERS = 'CDEFGAB'
 const LETTER_PC = [0, 2, 4, 5, 7, 9, 11]
 
 /** The accidental (-1, 0, +1) the key signature of a major key gives to each letter. */
-function signature(majorPc: number): Record<string, number> {
+export function signature(majorPc: number): Record<string, number> {
   const fifths = SIGNATURE_FIFTHS[majorPc]
   const out: Record<string, number> = Object.fromEntries([...LETTERS].map((l) => [l, 0]))
   const order = fifths >= 0 ? SHARP_ORDER : [...SHARP_ORDER].reverse().join('')
@@ -62,6 +77,15 @@ export function spellPitch(pitch: number, majorPc: number): { letter: string; ac
   // The octave of the letter: B#/Cb would cross it, but neither is ever spelled here
   const octave = Math.floor((pitch - LETTER_PC[LETTERS.indexOf(letter)] - accidental) / 12) - 1
   return { letter, accidental, octave }
+}
+
+// The middle line of each clef: B4 in the treble clef, D3 in the bass clef
+const MIDDLE_LINE: Record<Clef, Spelled> = { treble: { letter: 'B', accidental: 0, octave: 4 }, bass: { letter: 'D', accidental: 0, octave: 3 } }
+
+/** The clef of a melody: the bass clef for a low one (a bass or baritone solo), else the treble clef. */
+export function melodyClef(pitches: number[]): Clef {
+  const sorted = [...pitches].sort((a, b) => a - b)
+  return sorted.length && sorted[Math.floor(sorted.length / 2)] < 57 ? 'bass' : 'treble'
 }
 
 /** An ABC note letter with its octave marks (middle C is C, the octave above c). */
@@ -113,7 +137,10 @@ function snap(t: number, grids: number[], length: number): number {
 }
 
 /** A run of the bar to draw: a note (pitch) or a rest (null), with a chord symbol at its start. */
-interface Piece { start: number; end: number; pitch: number | null; text?: string }
+interface Piece { start: number; end: number; pitch: number | null; text?: string; note?: number }
+
+/** A melody note with its index in the chart's melody. */
+type IndexedNote = MelodyNote & { index?: number }
 
 /**
  * Cut the bar's pieces so each one can be written: at chord starts, at the edges of triplet beats,
@@ -166,15 +193,16 @@ const quoted = (text: string, place = '') => `"${place}${text.replace(/"/g, "'")
  * the bar before; the result's `carry` is the part of the last note that runs into the next bar.
  */
 function writeBar(
-  index: number, bar: ChartBar, notes: MelodyNote[], length: number, straight: boolean,
-  majorPc: number, chordAt: (symbol: string | null) => string, carry: MelodyNote | null, marks: BarMarks,
-): { body: string; events: DrawnEvent[]; carry: MelodyNote | null } {
+  index: number, bar: ChartBar, notes: IndexedNote[], length: number, straight: boolean,
+  majorPc: number, chordAt: (symbol: string | null) => string, carry: IndexedNote | null, marks: BarMarks,
+  writing: NoteWriting, clef: Clef,
+): { body: string; events: DrawnEvent[]; carry: IndexedNote | null } {
   // Monophonic: a note ends where the next one starts
   const sorted = [...(carry ? [carry] : []), ...notes].filter((n) => n.at < length - EPS).sort((a, b) => a.at - b.at)
   const clipped = sorted.map((n, i) => ({ ...n, beats: Math.min(n.at + n.beats, sorted[i + 1]?.at ?? Infinity) - n.at }))
   const lastNote = clipped.at(-1)
   const nextCarry = lastNote && lastNote.at + lastNote.beats > length + 0.02
-    ? { bar: index + 1, at: 0, beats: lastNote.at + lastNote.beats - length, pitch: lastNote.pitch } : null
+    ? { bar: index + 1, at: 0, beats: lastNote.at + lastNote.beats - length, pitch: lastNote.pitch, index: lastNote.index } : null
   const inBar = clipped.map((n) => ({ ...n, beats: Math.min(n.beats, length - n.at) }))
   const grids = beatGrids(inBar, length, straight)
   // Notes on the grid, dropping any that shrink to nothing
@@ -185,7 +213,7 @@ function writeBar(
     const last = placed.at(-1)
     if (last && last.end > start) last.end = start
     if (last && last.end <= last.start + EPS) placed.pop()
-    if (end > start + EPS) placed.push({ start, end, pitch: note.pitch })
+    if (end > start + EPS) placed.push({ start, end, pitch: note.pitch, note: note.index })
   }
   // Rests fill the gaps
   const pieces: Piece[] = []
@@ -199,14 +227,15 @@ function writeBar(
   // Cut at chord starts and around triplet beats, then hang the chord symbols on the pieces
   const chordStarts: number[] = []
   let at = 0
-  for (const chord of bar.chords) {
+  const chords = writing.chords === false ? [] : bar.chords
+  for (const chord of chords) {
     chordStarts.push(snap(at, grids, length))
     at += chord.beats
   }
   const triplets = grids.flatMap((g, beat) => (g === 3 ? [beat, beat + 1] : []))
   const cuts = [...new Set([...chordStarts, ...triplets])].filter((t) => t > EPS && t < length - EPS).sort((a, b) => a - b)
   const cut = cutPieces(pieces, cuts, grids)
-  bar.chords.forEach((chord, i) => {
+  chords.forEach((chord, i) => {
     const target = cut.find((p) => Math.abs(p.start - chordStarts[i]) < EPS)
     if (target) target.text = (target.text ?? '') + quoted(chordAt(chord.symbol))
   })
@@ -216,7 +245,7 @@ function writeBar(
   }
 
   // A bar of rest only, with no chord change inside, is a whole-bar rest
-  if (cut.every((p) => p.pitch === null) && bar.chords.length <= 1) {
+  if (cut.every((p) => p.pitch === null) && chords.length <= 1) {
     return { body: `${cut.map((p) => p.text ?? '').join('')}Z`, events: [{ bar: index, at: 0, beats: length, rest: true }], carry: null }
   }
 
@@ -243,8 +272,14 @@ function writeBar(
     const units = grid === 3 ? Math.round((piece.end - piece.start) * 3) * 2 : Math.round((piece.end - piece.start) * UNIT)
     const size = units === 1 ? '' : String(units)
     if (piece.pitch === null) token += `z${size}`
-    else {
-      const { letter, accidental, octave } = spellPitch(piece.pitch, majorPc)
+    else if (piece.note !== undefined && writing.rhythmOnly?.(piece.note)) {
+      // The rhythm without the pitch: a slash on the middle line, with no accidental
+      const { letter, octave } = MIDDLE_LINE[clef]
+      token += `!style=rhythm!${abcLetter(letter, octave)}${size}`
+      const next = cut[i + 1]
+      if (next && next.note === piece.note && Math.abs(next.start - piece.end) < EPS) token += '-'
+    } else {
+      const { letter, accidental, octave } = (piece.note !== undefined && writing.spelling?.(piece.note)) || spellPitch(piece.pitch, majorPc)
       const place = `${letter}${octave}`
       const current = inForce.get(place) ?? sig[letter]
       const tiedOver = i === 0 && carry !== null && carry.pitch === piece.pitch // a continuation: no new accidental
@@ -258,7 +293,8 @@ function writeBar(
     }
     if (tripletLeft > 0) tripletLeft--
     tokens.push(token)
-    events.push({ bar: index, at: piece.start, beats: piece.end - piece.start, rest: piece.pitch === null })
+    events.push({ bar: index, at: piece.start, beats: piece.end - piece.start, rest: piece.pitch === null,
+      ...(piece.note !== undefined && piece.pitch !== null ? { note: piece.note } : {}) })
   })
   // The last note is tied into the next bar when it runs past the bar line
   const last = cut.at(-1)
@@ -295,13 +331,15 @@ function barMarks(bar: ChartBar): BarMarks {
  * `barsPerLine` sets the most bars on a staff line (fewer on phones); a rehearsal mark starts a
  * new line.
  */
-export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySettings, barsPerLine = 4): LeadSheetAbc {
+export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySettings, barsPerLine = 4,
+  writing: NoteWriting = {}): LeadSheetAbc {
   let keyPc = (chart.key + transpose + 120) % 12
   let majorPc = chart.minor ? (keyPc + 3) % 12 : keyPc
-  const byBar = notesByBar(chart.melody)
+  // Each note knows its index in the melody, so exercises can write some notes their own way
+  const indexed = chart.melody ? { ...chart.melody, notes: chart.melody.notes.map((n, index) => ({ ...n, index })) } : undefined
+  const byBar = notesByBar(indexed) as Map<number, IndexedNote[]>
   // A low melody (a bass or baritone solo) is written in the bass clef
-  const pitches = (chart.melody?.notes ?? []).map((n) => n.pitch + transpose).sort((a, b) => a - b)
-  const clef = pitches.length && pitches[Math.floor(pitches.length / 2)] < 57 ? 'bass' : 'treble'
+  const clef = writing.clef ?? melodyClef((chart.melody?.notes ?? []).map((n) => n.pitch + transpose))
   const meters = barMeters(chart)
   const header = ['X:1', '%%barnumbers 1', `M:${meterText(chart.bars[0]?.partial ? chart.time : (meters[0]?.time ?? chart.time))}`,
     `L:1/${UNIT * 4}`, `K:${abcKey(keyPc, !!chart.minor)} clef=${clef}`]
@@ -309,7 +347,7 @@ export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySet
   const lines: string[] = []
   const events: DrawnEvent[] = []
   let line = ''
-  let carry: MelodyNote | null = null
+  let carry: IndexedNote | null = null
   // Chords are named in the key in force (for Roman numerals)
   const chordAt = (symbol: string | null) => chordText(symbol, transpose, keyPc, display)
   const shown = chart.bars.map((bar, index) => ({ bar, index })).filter(({ bar }) => !bar.spacer)
@@ -336,7 +374,7 @@ export function melodyToAbc(chart: Chart, transpose: number, display: DisplaySet
       (i > 0 && bar.time && !bar.partial ? `[M:${meterText(bar.time)}]` : '') +
       (change ? `[K:${abcKey(keyPc, !!change.minor)}]` : '')
     const straight = !!meter.compound || !Number.isInteger(meter.beats)
-    const written = writeBar(index, bar, notes, meter.beats, straight, majorPc, chordAt, carry, barMarks(bar))
+    const written = writeBar(index, bar, notes, meter.beats, straight, majorPc, chordAt, carry, barMarks(bar), writing, clef)
     carry = written.carry
     line += `${opening}${written.body} ${barline(bar, shown[i + 1]?.bar)} `
     events.push(...written.events)
