@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
-import { useMixer } from '../audio/useMixer'
+import { MELODY_PARTS, useMixer } from '../audio/useMixer'
 import { useHeardBeat, usePlayer } from '../audio/usePlayer'
-import { arrange, BASE_BPM } from '../engine/arrange'
+import { arrange, BASE_BPM, type Part } from '../engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from '../engine/pianoPatterns'
 import type { Timeline } from '../engine/timeline'
 import { warmUpMidi } from '../engine/warmup'
@@ -36,6 +36,7 @@ const BPM_RANGE: [number, number] = [40, 240]
 const MAX_REPEATS = 4
 const START_BPM = 100 // excerpts start at most this fast
 const NOTE_SOUND_MS = 450 // how long a placed note sounds
+const SOLO_PARTS: Part[] = ['melody', 'drums'] // band off: the melody, and the count-in
 const SHEET_ZOOM = 1.6 // excerpts are short: the staff is drawn larger, to place notes precisely
 
 /** The settings of the exercise, kept in the browser. */
@@ -564,7 +565,7 @@ export function MelodicDictation() {
         maxChoruses={MAX_REPEATS}
         onChoruses={(n) => change({ repeats: n })}
       >
-        <Mixer {...mixer(style.comp.program)} />
+        <Mixer {...mixer(style.comp.program)} parts={settings.band ? MELODY_PARTS : SOLO_PARTS} />
       </Transport>
     </div>
   )

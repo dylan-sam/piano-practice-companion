@@ -206,6 +206,7 @@ kept under the result.
 | **Hear the key**: *Tonic* (T) and *Cadence* (Y) | the tonic triad, and I-IV-V-I in major or i-iv-V-i in minor |
 | **Key** | the source's key, a random key for each excerpt, or one fixed tonic. Placed notes move with a key change. |
 | **Style**, **Tempo**, **Choruses** | the band's style (with or without the band, it sets the swing), the tempo (excerpts start at most at 100), and how many times the excerpt plays |
+| **Mixer** | melody, bass, piano, drums and master volume, shared with the player; with the band off, melody and drums (the count-in) |
 
 ## Chord Sightreading
 

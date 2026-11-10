@@ -7,6 +7,7 @@ import type { Player } from '../audio/player'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { BASE_BPM, type Part } from '../engine/arrange'
 import type { MelodyOccurrence } from '../engine/melody'
+import { BAND_PARTS, MELODY_PARTS } from '../audio/useMixer'
 import {
   EMPTY_SCORE, MelodyJudge, noteKey, TIMING_WINDOWS, type MelodyScore, type NoteResult, type Strictness,
 } from './melodyReading'
@@ -21,7 +22,7 @@ export const DEFAULT_READING: ReadingSettings = { strictness: 'normal', anyOctav
 
 /** The Mixer's parts while reading a melody: the band, and the melody too when it guides. */
 export const readingParts = (guide: boolean): Part[] =>
-  guide ? ['bass', 'comp', 'melody', 'drums'] : ['bass', 'comp', 'drums']
+  guide ? MELODY_PARTS : BAND_PARTS
 
 /** Whether stored reading settings are usable. */
 export function isReadingSettings(value: unknown): value is ReadingSettings {

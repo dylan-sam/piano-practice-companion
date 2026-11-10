@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Part } from '../engine/arrange'
+import { BAND_PARTS } from '../audio/useMixer'
 import { Popover } from './Popover'
 
 interface MixerProps {
@@ -16,10 +17,9 @@ interface MixerProps {
   level: () => { peak: number; rms: number } // output level in dBFS
 }
 
-const PARTS: Part[] = ['bass', 'comp', 'drums']
 
 /** Mix only the instrument parts offered by the current screen. */
-export function Mixer({ parts = PARTS, labels, volumes, muted, onVolume, onMute, master, masterMuted, onMaster, onMasterMute, level }: MixerProps) {
+export function Mixer({ parts = BAND_PARTS, labels, volumes, muted, onVolume, onMute, master, masterMuted, onMaster, onMasterMute, level }: MixerProps) {
   return (
     <Popover
       id="mixer"

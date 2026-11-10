@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { arrange, BASE_BPM, type Part } from './engine/arrange'
+import { arrange, BASE_BPM } from './engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from './engine/pianoPatterns'
 import { warmUpMidi } from './engine/warmup'
 import { chorusTranspose, type Timeline } from './engine/timeline'
@@ -35,7 +35,7 @@ import { handlePracticeShortcut, type PracticeShortcuts } from './ui/shortcuts'
 import { Wordmark } from './ui/AppLink'
 import type { Player } from './audio/player'
 import { useHeardBeat, usePlayer } from './audio/usePlayer'
-import { useMixer } from './audio/useMixer'
+import { MELODY_PARTS, useMixer } from './audio/useMixer'
 import { LeadSheet } from './ui/LeadSheet'
 import { useBackClose } from './ui/backButton'
 import { useDrawerScreen } from './ui/useNarrowScreen'
@@ -67,7 +67,6 @@ interface Draft {
 
 const BPM_RANGE: [number, number] = [40, 300]
 // The mixer strips of a lead sheet, with the melody instrument
-const MELODY_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
 const MAX_CHORUSES = 24
 // Keep a tempo inside the allowed range
 const clampBpm = (v: number) => Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], v))

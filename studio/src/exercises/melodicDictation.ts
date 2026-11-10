@@ -10,7 +10,7 @@ import { barMeters, type Chart, type ChartBar } from '../music/chart'
 import { onLickGrid } from '../music/licks'
 import { signature, spellPitch, type Spelled } from '../music/abc'
 import { signatureKey } from '../music/staff'
-import type { MelodyNote } from '../music/melody'
+import { melodyProgram, type MelodyNote } from '../music/melody'
 import type { Tune } from '../music/songs'
 import type { StyleDefinition } from '../styles/types'
 import { CHANNELS, BASE_BPM } from '../engine/arrange'
@@ -287,11 +287,10 @@ export function transposeGuesses(guesses: Record<number, Guess>, semitones: numb
  */
 export function melodyAloneMidi(chart: Chart, style: StyleDefinition, transpose: number, repeats: number): { midi: Uint8Array; timeline: Timeline } {
   const timeline = buildTimeline(chart, transpose, repeats, { ending: false })
-  const program = chart.melody?.program ?? 65
   const midi = writeMidi(BASE_BPM, [
     { name: 'Count-in', channel: CHANNELS.drums, program: style.drums.kit, pan: 64, reverb: 20,
       events: generateDrums([], style.drums, style.swing, timeline.clicks) },
-    { name: 'Melody', channel: CHANNELS.melody, program, pan: 54, reverb: 45,
+    { name: 'Melody', channel: CHANNELS.melody, program: melodyProgram(chart.melody!), pan: 54, reverb: 45,
       events: melodyEvents(chart, timeline, CHANNELS.melody, style.swing, transpose) },
   ])
   return { midi, timeline }

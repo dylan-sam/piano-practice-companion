@@ -9,6 +9,9 @@ import type { Player } from './player'
 // Kept in the browser: levels depend on the speakers, not on the tune or the screen
 const MASTER_KEY = 'eartraining:master-volume'
 const VOLUMES_KEY = 'eartraining:part-volumes'
+/** The band's parts, and the band with a melody (lead sheets, melodies played or dictated). */
+export const BAND_PARTS: Part[] = ['bass', 'comp', 'drums']
+export const MELODY_PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
 const DEFAULT_VOLUMES: Record<Part, number> = { bass: 110, comp: 85, melody: 100, drums: 95 }
 const UNMUTED: Record<Part, boolean> = { bass: false, comp: false, melody: false, drums: false }
 
