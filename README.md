@@ -14,6 +14,8 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ![The Chord Player](docs/images/player.png)
 
+<img src="docs/images/phone.png" alt="The Chord Player on a phone" width="260">
+
 - [What you can do](#what-you-can-do)
 - [The data](#the-data)
 - [Getting started](#getting-started)
@@ -217,8 +219,6 @@ it on a MIDI keyboard with the band; it is judged as in Lead Sheet Sightreading.
 **Rest between licks** leaves a rest as long as the lick after each one.
 
 All four exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
-
-<img src="docs/images/phone.png" alt="The Chord Player on a phone" width="260">
 
 ## The data
 
@@ -491,7 +491,7 @@ with nothing to build:
 
 1. On the phone, open the
    [latest release](https://github.com/dylan-sam/piano-practice-companion/releases/latest)
-   and tap `piano-practice-companion-debug.apk` (23 MB) under **Assets**. The
+   and tap `piano-practice-companion-debug.apk` (22 MB) under **Assets**. The
    same file is also in the repository, at
    [`releases/piano-practice-companion-debug.apk`](releases/piano-practice-companion-debug.apk)
    (open the link, then **Download raw file**).
