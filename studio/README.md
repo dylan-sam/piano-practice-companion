@@ -18,6 +18,7 @@ OpenStand's example songs, telemetry and submission action.
 - [Lead sheets](#lead-sheets)
 - [The Display menu](#the-display-menu)
 - [Tunes and playlists](#tunes-and-playlists)
+- [Playback without clicks](#playback-without-clicks)
 - [Building and running](#building-and-running)
 - [Code map](#code-map)
 - [Licenses](#licenses)
@@ -195,6 +196,22 @@ Export a file before clearing the browser's storage, or the tunes are lost.
 
 The **Mixer** (part volumes, mutes, master volume, kept in the browser) is
 shared by the player and the exercises (`src/audio/useMixer.ts`).
+
+## Playback without clicks
+
+Loading a song makes SpessaSynth reset its synthesizer, which cuts the notes
+still ringing and the reverb. `src/audio/player.ts` therefore keeps a second
+synthesizer (made in the background after the warm-up):
+
+- a change while the band plays (style, pattern, choruses, guide melody, the
+  band on or off...) loads the new arrangement on the second synthesizer, which
+  takes over at the band's position while the first lets its notes fade
+  (`play(midi, fromSeconds)`);
+- an endless exercise loads its next chunk there ahead of time (`queue`) and
+  starts it on the bar line (`startQueued`).
+
+Only a real start (a new song, key or loop, or Play) loads on the playing
+synthesizer, from the beginning.
 
 ## Building and running
 

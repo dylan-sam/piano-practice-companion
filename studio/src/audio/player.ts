@@ -176,6 +176,8 @@ export class Player {
   // Loads the MIDI and starts playing from the given time (seconds of MIDI time)
   async play(midi: Uint8Array, fromSeconds = 0): Promise<void> {
     const seq = this.requireSeq()
+    // Going on from where the band is (a new style, guide melody...): no reset can be heard
+    if (fromSeconds > 0 && this.isPlaying && this.bank) return this.takeOver(midi)
     this.playRequested = true
     // A song replacing a playing one (the next chunk of an endless exercise, a new arrangement
     // going on from where the band is) never sends the note-offs of the notes still sounding
@@ -190,6 +192,49 @@ export class Player {
     seq.play()
   }
 
+  /** The second synthesizer, made the first time it is needed (or in the background after the warm-up). */
+  private spareDeck(): Promise<Deck> {
+    if (!this.bank) return Promise.reject(new Error('Player is not ready yet'))
+    this.spareMaking ??= this.makeDeck(this.bank.slice(0)).then((deck) => (this.spare = deck))
+    return this.spareMaking
+  }
+
+  /**
+   * Go on with a new arrangement of the playing song from where the band is, without a sound of
+   * the change: loading a song resets a synthesizer (cutting the ringing notes and the reverb),
+   * so the new arrangement is loaded on the second synthesizer, which then starts at the band's
+   * position while the first lets its notes fade. A waiting chunk (`queue`) is dropped.
+   */
+  private async takeOver(midi: Uint8Array): Promise<void> {
+    this.queued = null
+    this.queuedReady = false
+    const spare = await this.spareDeck()
+    const next = this.loading.then(async () => {
+      spare.seq.pause()
+      await this.loadOn(spare.seq, midi, 'arrangement.mid')
+      const playing = this.seq
+      const synth = this.synth
+      if (!playing || !synth) return
+      spare.seq.playbackRate = playing.playbackRate
+      this.applyVolumes(spare.synth)
+      // The position now (the band went on while the new arrangement loaded). SpessaSynth's
+      // sequencer starts its own clock from the paused time it keeps privately, which the time
+      // set only updates once the audio thread answers: it is set at once, so the clock is right
+      const position = playing.currentTime
+      spare.seq.currentTime = position
+      ;(spare.seq as unknown as { pausedTime?: number }).pausedTime = position
+      spare.seq.play()
+      playing.pause() // its notes are released with their own fade, not cut
+      this.startedAt = performance.now()
+      this.spare = { synth, seq: playing }
+      this.spareMaking = Promise.resolve(this.spare)
+      this.synth = spare.synth
+      this.seq = spare.seq
+    })
+    this.loading = next
+    await next
+  }
+
   /**
    * Get the next song ready on the second synthesizer, paused at its start, for `startQueued`.
    * A later call replaces the waiting song.
@@ -198,8 +243,7 @@ export class Player {
     if (!this.bank || !this.seq) return
     this.queued = midi
     this.queuedReady = false
-    this.spareMaking ??= this.makeDeck(this.bank.slice(0)).then((deck) => (this.spare = deck))
-    const spare = await this.spareMaking
+    const spare = await this.spareDeck()
     // Loading resets that synthesizer: the chunk it just handed over first rings out
     const ringing = this.startedAt + RING_OUT_MS - performance.now()
     if (ringing > 0) await new Promise((resolve) => window.setTimeout(resolve, ringing))
@@ -249,9 +293,11 @@ export class Player {
   // Stops as soon as the user presses play; the rest is decoded on the way.
   async warmUp(songs: Uint8Array[]): Promise<void> {
     for (const midi of songs) {
-      if (this.playRequested) return
+      if (this.playRequested) break
       await this.load(midi, 'warm-up.mid')
     }
+    // The second synthesizer is made now, so the first change while playing has no wait
+    void this.spareDeck().catch(() => {})
   }
 
   private load(midi: Uint8Array, fileName: string): Promise<void> {

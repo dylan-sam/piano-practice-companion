@@ -57,8 +57,8 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   loop starts over. A new style or piano pattern also goes on from where the
   band is, and a melody then swings as the new style does. In general, a
   setting that leaves the sheet as it is (style, pattern, choruses, guide
-  melody, any octave, the band on or off...) never stops the song or plays a
-  new count-in.
+  melody, any octave, the band on or off...) never stops the song, plays a new
+  count-in or makes a click: the new arrangement takes over at the same spot.
 - **Swing marking**: a sheet whose style swings its eighths shows the usual
   marking (two eighths = a triplet quarter and eighth) under the style, at the
   top left.
