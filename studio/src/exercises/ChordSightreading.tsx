@@ -86,6 +86,9 @@ export function ChordSightreading() {
   const mistakesRef = useRef(mistakes)
 
   const [mode, setMode] = useState<Mode>('pick')
+  // The source whose menu is open while an infinite line goes on playing (Pick a song, Random song)
+  const [menu, setMenu] = useState<Mode | null>(null)
+  const shown = menu ?? mode // the mode whose button and menu are shown
   const [libraryOpen, setLibraryOpen] = useState(true)
   const [tunes, setTunes] = useState<Tune[]>([])
   const [importOpen, setImportOpen] = useState(false)
@@ -201,6 +204,8 @@ export function ChordSightreading() {
           INFINITE_GROUPS, seventhsRef.current / 100)
         const arrangement = arrangeForReading(line.chart, nextStyle, nextPattern, 0, 1, NO_PRACTICE, false)
         pendingRef.current = { line, arrangement, styleId: nextStyle, patternId: nextPattern }
+        // Loaded ahead on the second synthesizer, so the hand-over has no gap
+        void playerRef.current?.queue(arrangement.midi)
       } catch (cause) {
         setError(String(cause))
       }
@@ -230,7 +235,8 @@ export function ChordSightreading() {
     setFeedback({})
     setBeat(0)
     try {
-      await player.play(pending.arrangement.midi)
+      // The prepared chunk waits on the second synthesizer; one built just now is loaded first
+      if (!player.startQueued(pending.arrangement.midi)) await player.play(pending.arrangement.midi)
       player.setRate(liveBpmRef.current / BASE_BPM)
       switchedRef.current = false
       setPlaying(true)
@@ -295,6 +301,11 @@ export function ChordSightreading() {
     setBeat(0)
     setTune(next)
     setLibraryOpen(false)
+    // A song chosen from a menu opened over an infinite line: its source becomes the mode
+    if (menu) {
+      setMode(menu)
+      setMenu(null)
+    }
     setStyleId(next.chart.style)
     setPatternId(defaultBassPatternForStyle(next.chart.style))
     setBpm(Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], next.chart.bpm)))
@@ -351,6 +362,20 @@ export function ChordSightreading() {
 
   /** Change the screen mode without leaving the previous band playing; picking and random songs keep the current song. */
   const chooseMode = (next: Mode) => {
+    // While an infinite line plays, Pick a song and Random song only open their menu: the line
+    // goes on until a song is chosen (openTune); Infinite progressions closes the menu again
+    if (mode === 'infinite' && playing && next !== 'infinite') {
+      if (next === 'pick' && menu === 'pick') setLibraryOpen((current) => !current)
+      else setLibraryOpen(next === 'pick')
+      setMenu(next)
+      setError('')
+      return
+    }
+    if (menu) {
+      setMenu(null)
+      setLibraryOpen(false)
+      if (next === 'infinite') return
+    }
     // Pick a song again only opens or closes the song list, as the Tunes button of the Chord Player
     if (next === 'pick' && mode === 'pick') {
       setLibraryOpen((current) => !current)
@@ -490,18 +515,18 @@ export function ChordSightreading() {
             : <>Waiting for<span className="topbar-long"> MIDI</span> keyboard</>
             : <>Connect<span className="topbar-long"> MIDI keyboard</span><span className="topbar-short"> MIDI</span></>}
         </button>
-        {mode === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
+        {shown === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
           onClick={() => setLibraryOpen((current) => !current)}>Songs</button>}
       </header>
 
       <div className="sight-mode" role="group" aria-label="Sight-reading mode">
-        <button className="chip" aria-pressed={mode === 'pick'} onClick={() => chooseMode('pick')}>Pick a song</button>
-        <button className="chip" aria-pressed={mode === 'random'} onClick={() => chooseMode('random')}>Random song</button>
-        <button className="chip" aria-pressed={mode === 'infinite'} onClick={() => chooseMode('infinite')}>Infinite progressions</button>
+        <button className="chip" aria-pressed={shown === 'pick'} onClick={() => chooseMode('pick')}>Pick a song</button>
+        <button className="chip" aria-pressed={shown === 'random'} onClick={() => chooseMode('random')}>Random song</button>
+        <button className="chip" aria-pressed={shown === 'infinite'} onClick={() => chooseMode('infinite')}>Infinite progressions</button>
       </div>
 
-      <div className={mode === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
-        {mode === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
+      <div className={shown === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
+        {shown === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
           onSelect={(id) => { const selected = tunes.find((item) => item.id === id); if (selected) openTune(selected) }}
           onLoadChoco={loadChoco} onImport={() => setImportOpen(true)} />}
         <main className="stage exercise-stage sight-stage" onClick={() => setLibraryOpen(false)}>
@@ -510,7 +535,7 @@ export function ChordSightreading() {
           {readiness.kind === 'error' && <p className="exercise-error" role="alert">{readiness.message}</p>}
           {keyboard.error && <p className="exercise-error" role="alert">{keyboard.error}</p>}
           {!keyboard.supported && <p className="sight-hint">This browser does not expose Web MIDI. A compatible browser or native MIDI input is needed to score notes.</p>}
-          {mode === 'random' && <div className="sight-picker">
+          {shown === 'random' && <div className="sight-picker">
             <label className="control"><span className="label">Train a progression (optional)</span>
               <select className="select" value={progressionId} onChange={(event) => setProgressionId(event.target.value)}>
                 <option value="">Any progression</option>
@@ -519,7 +544,7 @@ export function ChordSightreading() {
             </label>
             <button className="button button-primary" onClick={() => void chooseRandomSong()}>Choose random song</button>
           </div>}
-          {mode === 'infinite' && <div className="sight-picker">
+          {shown === 'infinite' && <div className="sight-picker">
             <button className="button button-primary" onClick={() => void startInfinite()}
               disabled={!bank || readiness.kind !== 'ready'}>New infinite line</button>
             <button className="chip" aria-pressed={focus} onClick={() => setFocus((current) => !current)}>

@@ -48,14 +48,17 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   several collections offers its versions in a menu, the best one first.
 - **Arrange it**: six styles (Swing, Bossa Nova, Latin, Ballad, Blues,
   Straight Pop/Rock), 16 piano patterns, any key, tempo and number of choruses.
-- **Style lab**: create your own groove on a step grid (drums, bass, comping),
+- **Pattern Creator**: create your own groove on a step grid (drums, bass, comping),
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
   fourth, a half step or a whole step each chorus), speed up each chorus. Keys
   and speed-up apply while the band plays, without starting over, in every
   player and exercise (with the choruses needed to go round the keys); a new
   loop starts over. A new style or piano pattern also goes on from where the
-  band is, and a melody then swings as the new style does.
+  band is, and a melody then swings as the new style does. In general, a
+  setting that leaves the sheet as it is (style, pattern, choruses, guide
+  melody, any octave, the band on or off...) never stops the song or plays a
+  new count-in.
 - **Swing marking**: a sheet whose style swings its eighths shows the usual
   marking (two eighths = a triplet quarter and eighth) under the style, at the
   top left.
@@ -66,9 +69,11 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   menu (Sheet auto-scroller On/Off).
 - **Display**: Roman numerals (each chord as a degree of the key, following key
   changes), minor written C− or Cm, and % for a bar that repeats the bar before.
-- **Your own charts**: write or edit a chart, import iReal Pro links and
-  playlists, export your playlists to a file, and share a chart as a link that
-  opens in this app or in iReal Pro.
+- **Your own charts**: write or edit a chart (**Edit Song**), import iReal Pro
+  links and playlists, export your playlists to a file (**Export My Tunes**),
+  and share a chart as a link that opens in this app or in iReal Pro. The
+  **Songs** list shows each playlist under a bar with its name; the playlist
+  you choose comes first.
 - **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
   and the band plays it without its melody.
 
@@ -84,7 +89,7 @@ or the chart's own instrument) and has its own fader in the Mixer.
   is coloured; long sheets scroll by themselves.
 - The melody follows repeats, loops, transposition and Practice > Keys, with
   the style's swing; every option of the chord player (styles, Practice,
-  Style lab, Display) works here too.
+  Pattern Creator, Display) works here too.
 - It comes with **1,479 lead sheets that may be shared**: 498 public domain
   songs of the old Wikifonia site (OpenEWLD) and 981 folk tunes of the
   Nottingham Music Database, read and checked as described in
@@ -182,7 +187,7 @@ the percentage and your average timing (early or late, in milliseconds).
   (OpenEWLD and Nottingham) and your own imported ones. **Import** MuseScore
   MusicXML files or a Studio export here: they are in the Lead Sheet Player
   too.
-- **Reading** (a button of the bottom bar, next to Practice and Mixer):
+- **Scoring** (a button of the bottom bar, next to Practice and Mixer):
   - **Timing**: Easy, Normal or Strict.
   - **Any octave**: count a note played in another octave than written.
   - **Guide melody**: the band also plays the melody, to follow along.

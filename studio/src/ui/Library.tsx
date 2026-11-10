@@ -100,10 +100,10 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const chosenLabels = catalog.filter((p) => chosen.includes(p.id)).map((p) => p.label.replaceAll(' \u2013 ', '\u2013'))
 
   return (
-    <nav className="library" aria-label="Tunes" inert={disabled}>
+    <nav className="library" aria-label="Songs" inert={disabled}>
       <div className="library-head">
         <h2 className="label">
-          Tunes <span className="library-count">{scoreGroups.length + (filtering ? 0 : matches.length)}</span>
+          Songs <span className="library-count">{scoreGroups.length + (filtering ? 0 : matches.length)}</span>
         </h2>
         {showActions && <span className="library-actions">
           {onNew && <button className="library-import" onClick={onNew}>
@@ -118,8 +118,8 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       <input
         className="library-search"
         type="search"
-        placeholder={searchCatalog ? 'Search ChoCo title, artist or saved tune' : 'Search title or performer'}
-        aria-label="Search tunes"
+        placeholder={searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
+        aria-label="Search songs"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -199,27 +199,32 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       )}
 
       {matches.length > 0 && !filtering && (
-        <h3 className="label">Saved tunes{activePlaylist ? ` · ${activePlaylist} first` : ''}</h3>
+        <h3 className="label">Saved songs</h3>
       )}
       <ul className="library-list">
-        {(filtering ? [] : matches.slice(0, LIMIT)).map((tune) => (
-          <li key={tune.id}>
-            <button
-              className="tune"
-              aria-current={tune.id === selectedId ? 'true' : undefined}
-              onClick={() => onSelect(tune.id)}
-            >
-              <span className="tune-title">{tune.chart.title}</span>
-              <span className="tune-meta">
-                {tune.chart.composer ? `${tune.chart.composer} · ` : ''}
-                {tune.chart.sourceStyle ?? getStyle(tune.chart.style).name} ·{' '}
-                {noteName(tune.chart.key, keyPrefersFlats(tune.chart.key))}
-                {tune.chart.minor ? '−' : ''}
-                {' · '}{tune.playlist ?? 'My tunes'}
-              </span>
-            </button>
-          </li>
-        ))}
+        {(filtering ? [] : matches.slice(0, LIMIT)).map((tune, i, shown) => {
+          // Each playlist starts under a bar with its name (the chosen one comes first)
+          const name = tune.playlist ?? 'My tunes'
+          const starts = i === 0 || (shown[i - 1].playlist ?? 'My tunes') !== name
+          return (
+            <li key={tune.id}>
+              {starts && <div className="library-group">{name}</div>}
+              <button
+                className="tune"
+                aria-current={tune.id === selectedId ? 'true' : undefined}
+                onClick={() => onSelect(tune.id)}
+              >
+                <span className="tune-title">{tune.chart.title}</span>
+                <span className="tune-meta">
+                  {tune.chart.composer ? `${tune.chart.composer} · ` : ''}
+                  {tune.chart.sourceStyle ?? getStyle(tune.chart.style).name} ·{' '}
+                  {noteName(tune.chart.key, keyPrefersFlats(tune.chart.key))}
+                  {tune.chart.minor ? '−' : ''}
+                </span>
+              </button>
+            </li>
+          )
+        })}
       </ul>
       {matches.length > LIMIT && !filtering && (
         <p className="library-more">{matches.length - LIMIT} more. Search to narrow the list.</p>
@@ -251,7 +256,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         ))}
       </ul>
       {(filtering || matches.length === 0) && scoreGroups.length === 0 && (
-        <p className="library-more">{!tunes.length && emptyText ? emptyText : 'No tunes match.'}</p>
+        <p className="library-more">{!tunes.length && emptyText ? emptyText : 'No songs match.'}</p>
       )}
     </nav>
   )

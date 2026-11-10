@@ -57,7 +57,7 @@ The back button never quits the app by surprise
 
 | Open now | One press of back |
 |---|---|
-| a menu, panel or dialog (Settings, Display, Practice, Mixer, ⋯, Share, Export, Import, the tune drawer, the chart editor, the Style lab, loop picking) | closes the last one opened, without saving; press again for the one before |
+| a menu, panel or dialog (Settings, Display, Practice, Mixer, ⋯, Share, Export My Tunes, Import, the tune drawer, the chart editor, the Pattern Creator, loop picking) | closes the last one opened, without saving; press again for the one before |
 | nothing, on a screen (player or an exercise) | goes back to the main menu |
 | nothing, on the main menu | leaves the app |
 
@@ -81,7 +81,7 @@ nothing hides behind the phone's own buttons.
 
 | Screen | Size | Layout |
 |---|---|---|
-| Upright phone | below 820 px wide (or any screen below 600 px) | top-bar buttons in a ⋯ menu; tune list in a drawer opened by *Tunes* (*Songs* in the sightreader); **2 bars per row**; Settings panel from the bottom |
+| Upright phone | below 820 px wide (or any screen below 600 px) | top-bar buttons in a ⋯ menu; song list in a drawer opened by *Songs*; **2 bars per row**; Settings panel from the bottom |
 | Landscape phone | below 500 px high | the desktop layout, made compact: thinner top bar and play bar, short button labels, tune list in a drawer, smaller title and rows, **4 bars per row**; Settings panel at the right, beside the chart |
 | Tablet, narrow window | up to 1100 px wide | the desktop layout; Settings panel at the bottom right |
 | Desktop | wider | everything in view, no Settings panel |

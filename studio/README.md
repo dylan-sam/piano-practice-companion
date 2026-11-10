@@ -34,7 +34,7 @@ OpenStand's example songs, telemetry and submission action.
 | Chord Sightreading | `/sightreading/chords` | `src/exercises/ChordSightreading.tsx` |
 | Lead Sheet Sightreading | `/sightreading/lead-sheets` | `src/exercises/MelodySightreading.tsx` (`kind="lead-sheets"`), note judging in `src/exercises/melodyReading.ts` |
 | Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
-| Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` (the Reading button of the bottom bar) |
+| Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` (the Scoring button of the bottom bar) |
 
 The back button and a screen's title go up one level (`parentRoute` in
 `src/router.ts`): a screen to its area's menu, an area's menu to the main menu.
@@ -67,7 +67,7 @@ pattern replaces the style's own piano comping.
   walking bass.
 - Blues and Straight Pop/Rock piano patterns leave out the style's separate
   bass line; the blues walking patterns bring their own bass notes.
-- With a Style lab style, the "chord comping" entry plays the comping rhythm
+- With a Pattern Creator style, the "chord comping" entry plays the comping rhythm
   drawn in the lab.
 
 The patterns, their sources and how they follow the chords:
@@ -136,7 +136,7 @@ How it is drawn and played:
 | chords | above the staff, in the Display menu's notation (C−7 or Cm7, Roman numerals) | `chordText` |
 | playing | the bar being played gets the yellow highlighter and the note being played is coloured; the sheet scrolls like a chart (auto-scroller in the Display menu) | `src/ui/LeadSheet.tsx`, `src/ui/useAutoScroll.ts` |
 | loops | Practice > Choose bars: click a bar (or its chords) on the staff | `src/ui/LeadSheet.tsx` |
-| sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later; a beat written in sixteenths stays straight, so its sixteenths stay even); its own strip in the Mixer. The band's grooves follow the same rule (a Style lab groove with sixteenths) | `src/engine/melody.ts` (`straightBeats`), `src/engine/events.ts` (`swingPlacer`), `src/engine/arrange.ts` |
+| sound | channel 3, panned slightly right, with the style's swing (eighth-note "ands" move later; a beat written in sixteenths stays straight, so its sixteenths stay even); its own strip in the Mixer. The band's grooves follow the same rule (a Pattern Creator groove with sixteenths) | `src/engine/melody.ts` (`straightBeats`), `src/engine/events.ts` (`swingPlacer`), `src/engine/arrange.ts` |
 
 Charts with a melody are imported as MusicXML (**Import > MusicXML**,
 `src/formats/musicxml.ts`) or as a Studio export. From a MusicXML file:
@@ -186,8 +186,8 @@ playlist, then the other saved playlists, then the catalog's results.
 |---|---|---|
 | New, Edit | Studio | write or change a chart, saved as a tune |
 | Import → iReal Pro | Studio's tune list | adds iReal Pro links or playlist files as a playlist |
-| Import → Studio export | Studio's tune list | restores a file made by Export, with its playlist names |
-| Export | Studio's top bar | downloads one playlist, or all, as a JSON file of editable charts (catalog songs opened for preview are not included) |
+| Import → Studio export | Studio's tune list | restores a file made by Export My Tunes, with its playlist names |
+| Export My Tunes | Studio's top bar | downloads one playlist, or all, as a JSON file of editable charts (catalog songs opened for preview are not included) |
 | Share → Copy Studio link | Studio's top bar | a link that opens the chart in this app; nothing is uploaded |
 | Share → Copy iReal Pro link | Studio's top bar | an `irealb://` link that opens in iReal Pro |
 
@@ -231,12 +231,12 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | Folder | Holds |
 |---|---|
 | `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which the melody sightreaders also judge), timeline and count-in (`timeline.ts`) |
-| `src/styles/` | the six styles, compound meters (`compound.ts`) and the Style lab (`lab.ts`) |
+| `src/styles/` | the six styles, compound meters (`compound.ts`) and the Pattern Creator (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), places on the staff (`staff.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
-| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Style lab |
+| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Pattern Creator |
 | `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's tests |

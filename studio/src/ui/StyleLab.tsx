@@ -194,9 +194,9 @@ export function StyleLab(props: StyleLabProps) {
     )
 
   return (
-    <section className="lab" aria-label="Style lab">
+    <section className="lab" aria-label="Pattern Creator">
       <div className="lab-head">
-        <h2 className="lab-title">Style lab</h2>
+        <h2 className="lab-title">Pattern Creator</h2>
         <label className="field">
           <span className="label">Start from</span>
           <select className="select" value={lab.base} onChange={(e) => onStartFrom(e.target.value)}>
@@ -268,7 +268,7 @@ export function StyleLab(props: StyleLabProps) {
         <button className="chip" onClick={onCopy}>
           {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy code'}
         </button>
-        <button className="icon-button lab-close" aria-label="Close the style lab" onClick={onClose}>
+        <button className="icon-button lab-close" aria-label="Close the Pattern Creator" onClick={onClose}>
           ×
         </button>
       </div>

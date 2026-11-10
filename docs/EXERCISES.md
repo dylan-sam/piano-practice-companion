@@ -201,7 +201,7 @@ kept under the result.
 | **Options → Excerpts from** | songs and licks, songs only, or licks only |
 | **Options → Alterations** | with or without alterations; *No alterations*: every note of the excerpt is in the key signature (in minor, that of the relative major, so a raised seventh counts as an alteration); *With alterations*: at least one note to guess is outside the key signature |
 | **Options → Show the chords** (Off) | writes the chord symbols over the staff while you write; they are always shown once you check |
-| **Options → Play with the band** (On) | bass, piano and drums play the chords under the melody; off, the melody plays alone after a count-in |
+| **Options → Play with the band** (On) | bass, piano and drums play the chords under the melody; off, the melody plays alone after a count-in. Turning it on or off, or changing the style, pattern or choruses, lets a playing excerpt go on from where it is |
 | **Options → Sound of placed notes** (Off) | plays each note on the piano as it is placed on the staff |
 | **Hear the key**: *Tonic* (T) and *Cadence* (Y) | the tonic triad, and I-IV-V-I in major or i-iv-V-i in minor |
 | **Key** | the source's key, a random key for each excerpt, or one fixed tonic. Placed notes move with a key change. |
@@ -223,8 +223,15 @@ while bass and drums play along.
 - Moving between *Pick a song* and *Random song* keeps the current song selected
   and playing.
 - Pressing *Pick a song* again (or *Songs*) opens or closes the song list, like
-  the *Tunes* button of the player.
-- Only *Infinite progressions* stops the song, since it replaces the chart.
+  the *Songs* button of the player.
+- While an infinite line plays, *Pick a song* and *Random song* only open their
+  menu: the line goes on until you choose a song (*Infinite progressions*
+  closes the menu again). Starting an infinite line stops a song, since it
+  replaces the chart.
+- From one chunk of an infinite line to the next, the band does not stop: the
+  next chunk is loaded ahead on a second synthesizer and starts exactly on the
+  bar line, while the last notes of the chunk before ring out. Lick
+  Sightreading does the same.
 - While a song plays, a chart taller than the screen scrolls by itself to keep
   the playing bar near the middle, as in the player (Display → Sheet
   auto-scroller On/Off).
@@ -346,7 +353,7 @@ every style (moving only its "and" would make them uneven).
 
 ### How notes are judged
 
-The reading settings are in the **Reading** button of the bottom bar, next to
+The reading settings are in the **Scoring** button of the bottom bar, next to
 Practice and Mixer (on phones, under Settings), so the sheet keeps the page.
 
 Every written note gets a window around its start (`TIMING_WINDOWS` in
@@ -377,10 +384,11 @@ Every written note gets a window around its start (`TIMING_WINDOWS` in
 The line under the settings shows, for the play-through so far: notes right,
 wrong notes, missed notes, extra keys, the percentage of judged notes played
 right, and the average timing of the right notes in milliseconds (early or
-late). It starts again with each play, and whenever the arrangement or the
-judging changes (key, choruses, a Practice loop, Timing, Any octave, Guide
-melody). A new style or piano pattern goes on from where the band is and keeps
-the score; the notes still to come are judged where the new style swings them.
+late). It starts again with each play, and whenever the sheet changes (key,
+choruses, a Practice loop). What leaves the sheet as it is goes on from where
+the band is and keeps the score: a new style or piano pattern (the notes still
+to come are judged where the new style swings them), Timing and Any octave
+(the notes still to come are judged the new way) and Guide melody.
 Practice > Keys and the speed-up go on from where the band is and keep the
 score: the notes still to come are judged in their new keys.
 
@@ -391,7 +399,7 @@ MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)
 Choose where the chords come from and a lick: the lick is written over every
 chord, as a lead sheet, and you play it on a MIDI keyboard with the band. Notes
 are judged and scored as in [Lead Sheet Sightreading](#how-notes-are-judged), with
-the same Timing, Any octave and Guide melody settings (the Reading button). The
+the same Timing, Any octave and Guide melody settings (the Scoring button). The
 lick picker sits above the sheet, with the lick's source and chord on the line
 below it.
 

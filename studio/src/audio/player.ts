@@ -32,14 +32,33 @@ async function fetchWithProgress(url: string, onProgress: (ratio: number) => voi
 // About +10 dB: brings the band from around -28 dBFS (RMS) to the level of other music
 const MASTER_GAIN = 3.2
 const LIVE_PIANO_CHANNEL = 2
+// An "ended" this soon after a song started may belong to the song it replaced (see Player.ended)
+const LATE_END_MS = 2000
+// After a hand-over, the synthesizer that played rings out this long before it loads the next chunk
+const RING_OUT_MS = 2500
 // Master gain for a volume from 0 to 100 (squared, so the slider feels even)
 const masterGainFor = (volume: number) => MASTER_GAIN * (volume / 100) ** 2
 
-// Thin layer over SpessaSynth: sound bank loading, MIDI playback, mixer
+/** A synthesizer with the sequencer that plays songs on it. */
+interface Deck { synth: WorkletSynthesizer; seq: Sequencer }
+
+// Thin layer over SpessaSynth: sound bank loading, MIDI playback, mixer.
+//
+// Endless exercises hand over from one chunk to the next without a gap: loading a song makes
+// SpessaSynth reset its synthesizer (cutting the reverb and the notes still ringing) and takes
+// a moment, so the next chunk is loaded ahead on a second synthesizer (`queue`), paused, and
+// started exactly at the hand-over (`startQueued`) while the first lets its last notes ring.
 export class Player {
   private ctx: AudioContext
-  private synth: WorkletSynthesizer | null = null
-  private seq: Sequencer | null = null
+  private synth: WorkletSynthesizer | null = null // the synthesizer playing now
+  private seq: Sequencer | null = null // and its sequencer
+  private live: WorkletSynthesizer | null = null // the synthesizer of the live piano: always the first one
+  private spare: Deck | null = null // the second synthesizer, made for the first hand-over
+  private spareMaking: Promise<Deck> | null = null
+  private bank: ArrayBuffer | null = null // a copy of the sound bank, for the second synthesizer
+  private queued: Uint8Array | null = null // the song waiting on the spare synthesizer
+  private queuedReady = false
+  private startedAt = 0 // when the playing song was started (performance.now())
   private volumes = new Map<number, number>()
   // Loads go one at a time, so a warm-up load can't replace the song the user asked for
   private loading: Promise<void> = Promise.resolve()
@@ -80,6 +99,7 @@ export class Player {
   private meterBuffer = new Float32Array(1024)
 
   private master(): AudioNode {
+    if (this.masterGain) return this.masterGain
     this.masterGain = new GainNode(this.ctx, { gain: masterGainFor(this.masterVolume) })
     this.meter = new AnalyserNode(this.ctx, { fftSize: 1024 })
     const limiter = new DynamicsCompressorNode(this.ctx, { threshold: -8, knee: 4, ratio: 12, attack: 0.002, release: 0.15 })
@@ -115,17 +135,42 @@ export class Player {
       fetchWithProgress(SOUNDFONT_URL, onProgress),
       this.ctx.audioWorklet.addModule(processorUrl),
     ])
+    this.bank = soundfont.slice(0)
+    const { synth, seq } = await this.makeDeck(soundfont)
+    this.synth = synth
+    this.seq = seq
+    this.live = synth
+  }
+
+  /** A synthesizer with the sound bank, and its sequencer (paused, playing each song once). */
+  private async makeDeck(soundfont: ArrayBuffer): Promise<Deck> {
     const synth = new WorkletSynthesizer(this.ctx)
     synth.connect(this.master())
     await synth.soundBankManager.addSoundBank(soundfont, 'main')
     await synth.isReady
-
     const seq = new Sequencer(synth, { skipToFirstNoteOn: false })
     seq.loopCount = 0
-    seq.eventHandler.addEvent('songEnded', 'player', () => this.onEnded())
+    seq.eventHandler.addEvent('songEnded', 'player', () => this.ended(seq))
+    return { synth, seq }
+  }
 
-    this.synth = synth
-    this.seq = seq
+  /**
+   * A song ended. Only the playing synthesizer's end counts (the other one finishing the chunk
+   * it handed over is not the end). An end arriving just after a song started, while that song
+   * is far from its end, belongs to the song it replaced: the message comes from the audio thread
+   * late, and the sequencer then believes it is paused, which would freeze the clock (and the
+   * highlight) while the music goes on; its clock is set going again instead.
+   */
+  private ended(seq: Sequencer): void {
+    if (seq !== this.seq) return
+    const late = performance.now() - this.startedAt < LATE_END_MS && seq.currentTime < seq.duration - 0.5
+    if (late) {
+      // SpessaSynth keeps the paused time privately; clearing it lets the clock run again
+      ;(seq as unknown as { pausedTime?: number }).pausedTime = undefined
+      seq.isFinished = false
+      return
+    }
+    this.onEnded()
   }
 
   // Loads the MIDI and starts playing from the given time (seconds of MIDI time)
@@ -135,12 +180,69 @@ export class Player {
     // A song replacing a playing one (the next chunk of an endless exercise, a new arrangement
     // going on from where the band is) never sends the note-offs of the notes still sounding
     this.releaseBand()
+    this.silenceSpare()
     const resumed = this.ctx.resume()
     await this.load(midi, 'arrangement.mid')
     await resumed
     this.applyVolumes()
     if (fromSeconds > 0) seq.currentTime = fromSeconds
+    this.startedAt = performance.now()
     seq.play()
+  }
+
+  /**
+   * Get the next song ready on the second synthesizer, paused at its start, for `startQueued`.
+   * A later call replaces the waiting song.
+   */
+  async queue(midi: Uint8Array): Promise<void> {
+    if (!this.bank || !this.seq) return
+    this.queued = midi
+    this.queuedReady = false
+    this.spareMaking ??= this.makeDeck(this.bank.slice(0)).then((deck) => (this.spare = deck))
+    const spare = await this.spareMaking
+    // Loading resets that synthesizer: the chunk it just handed over first rings out
+    const ringing = this.startedAt + RING_OUT_MS - performance.now()
+    if (ringing > 0) await new Promise((resolve) => window.setTimeout(resolve, ringing))
+    if (this.queued !== midi) return
+    this.loading = this.loading.then(async () => {
+      if (this.queued !== midi) return // replaced meanwhile
+      // The spare synthesizer may still be ringing out the chunk it handed over
+      spare.seq.pause()
+      await this.loadOn(spare.seq, midi, 'next.mid')
+      spare.seq.playbackRate = this.seq?.playbackRate ?? 1
+      this.applyVolumes(spare.synth)
+      if (this.queued === midi) this.queuedReady = true
+    })
+    await this.loading
+  }
+
+  /**
+   * Start the queued song now, if it is this one and ready: the synthesizers swap, and the one
+   * that played goes on to the end of its song, so its last notes ring. False when it is not
+   * ready (then `play` it).
+   */
+  startQueued(midi: Uint8Array): boolean {
+    const spare = this.spare
+    if (!spare || !this.synth || !this.seq || this.queued !== midi || !this.queuedReady) return false
+    this.playRequested = true
+    spare.seq.play()
+    this.startedAt = performance.now()
+    this.spare = { synth: this.synth, seq: this.seq }
+    this.spareMaking = Promise.resolve(this.spare)
+    this.synth = spare.synth
+    this.seq = spare.seq
+    this.queued = null
+    this.queuedReady = false
+    return true
+  }
+
+  /** Stop the second synthesizer (a song started from the beginning replaces everything). */
+  private silenceSpare(): void {
+    this.queued = null
+    this.queuedReady = false
+    if (!this.spare) return
+    this.spare.seq.pause()
+    this.spare.synth.stopAll(true)
   }
 
   // Loads silent songs so their samples are decoded before they are needed.
@@ -154,18 +256,20 @@ export class Player {
 
   private load(midi: Uint8Array, fileName: string): Promise<void> {
     const seq = this.requireSeq()
-    const next = this.loading.then(
-      () =>
-        new Promise<void>((resolve) => {
-          seq.eventHandler.addEvent('songChange', 'player-load', () => {
-            seq.eventHandler.removeEvent('songChange', 'player-load')
-            resolve()
-          })
-          seq.loadNewSongList([{ binary: midi.slice().buffer, fileName }])
-        }),
-    )
+    const next = this.loading.then(() => this.loadOn(seq, midi, fileName))
     this.loading = next
     return next
+  }
+
+  /** Load a song on a sequencer, resolving once it is loaded. */
+  private loadOn(seq: Sequencer, midi: Uint8Array, fileName: string): Promise<void> {
+    return new Promise<void>((resolve) => {
+      seq.eventHandler.addEvent('songChange', 'player-load', () => {
+        seq.eventHandler.removeEvent('songChange', 'player-load')
+        resolve()
+      })
+      seq.loadNewSongList([{ binary: midi.slice().buffer, fileName }])
+    })
   }
 
   stop(): void {
@@ -173,6 +277,7 @@ export class Player {
     this.seq.pause()
     this.seq.currentTime = 0
     this.synth.stopAll(true)
+    this.silenceSpare()
   }
 
   async dispose(): Promise<void> {
@@ -201,23 +306,29 @@ export class Player {
 
   setRate(rate: number): void {
     if (this.seq) this.seq.playbackRate = rate
+    if (this.spare) this.spare.seq.playbackRate = rate
   }
 
   setVolume(channel: number, volume: number): void {
     this.volumes.set(channel, volume)
-    this.applyVolume(channel, volume)
+    for (const synth of this.synths()) this.applyVolume(synth, channel, volume)
   }
 
-  /** Sound a player's MIDI key on a separate acoustic piano channel. */
+  /** Sound a player's MIDI key on a separate acoustic piano channel (always on the first synthesizer). */
   liveNoteOn(note: number, velocity: number): void {
-    if (!this.synth) return
-    this.synth.programChange(LIVE_PIANO_CHANNEL, 0)
-    this.synth.noteOn(LIVE_PIANO_CHANNEL, note, velocity)
+    if (!this.live) return
+    this.live.programChange(LIVE_PIANO_CHANNEL, 0)
+    this.live.noteOn(LIVE_PIANO_CHANNEL, note, velocity)
   }
 
   /** Release a player's monitored MIDI key without changing the backing track. */
   liveNoteOff(note: number): void {
-    this.synth?.noteOff(LIVE_PIANO_CHANNEL, note)
+    this.live?.noteOff(LIVE_PIANO_CHANNEL, note)
+  }
+
+  /** The synthesizers made so far. */
+  private synths(): WorkletSynthesizer[] {
+    return [this.synth, this.spare?.synth].filter((synth): synth is WorkletSynthesizer => !!synth)
   }
 
   /** Release every note of the band (all channels but the live piano) and lift the sustain pedal. */
@@ -230,16 +341,18 @@ export class Player {
     }
   }
 
-  private applyVolumes(): void {
-    this.volumes.forEach((v, ch) => this.applyVolume(ch, v))
+  // The mixer's volumes on a synthesizer (the playing one by default), after a song is loaded
+  private applyVolumes(synth = this.synth): void {
+    if (!synth) return
+    this.volumes.forEach((v, ch) => this.applyVolume(synth, ch, v))
   }
 
   // Locks the volume so controllers in the MIDI file cannot override the mixer
-  private applyVolume(channel: number, volume: number): void {
-    const midiChannel = this.synth?.midiChannels[channel]
-    if (!this.synth || !midiChannel) return
+  private applyVolume(synth: WorkletSynthesizer, channel: number, volume: number): void {
+    const midiChannel = synth.midiChannels[channel]
+    if (!midiChannel) return
     midiChannel.lockController(MIDIControllers.mainVolume, false)
-    this.synth.controllerChange(channel, MIDIControllers.mainVolume, Math.round(volume))
+    synth.controllerChange(channel, MIDIControllers.mainVolume, Math.round(volume))
     midiChannel.lockController(MIDIControllers.mainVolume, true)
   }
 

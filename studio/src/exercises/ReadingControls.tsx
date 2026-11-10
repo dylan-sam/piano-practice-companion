@@ -1,4 +1,4 @@
-// The controls shared by the melody reading screens: how notes are judged (in the Reading button
+// The controls shared by the melody reading screens: how notes are judged (in the Scoring button
 // of the bottom bar), the score line and the MIDI keyboard button.
 
 import type { useMidiKeyboard } from '../audio/useMidiKeyboard'
@@ -34,8 +34,9 @@ export function ReadingControls({ settings, onChange }: {
 }
 
 /**
- * The Reading button of the bottom bar, next to Practice and Mixer: how notes are judged. It keeps
- * the page for the sheet, which matters most on phones held sideways.
+ * The Scoring button of the bottom bar, next to Practice and Mixer: how the notes played are
+ * judged (timing window, any octave) and the guide melody. It keeps the page for the sheet, which
+ * matters most on phones held sideways.
  */
 export function ReadingPopover({ settings, onChange }: {
   settings: ReadingSettings
@@ -44,14 +45,14 @@ export function ReadingPopover({ settings, onChange }: {
   // A dot on the button when a setting differs from the usual one
   const active = settings.strictness !== 'normal' || !settings.anyOctave || settings.guide
   return (
-    <Popover id="reading" className="reading" active={active} title="How notes are judged" label={
+    <Popover id="reading" className="reading" active={active} title="How your notes are scored: timing window, any octave, guide melody" label={
       <>
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path d="M6 12.5V3l7-1.5V11" />
           <circle cx="4.5" cy="12.5" r="1.8" />
           <circle cx="11.5" cy="11" r="1.8" />
         </svg>
-        Reading
+        Scoring
       </>
     }>
       {() => (

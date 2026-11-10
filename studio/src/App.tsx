@@ -86,11 +86,11 @@ const PLAYER_NAMES: Record<PlayerMode, { title: string; tag: string }> = {
 // Import formats of each player: iReal Pro charts have no melody, MusicXML lead sheets do
 const NO_LEAD_SHEETS = 'No lead sheets yet. Import a MusicXML lead sheet or a Studio export with melodies (Import).'
 
-// The style being made in the style lab is kept in the browser between visits
+// The style being made in the Pattern Creator is kept in the browser between visits
 const LAB_KEY = 'eartraining:style-lab'
 const LAB_STYLE = 'lab' // style id used while the lab is open
 
-/** The style being made in the style lab, as last saved in the browser. */
+/** The style being made in the Pattern Creator, as last saved in the browser. */
 function loadLab(): LabStyle | null {
   return loadJson<LabStyle | null>(LAB_KEY, null, (value) => typeof value === 'object')
 }
@@ -188,7 +188,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     const saved = id.startsWith('my:') ? mine.find((m) => myStyleId(m) === id) : undefined
     return saved ? { ...styleFromLab(saved), id } : getStyle(id)
   }
-  // Find a style by id among the built-in, Style lab and saved styles
+  // Find a style by id among the built-in, Pattern Creator and saved styles
   const resolveStyle = (id: string) => styleFor(id, labRef.current, myStylesRef.current)
   const style = draft ? getStyle(draft.chart.style) : styleFor(styleId, lab, myStyles)
   const keyPc = (chart.key + transpose + 12) % 12
@@ -355,7 +355,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
 
   // A share link opened while the app is already open only changes the URL fragment
   useEffect(() => {
-    // Open the tune and Style lab style that a shared link carries
+    // Open the tune and Pattern Creator style that a shared link carries
     const onHash = async () => {
       // A style link may carry a tune too; read both before the fragment is cleared
       const sharedStyle = await labFromHash(window.location.hash)
@@ -436,7 +436,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     setTimeout(() => set('idle'), 2200)
   }
 
-  // ---- Style lab ----
+  // ---- Pattern Creator ----
 
   const labTimer = useRef(0)
   const rearrangeRef = useRef(() => {})
@@ -444,7 +444,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     rearrangeRef.current = () => changeArrangement({})
   })
 
-  // Change the Style lab style and play with it
+  // Change the Pattern Creator style and play with it
   const setLab = (next: LabStyle) => {
     labRef.current = next
     setLabState(next)
@@ -454,7 +454,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     labTimer.current = window.setTimeout(() => rearrangeRef.current(), 120)
   }
 
-  // Open the Style lab, starting from the current style
+  // Open the Pattern Creator, starting from the current style
   const openLab = () => {
     setLibraryOpen(false)
     setLab(loadLab() ?? labFromStyle(getStyle(styleId)))
@@ -462,7 +462,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     setPatternId(null)
   }
 
-  // Close the Style lab and go back to the style used before
+  // Close the Pattern Creator and go back to the style used before
   function closeLab() {
     const current = labRef.current
     if (!current) return
@@ -485,7 +485,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     }
   })
 
-  // The Style lab grid step playing now, to highlight it (null outside the groove)
+  // The Pattern Creator grid step playing now, to highlight it (null outside the groove)
   const labStep = (() => {
     if (!lab || !position || position.countIn || position.ending) return null
     const groovebar = position.barNumber - (lab.fills ? 1 : 0)
@@ -564,7 +564,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const exportPlaylists = playlistNames(tunes)
 
   // The Android back button closes, the last opened first: the tune drawer, the editor (without
-  // saving), the Style lab and loop picking (menus and dialogs register themselves)
+  // saving), the Pattern Creator and loop picking (menus and dialogs register themselves)
   const drawer = useDrawerScreen()
   useBackClose(drawer && libraryOpen, () => setLibraryOpen(false))
   useBackClose(draft !== null, () => setDraft(null))
@@ -580,16 +580,16 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         {!editing && !empty && (
           <TopbarMenu active={!!lab}>
             <button
-              className="topbar-button topbar-lab"
+              className="topbar-button"
               aria-pressed={!!lab}
               onClick={() => (lab ? closeLab() : openLab())}
               title="Make your own style: edit the drums, bass and chords and hear them as you go"
             >
-              <span className="topbar-long">Style </span>lab
+              Pattern Creator
             </button>
             <DisplayMenu />
             <button className="topbar-button" onClick={() => startEditing(tune)} title="Edit this chart">
-              Edit
+              Edit Song
             </button>
             <Popover id="share" className="share" label="Share">
               {() => (
@@ -609,7 +609,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
                 </div>
               )}
             </Popover>
-            <Popover id="export-playlists" className="share" label="Export">
+            <Popover id="export-playlists" className="share" label="Export My Tunes">
               {(close) => (
                 <div className="share-panel">
                   {exportPlaylists.length === 0 ? <p className="share-desc">No saved playlists yet.</p> : (
@@ -632,7 +632,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
           </TopbarMenu>
         )}
         <button className="tunes-toggle" aria-expanded={libraryOpen} onClick={() => setLibraryOpen(!libraryOpen)}>
-          Tunes
+          Songs
         </button>
         <a className="topbar-link" href={`${import.meta.env.BASE_URL}source.zip`} title="Download Studio source and license">
           <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -759,7 +759,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         pianoPatterns={patternsForStyle(styleId).length ? patternsForStyle(styleId) : PIANO_PATTERNS}
         onPianoPattern={(id) => changeArrangement({ patternId: id })}
         extraStyles={[
-          ...(lab ? [{ id: LAB_STYLE, name: `${lab.name.trim() || 'My style'} (style lab)` }] : []),
+          ...(lab ? [{ id: LAB_STYLE, name: `${lab.name.trim() || 'My style'} (Pattern Creator)` }] : []),
           ...myStyles.map((m) => ({ id: myStyleId(m), name: m.name })),
         ]}
         onStyle={(id) => {

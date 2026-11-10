@@ -104,6 +104,9 @@ export function LickSightreading() {
   const switchedRef = useRef(false)
 
   const [mode, setMode] = useState<Mode>('pick')
+  // The source whose menu is open while an infinite line goes on playing (Pick a song, Random song)
+  const [menu, setMenu] = useState<Mode | null>(null)
+  const shown = menu ?? mode // the mode whose button and menu are shown
   const [libraryOpen, setLibraryOpen] = useState(true)
   const [tunes, setTunes] = useState<Tune[]>([])
   const [importOpen, setImportOpen] = useState(false)
@@ -178,7 +181,8 @@ export function LickSightreading() {
     chunkCountInRef.current = prepared.countIn ?? true
     switchedRef.current = false
     setTimeline(prepared.arrangement.timeline)
-    await player.play(prepared.arrangement.midi, fromSeconds)
+    // The next chunk of an infinite line waits on the second synthesizer (no gap at the hand-over)
+    if (fromSeconds > 0 || !player.startQueued(prepared.arrangement.midi)) await player.play(prepared.arrangement.midi, fromSeconds)
     player.setRate(liveBpmRef.current / BASE_BPM)
     setPlaying(true)
   }, [begin, resume, settings])
@@ -204,6 +208,12 @@ export function LickSightreading() {
     return { ...prepared, line: next, countIn }
   }, [bank, styleId, patternId, withShape])
 
+  /** Keep the next chunk of the infinite line, and load it ahead on the second synthesizer. */
+  const setPending = useCallback((prepared: Prepared | null) => {
+    pendingRef.current = prepared
+    if (prepared) void playerRef.current?.queue(prepared.arrangement.midi)
+  }, [])
+
   /** Hand over to the next chunk of the infinite line (prepared while the band plays, when it could be). */
   const switchToNext = useCallback(async () => {
     if (!continueRef.current) return
@@ -216,12 +226,12 @@ export function LickSightreading() {
     setLine(prepared.line)
     try {
       await startPrepared(prepared, true)
-      window.setTimeout(() => { if (continueRef.current) pendingRef.current = nextChunk(prepared.line!, settings, false) }, 0)
+      window.setTimeout(() => { if (continueRef.current) setPending(nextChunk(prepared.line!, settings, false)) }, 0)
     } catch (cause) {
       setError(String(cause))
       continueRef.current = false
     }
-  }, [nextChunk, settings, settleThrough, startPrepared])
+  }, [nextChunk, settings, settleThrough, startPrepared, setPending])
 
   const readiness = usePlayer(playerRef, () => {
     settleThrough(Infinity)
@@ -280,6 +290,11 @@ export function LickSightreading() {
     setBeat(0)
     setTune(next)
     setLibraryOpen(false)
+    // A song chosen from a menu opened over an infinite line: its source becomes the mode
+    if (menu) {
+      setMode(menu)
+      setMenu(null)
+    }
     setStyleId(next.chart.style)
     setPatternId(defaultPatternForStyle(next.chart.style))
     setBpm(Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], next.chart.bpm)))
@@ -327,7 +342,7 @@ export function LickSightreading() {
       setPractice(NO_PRACTICE)
       continueRef.current = true
       await startPrepared(prepared, false, layout)
-      window.setTimeout(() => { if (continueRef.current) pendingRef.current = nextChunk(prepared.line!, layout, false) }, 0)
+      window.setTimeout(() => { if (continueRef.current) setPending(nextChunk(prepared.line!, layout, false)) }, 0)
     } catch (cause) {
       setError(String(cause))
     }
@@ -335,6 +350,20 @@ export function LickSightreading() {
 
   /** Switch between the three sources of chords; a picked or random song stays when moving between those two. */
   const chooseMode = (next: Mode) => {
+    // While an infinite line plays, Pick a song and Random song only open their menu: the line
+    // goes on until a song is chosen (openTune); Infinite progressions closes the menu again
+    if (mode === 'infinite' && playing && next !== 'infinite') {
+      if (next === 'pick' && menu === 'pick') setLibraryOpen((current) => !current)
+      else setLibraryOpen(next === 'pick')
+      setMenu(next)
+      setError('')
+      return
+    }
+    if (menu) {
+      setMenu(null)
+      setLibraryOpen(false)
+      if (next === 'infinite') return
+    }
     if (next === 'pick' && mode === 'pick') {
       setLibraryOpen((current) => !current)
       return
@@ -355,9 +384,10 @@ export function LickSightreading() {
   }
 
   /**
-   * Change what the band plays, how notes are judged or the lick. A new style or piano pattern
-   * goes on from where the band is (the lick's eighths swing as the new style does); any other
-   * change starts the song again, so the score stays fair.
+   * Change what the band plays, how notes are judged or the lick. What leaves the sheet as it is
+   * (style, piano pattern, guide melody, any octave, timing) goes on from where the band is (the
+   * lick's eighths swing as the new style does); a change of the sheet (lick, rest, key,
+   * choruses, loop) starts the song again.
    */
   const changeArrangement = (nextStyle: string, nextPattern: string | null, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice, nextSettings = settings) => {
@@ -368,19 +398,20 @@ export function LickSightreading() {
     setPractice(nextPractice)
     const player = playerRef.current
     if (!playing || !source || !player) return
-    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice && nextSettings === settings
+    const sameSheet = nextSettings.lickId === settings.lickId && nextSettings.rest === settings.rest
+    const soundOnly = sameSheet && nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice
     if (soundOnly) {
       settleThrough(player.heardPosition * BASE_BPM / 60)
       const from = player.position
       if (mode === 'infinite') {
-        // The chunk on the stand is arranged again in the new style; the next one is prepared again
+        // The chunk on the stand is arranged again (new style, guide melody); the next one is prepared again
         pendingRef.current = null
-        const current = prepare(withShape(source, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, settings, { countIn: chunkCountInRef.current })
-        void startPrepared({ ...current, line: lineRef.current ?? undefined, countIn: chunkCountInRef.current }, true, settings, from).then(() => {
+        const current = prepare(withShape(source, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, nextSettings, { countIn: chunkCountInRef.current })
+        void startPrepared({ ...current, line: lineRef.current ?? undefined, countIn: chunkCountInRef.current }, true, nextSettings, from).then(() => {
           const playingLine = lineRef.current
-          if (continueRef.current && playingLine) pendingRef.current = nextChunk(playingLine, settings, false, nextStyle, nextPattern)
+          if (continueRef.current && playingLine) setPending(nextChunk(playingLine, nextSettings, false, nextStyle, nextPattern))
         })
-      } else void startPlayback(withShape(source), nextStyle, nextPattern, transpose, choruses, practice, settings, from)
+      } else void startPlayback(withShape(source), nextStyle, nextPattern, transpose, choruses, practice, nextSettings, from)
       return
     }
     if (mode === 'infinite') void startInfinite(nextSettings)
@@ -406,7 +437,7 @@ export function LickSightreading() {
     void startPlayback(withShape(source), styleId, patternId, transpose, nextChoruses, next, settings, player.position)
   }
 
-  /** Change a setting (it restarts a playing song, so the score stays fair). */
+  /** Change a setting: a new lick or rest starts the song again, the reading settings let it go on. */
   const changeSettings = (change: Partial<LickSettings>) => {
     changeArrangement(styleId, patternId, transpose, choruses, practice, setSettings(change))
   }
@@ -477,18 +508,18 @@ export function LickSightreading() {
         <span className="topbar-spacer" />
         <DisplayMenu autoScroll />
         <MidiButton keyboard={keyboard} />
-        {mode === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
+        {shown === 'pick' && <button className="tunes-toggle" aria-expanded={libraryOpen}
           onClick={() => setLibraryOpen((current) => !current)}>Songs</button>}
       </header>
 
       <div className="sight-mode" role="group" aria-label="Where the chords come from">
-        <button className="chip" aria-pressed={mode === 'pick'} onClick={() => chooseMode('pick')}>Pick a song</button>
-        <button className="chip" aria-pressed={mode === 'random'} onClick={() => chooseMode('random')}>Random song</button>
-        <button className="chip" aria-pressed={mode === 'infinite'} onClick={() => chooseMode('infinite')}>Infinite progressions</button>
+        <button className="chip" aria-pressed={shown === 'pick'} onClick={() => chooseMode('pick')}>Pick a song</button>
+        <button className="chip" aria-pressed={shown === 'random'} onClick={() => chooseMode('random')}>Random song</button>
+        <button className="chip" aria-pressed={shown === 'infinite'} onClick={() => chooseMode('infinite')}>Infinite progressions</button>
       </div>
 
-      <div className={mode === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
-        {mode === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
+      <div className={shown === 'pick' ? `workspace${libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
+        {shown === 'pick' && <Library tunes={tunes} selectedId={tune?.id ?? ''}
           onSelect={(id) => { const selected = tunes.find((item) => item.id === id); if (selected) openTune(selected) }}
           onLoadChoco={loadChoco} onImport={() => setImportOpen(true)} />}
         <main className="stage exercise-stage sight-stage" onClick={() => setLibraryOpen(false)}>
@@ -497,7 +528,7 @@ export function LickSightreading() {
           {readiness.kind === 'error' && <p className="exercise-error" role="alert">{readiness.message}</p>}
           {keyboard.error && <p className="exercise-error" role="alert">{keyboard.error}</p>}
           {!keyboard.supported && <p className="sight-hint">This browser does not expose Web MIDI. A compatible browser or native MIDI input is needed to score notes.</p>}
-          {mode === 'random' && <div className="sight-picker">
+          {shown === 'random' && <div className="sight-picker">
             <label className="control"><span className="label">Train a progression (optional)</span>
               <select className="select" value={progressionId} onChange={(event) => setProgressionId(event.target.value)}>
                 <option value="">Any progression</option>
@@ -506,7 +537,7 @@ export function LickSightreading() {
             </label>
             <button className="button button-primary" onClick={() => void chooseRandomSong()}>Choose random song</button>
           </div>}
-          {mode === 'infinite' && <div className="sight-picker">
+          {shown === 'infinite' && <div className="sight-picker">
             <button className="button button-primary" onClick={() => void startInfinite()}
               disabled={!bank || !lick || readiness.kind !== 'ready'}>New infinite line</button>
           </div>}

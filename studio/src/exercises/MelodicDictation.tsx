@@ -173,8 +173,12 @@ export function MelodicDictation() {
   const clef = useMemo(() => melodyClef(notes.map((n) => n.pitch + transpose)), [notes, transpose])
   const style = getStyle(styleId)
 
-  /** Play the excerpt (or the placed notes) alone after a count-in, or with the band. */
-  const playLine = async (which: 'excerpt' | 'mine' = 'excerpt', band = settings.band, opts = { styleId, patternId, repeats }) => {
+  /**
+   * Play the excerpt (or the placed notes) alone after a count-in, or with the band. From
+   * `fromSeconds` (MIDI time) it goes on where it is: a new band setting does not start it again.
+   */
+  const playLine = async (which: 'excerpt' | 'mine' = 'excerpt', band = settings.band, opts = { styleId, patternId, repeats },
+    fromSeconds = 0) => {
     const player = playerRef.current
     if (!player || !excerpt || readiness.kind !== 'ready') return
     const line = which === 'excerpt' ? excerpt.chart : answerChart(excerpt, guesses, transpose)
@@ -183,7 +187,7 @@ export function MelodicDictation() {
       ? arrange(line, lineStyle, transpose, opts.repeats, { ending: false }, opts.patternId)
       : melodyAloneMidi(line, lineStyle, transpose, opts.repeats)
     timelineRef.current = timeline
-    await player.play(midi)
+    await player.play(midi, fromSeconds)
     player.setRate(bpm / BASE_BPM)
     setPlaying(which)
   }
@@ -206,13 +210,16 @@ export function MelodicDictation() {
     setPlaying(reference)
   }
 
-  /** Change the band (style, pattern, repeats, band on or off): a playing line starts again with it. */
+  /**
+   * Change the band (style, pattern, repeats, band on or off): the sheet stays the same, so a
+   * playing line goes on from where it is with the new band (no new count-in).
+   */
   const change = (patch: { styleId?: string; patternId?: string | null; repeats?: number }, band = settings.band) => {
     const next = { styleId, patternId, repeats, ...patch }
     setStyleId(next.styleId)
     setPatternId(next.patternId)
     setRepeats(next.repeats)
-    if (playing === 'excerpt' || playing === 'mine') void playLine(playing, band, next)
+    if (playing === 'excerpt' || playing === 'mine') void playLine(playing, band, next, playerRef.current?.position ?? 0)
   }
 
   /** Move the excerpt (and the notes placed so far) to another key. */
@@ -563,8 +570,11 @@ export function MelodicDictation() {
               )}
               {!checked && (
                 <p className="sight-hint dictation-hint">
-                  Tap the staff above or below a slash to put its note there; tap again or drag to move it.
-                  Keys: letters A–G, ↑ ↓ to move, + − = for sharp, flat and natural, ← → to change note, Enter to check.
+                  Tap the staff above or below a slash to put its note there; tap again or drag to move it.{' '}
+                  {/* Computer keys only where there is a keyboard (not on phones and tablets) */}
+                  <span className="keyboard-only">
+                    Keys: letters A–G, ↑ ↓ to move, + − = for sharp, flat and natural, ← → to change note, Enter to check.{' '}
+                  </span>
                   A MIDI keyboard writes the notes too.
                 </p>
               )}

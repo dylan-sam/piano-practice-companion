@@ -14,7 +14,7 @@ interface TransportProps {
   onToggle: () => void
   position: string
   styleId: string
-  extraStyles?: { id: string; name: string }[] // e.g. the style being made in the style lab
+  extraStyles?: { id: string; name: string }[] // e.g. the style being made in the Pattern Creator
   onStyle: (id: string) => void
   pianoPatternId: string | null
   pianoPatterns: readonly { id: string; name: string }[]

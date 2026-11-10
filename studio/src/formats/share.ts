@@ -75,12 +75,12 @@ export async function chartFromHash(hash: string): Promise<Chart | null> {
   return value ? decodeChart(value) : null
 }
 
-// A style made in the style lab travels the same way, with a tune to hear it on
+// A style made in the Pattern Creator travels the same way, with a tune to hear it on
 export async function styleShareUrl(lab: LabStyle, chart?: Chart): Promise<string> {
   return linkWith({ [STYLE_PARAM]: await encodeJson(lab), ...(chart ? { [PARAM]: await encodeChart(chart) } : {}) })
 }
 
-// The Style lab style a link's hash carries, or null
+// The Pattern Creator style a link's hash carries, or null
 export async function labFromHash(hash: string): Promise<LabStyle | null> {
   const value = fromHash(hash, STYLE_PARAM)
   return value ? normalizeLab(await decodeJson(value)) : null

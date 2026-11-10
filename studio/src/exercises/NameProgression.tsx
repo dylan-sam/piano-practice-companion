@@ -199,13 +199,16 @@ export function NameProgression() {
   const chart = useMemo(() => lineChart(listening), [lineChart, listening])
   const keyPc = asked ? (asked.question.key + transpose + 12) % 12 : 0
 
-  /** Play a line with the band; by default the shown line with the current arrangement. */
-  const playChart = async (line = chart, opts: Arrangement = { styleId, patternId, transpose, repeats }) => {
+  /**
+   * Play a line with the band; by default the shown line with the current arrangement. From
+   * `fromSeconds` (MIDI time) it goes on where it is.
+   */
+  const playChart = async (line = chart, opts: Arrangement = { styleId, patternId, transpose, repeats }, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player || !line || readiness.kind !== 'ready') return
     const { midi, timeline } = arrange(line, getStyle(opts.styleId), opts.transpose, opts.repeats, { ending: false }, opts.patternId)
     timelineRef.current = timeline
-    await player.play(midi)
+    await player.play(midi, fromSeconds)
     player.setRate(bpm / BASE_BPM)
     setPlaying('line')
   }
@@ -228,14 +231,18 @@ export function NameProgression() {
     setPlaying(reference)
   }
 
-  /** Change the band or key; a playing line starts again with the new arrangement. */
+  /**
+   * Change the band or key. A new style, pattern or number of repeats leaves the line as it is,
+   * so a playing line goes on from where it is; a new key starts it again.
+   */
   const change = (patch: Partial<Arrangement>) => {
     const next = { styleId, patternId, transpose, repeats, ...patch }
     setStyleId(next.styleId)
     setPatternId(next.patternId)
     setTranspose(next.transpose)
     setRepeats(next.repeats)
-    if (playing === 'line') void playChart(chart, next)
+    const from = next.transpose === transpose ? playerRef.current?.position ?? 0 : 0
+    if (playing === 'line') void playChart(chart, next, from)
     else if (playing) stop()
   }
 
@@ -405,7 +412,7 @@ export function NameProgression() {
           aria-label={`Focus on mistakes: ${focus ? 'on' : 'off'}`}
           title={`Ask more often the progressions you get wrong (${focus ? 'on' : 'off'})`}
           onClick={() => { setFocus(!focus); save('focus', !focus) }}>
-          Focus<span className="topbar-long"> on mistakes</span><strong className="focus-state">{focus ? 'On' : 'Off'}</strong>
+          Focus on mistakes<strong className="focus-state">{focus ? 'On' : 'Off'}</strong>
         </button>
         <Popover id="exercise-display" className="share exercise-display" label="Display"
           title="Choose which hints appear in the exercise and how chords are drawn" active={hideKey || hideAllChords || displayChanged}>

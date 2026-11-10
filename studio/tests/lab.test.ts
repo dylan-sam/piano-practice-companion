@@ -13,7 +13,7 @@ function evalSource(source: string): StyleDefinition {
   return new Function(`return (${literal})`)() as StyleDefinition
 }
 
-describe('style lab', () => {
+describe('Pattern Creator', () => {
   test('a style survives the trip through the grid', () => {
     const bossa = getStyle('bossa-nova')
     const back = styleFromLab(labFromStyle(bossa))

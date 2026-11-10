@@ -210,8 +210,9 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
   }
 
   /**
-   * Change what the band plays or how notes are judged. A new style or piano pattern goes on from
-   * where the band is; any other change starts the song again, so the score stays fair.
+   * Change what the band plays or how notes are judged. What leaves the sheet as it is (style,
+   * piano pattern, guide melody, any octave, timing) goes on from where the band is, the notes
+   * still to come judged the new way; a change of the sheet (key, choruses, loop) starts again.
    */
   const changeArrangement = (nextStyle: string, nextPattern: string | null, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice, nextSettings = settings) => {
@@ -222,8 +223,8 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     setPractice(nextPractice)
     const player = playerRef.current
     if (!playing || !chart || !player) return
-    // A new style or piano pattern goes on from where the band is (the melody swings as the new style does)
-    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice && nextSettings === settings
+    // The melody swings as the new style does; the guide melody joins or leaves the band
+    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice
     if (soundOnly) settleThrough(player.heardPosition * BASE_BPM / 60)
     void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings, soundOnly ? player.position : 0)
   }
@@ -247,7 +248,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     void startPlayback(chart, styleId, patternId, transpose, nextChoruses, next, settings, player.position)
   }
 
-  /** Change a reading setting (it restarts a playing song, so the score stays fair). */
+  /** Change a reading setting: a playing song goes on (the sheet stays the same). */
   const changeSettings = (change: Partial<ReadingSettings>) => {
     const next = setSettings(change)
     changeArrangement(styleId, patternId, transpose, choruses, practice, next)

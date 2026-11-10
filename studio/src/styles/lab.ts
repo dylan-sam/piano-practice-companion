@@ -1,4 +1,4 @@
-// The style lab's model: a style's grooves laid out on a grid of sixteenth notes,
+// The Pattern Creator's model: a style's grooves laid out on a grid of sixteenth notes,
 // so they can be edited cell by cell and turned back into a style.
 // Drums: groove A, an optional variation B (the band switches between them) and an optional
 // fill for the last bar of the form. Bass and chords: one bar each, with an optional variation B.
@@ -68,7 +68,7 @@ const empty = <T>(n: number): (T | null)[] => Array.from({ length: n }, () => nu
 // The grid step of a time in beats
 const stepOf = (at: number) => Math.round(at * STEPS_PER_BEAT)
 
-// Number of drum steps in a Style lab style
+// Number of drum steps in a Pattern Creator style
 export const drumSteps = (lab: LabStyle) => lab.bars * lab.beats * STEPS_PER_BEAT
 // Number of steps in one bar
 export const barSteps = (lab: LabStyle) => lab.beats * STEPS_PER_BEAT
@@ -103,7 +103,7 @@ function hitsFromLayer(layer: DrumLayer, until = Infinity): DrumHit[] {
   return hits
 }
 
-// Make a Style lab style from a built-in style
+// Make a Pattern Creator style from a built-in style
 export function labFromStyle(style: StyleDefinition): LabStyle {
   const { middle, last } = style.drums.grooves
   const groove = middle[0]
@@ -186,7 +186,7 @@ function lengths(onsets: number[], end: number, max: number): number[] {
 // Round to three decimals
 const round = (n: number) => Math.round(n * 1000) / 1000
 
-// Make a playable style from a Style lab style
+// Make a playable style from a Pattern Creator style
 export function styleFromLab(lab: LabStyle): StyleDefinition {
   const base = getStyle(lab.base)
   const one = barSteps(lab)
@@ -269,7 +269,7 @@ function resize(layer: DrumLayer, steps: number, repeat: boolean): DrumLayer {
   return out
 }
 
-// Change a Style lab style's length, resizing its drum layers
+// Change a Pattern Creator style's length, resizing its drum layers
 export function setBars(lab: LabStyle, bars: 1 | 2): LabStyle {
   const steps = bars * lab.beats * STEPS_PER_BEAT
   return {
@@ -293,7 +293,7 @@ export function styleSource(style: StyleDefinition, baseName: string): string {
     .replace(/\[\s+([^[\]{}]*?)\s+\]/g, (_, inner: string) => `[${inner.split(/,\s+/).join(', ')}]`)
   return `import type { StyleDefinition } from '../types'
 
-// Made in the OpenStand style lab, starting from ${baseName}
+// Made in the OpenStand Pattern Creator, starting from ${baseName}
 
 export const ${name}: StyleDefinition = ${body}
 `

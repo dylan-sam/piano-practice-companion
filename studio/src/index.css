@@ -300,6 +300,21 @@ button:disabled {
   padding: 0;
 }
 
+/* The name of a playlist, on a bar above its songs */
+.library-group {
+  margin: 10px 0 4px;
+  padding: 6px 10px 0;
+  border-top: 2px solid var(--line);
+  color: var(--muted);
+  font: 600 12px/1.4 var(--sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.library-list > li:first-child > .library-group {
+  margin-top: 2px;
+}
+
 .score-group {
   border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
@@ -1874,7 +1889,7 @@ input.fader::-moz-range-thumb {
   }
 }
 
-/* ---------- Style lab ---------- */
+/* ---------- Pattern Creator ---------- */
 
 .topbar-button[aria-pressed='true'] {
   background: var(--ink);
@@ -2051,10 +2066,6 @@ input.fader::-moz-range-thumb {
 @media (max-width: 820px) and (min-height: 501px), (max-width: 600px) {
   .topbar-long {
     display: none;
-  }
-
-  .topbar-lab {
-    text-transform: capitalize;
   }
 
   .lab-head {
@@ -3264,10 +3275,6 @@ input.fader::-moz-range-thumb {
     display: inline;
   }
 
-  .topbar-lab {
-    text-transform: capitalize;
-  }
-
   .exercise-level .select {
     max-width: 34vw;
     text-overflow: ellipsis;
@@ -3428,5 +3435,12 @@ input.fader::-moz-range-thumb {
 
   .dictation-hint {
     font-size: 13px;
+  }
+}
+
+/* Hints about computer keys are left out on touch screens (phones and tablets) */
+@media (hover: none) and (pointer: coarse) {
+  .keyboard-only {
+    display: none;
   }
 }

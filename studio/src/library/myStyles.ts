@@ -1,4 +1,4 @@
-// Styles made in the style lab and saved by the user, kept in this browser
+// Styles made in the Pattern Creator and saved by the user, kept in this browser
 
 import { labId, normalizeLab, type LabStyle } from '../styles/lab'
 
