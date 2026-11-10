@@ -53,14 +53,7 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Pattern Creator**: create your own groove on a step grid (drums, bass, comping),
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
-  fourth, a half step or a whole step each chorus), speed up each chorus. Keys
-  and speed-up apply while the band plays, without starting over, in every
-  player and exercise (with the choruses needed to go round the keys); a new
-  loop starts over. A new style or piano pattern also goes on from where the
-  band is, and a melody then swings as the new style does. In general, a
-  setting that leaves the sheet as it is (style, pattern, choruses, guide
-  melody, any octave, the band on or off...) never stops the song, plays a new
-  count-in or makes a click: the new arrangement takes over at the same spot.
+  fourth, a half step or a whole step each chorus), speed up each chorus.
 - **Swing marking**: a sheet whose style swings its eighths shows the usual
   marking (two eighths = a triplet quarter and eighth) under the style, at the
   top left.
@@ -89,25 +82,19 @@ The same band plays a **lead sheet**: a chart with a melody, drawn on a staff
 with the chords above it. The melody plays with the band (alto sax by default,
 or the chart's own instrument) and has its own fader in the Mixer.
 
-- The bar being played gets the yellow highlighter and the note being played
-  is coloured; long sheets scroll by themselves.
-- The melody follows repeats, loops, transposition and Practice > Keys, with
-  the style's swing; every option of the chord player (styles, Practice,
-  Pattern Creator, Display) works here too.
-- It comes with **1,479 lead sheets that may be shared**: 498 public domain
+- **Find a song**: it comes with **1,479 lead sheets that may be shared**: 498 public domain
   songs of the old Wikifonia site (OpenEWLD) and 981 folk tunes of the
   Nottingham Music Database, read and checked as described in
   [Lead sheets shipped with the app](docs/DATA.md#lead-sheets-shipped-with-the-app).
   They also open in the Chord Player, as chord charts.
+- The melody follows repeats, loops, transposition and Practice > Keys, with
+  the style's swing; every option of the chord player (styles, Practice,
+  Pattern Creator, Display) works here too.
 - More lead sheets can be imported: a **MusicXML** file (`.musicxml`, `.xml`
   or `.mxl`, as MuseScore exports it, or a scanned or photographed sheet read
   by Audiveris or homr and checked in MuseScore), or a Studio export. A lead
   sheet imported here is also in Lead Sheet Sightreading, and the other way
-  round. To try it with 450 transcribed jazz solos, see
-  [Testing lead sheets](docs/DATA.md#testing-lead-sheets-with-the-weimar-jazz-database)
-  (kept on your computer only, not shipped).
-- It lists lead sheets only; the licks and exercises below are in Exercises
-  Sightreading.
+  round.
 
 ### Licks and exercises
 
@@ -125,9 +112,6 @@ sixteenth; eighth-note triplets are used.
   blues, or one chord: 301 from the melodies of the shipped standards, 99 from
   folk tunes, and 24 written for the project. Each mined lick names its tune
   and bar.
-- Licks and common patterns mined from the Weimar Jazz Database solos can be
-  built on your computer for testing; they are not shipped
-  ([docs/LICKS.md](docs/LICKS.md#rights-and-credits)).
 
 ### Name the progression
 
@@ -135,8 +119,8 @@ sixteenth; eighth-note triplets are used.
 
 You hear a line of a real song with a gap in its chart, and choose which
 progression fills the gap. The first level asks for the two most common
-progressions, and each level adds the next most common progression, based on 
-how often it appears in the catalog. 
+progressions, and each level adds the next most common progression, based on
+how often it appears in the catalog.
 A round has 10 questions; 8 right answers pass the level. You can play the
 key's tonic or a cadence for reference, hear every answer in the gap once you
 have answered, hide the key or every chord, choose the key, and turn on
@@ -146,17 +130,13 @@ have answered, hide the key or every chord, choose the key, and turn on
 
 ![Melodic Dictation](docs/images/melodic-dictation.png)
 
-You hear a few bars (at most four) of a lead sheet or a lick and write the
+You hear a few bars (at most four) of a lead sheet or a lick from the catalog and write the
 notes that are hidden. The first and last notes are always shown; the hidden
 ones are drawn as slashes, so the rhythm is written for you and only the
-pitches are missing. Place a note as in a score editor: tap the staff above or
-below a slash (or click it), tap again or drag to move it, and use the sharp,
-flat and natural buttons. Letters A–G, the arrow keys and a MIDI keyboard write
-notes too. Placed notes are silent unless you turn their sound on. **Check** colours each note (green right, orange wrong, red left
-empty) and shows the song or lick it came from; the octave counts, the spelling
-does not. In **Options**, choose the number of notes to guess (1 to 12, or all
+pitches are missing. Place a note as in a score editor or play the note using a MIDI keyboard.
+In **Options**, choose the number of notes to guess (1 to 12, or all
 but the first and last), songs, licks or both, with or without alterations
-(notes outside the key signature), whether the chords are written (hidden by
+(notes outside the key signature), whether the chords are written on top of the chart (hidden by
 default), whether the band plays along (on by default) and whether placed notes
 sound (off by default). You can play the tonic
 or a cadence of the key first, and choose the key and tempo.
@@ -201,7 +181,7 @@ the percentage and your average timing (early or late, in milliseconds).
 The same screen with the [licks and exercises](#licks-and-exercises) of a few
 bars: scales, arpeggios, guide tones, approach notes, intervals, rhythm drills
 and licks. **Pick an exercise** or **Random exercise**; the key and tempo can
-change at each repetition with Practice.
+change at each repetition with the Practice button.
 
 ### Lick Sightreading
 
@@ -211,10 +191,7 @@ Choose a **lick** (one of the 133 one-chord licks of the
 [database](#licks-and-exercises), or a random one) and where the chords come
 from: a chord chart (**Pick a song**: the ChoCo catalog or your own imported
 iReal Pro charts, with **Import** here too), **Random song** or **Infinite
-progressions** (as in Chord Sightreading). The lick is written over every chord, and played again on
-the next bar line when it ends: chord tones stay chord tones, tensions stay
-tensions, and when the chord changes in the middle of the lick, the rest of it
-follows the new chord at once, in the octave closest to the note before. Play
+progressions** (as in Chord Sightreading). The lick is written and transposed over every chord. Play
 it on a MIDI keyboard with the band; it is judged as in Lead Sheet Sightreading.
 **Rest between licks** leaves a rest as long as the lick after each one.
 
