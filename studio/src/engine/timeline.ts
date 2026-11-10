@@ -195,3 +195,9 @@ export function slotAtBeat(timeline: Timeline, beat: number): Slot | undefined {
   }
   return slots[lo]
 }
+
+/** The bar sounding at a beat of the timeline (the count-in has none), or null after the end. */
+export function barAtBeat(timeline: Timeline, beat: number): Bar | null {
+  const bar = timeline.bars.findLast((b) => b.start <= beat + 1e-6)
+  return bar && beat < timeline.totalBeats ? bar : null
+}

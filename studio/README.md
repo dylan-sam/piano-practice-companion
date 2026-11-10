@@ -252,11 +252,12 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), places on the staff (`staff.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
-| `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage |
-| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Pattern Creator |
-| `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), and what the melody screens share (`useMelodyJudging.ts`, `ReadingControls.tsx`) |
+| `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage (`storage.ts`, and a screen's settings kept there: `useStoredSettings.ts`) |
+| `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Pattern Creator, loop picking (`useLoopPicking.ts`), keyboard shortcuts (`useWindowKeys.ts`) |
+| `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`: `arrangeMelody`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`). Shared by the exercises: the key menu, Tonic and Cadence, status messages, MIDI notes held, source buttons and random song picker (`ExerciseControls.tsx`); by the sightreaders: where the music comes from, with the song list, Import and the catalog (`useSongSource.ts`, laid out by `SongWorkspace.tsx`), the band's settings (`useBand.ts`), the hand-over of endless lines (`useEndlessLine.ts`); by the melody screens: judging (`useMelodyJudging.ts`) and the Scoring button, sheet and score line (`ReadingControls.tsx`) |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
-| `tests/` | the app's tests |
+| `tests/` | the app's unit tests (`pnpm test`) |
+| `e2e/` | the browser tests (Playwright, `pnpm run test:e2e`): every screen at three sizes, settings that must not restart the song, endless lines, Melodic Dictation, Export |
 | `android/`, `ios/` | the native projects |
 
 ## Licenses

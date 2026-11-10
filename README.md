@@ -445,7 +445,15 @@ python -m unittest discover     # the data pipeline, from the project root
 cd studio
 pnpm test                       # the app (vitest)
 pnpm run lint
+npx playwright install chromium # once, for the browser tests
+pnpm run test:e2e               # the browser tests (Playwright) on the built app
 ```
+
+The browser tests (`studio/e2e/`) open every screen on a computer and on phones
+held both ways, and check what is easy to break by hand: a style or band change
+that must not restart the song, endless lines going from sheet to sheet, notes
+placed in Melodic Dictation, the Export menu. GitHub runs the types, lint, unit
+tests and browser tests on every push (`.github/workflows/tests.yml`).
 
 ### Adding your own iReal Pro playlists
 
@@ -565,6 +573,7 @@ Two GitHub Actions workflows publish the app (`.github/workflows/`):
 | Workflow | Runs when | Does |
 |---|---|---|
 | `pages.yml` (Web demo) | every push to `master`, or by hand (Actions → Web demo → Run workflow) | builds the app with the song catalog bundled (`VITE_BUNDLED_CATALOG=1`, no server needed) for the folder `/piano-practice-companion/`, and publishes it on GitHub Pages |
+| `tests.yml` (Tests) | every push and pull request | checks the app's types and lint, runs the unit tests, then the browser tests on the app built as for the web demo |
 | `release.yml` (Release) | a version tag is pushed (`v1.0.0`, `v1.1.0`...) | creates a GitHub release with `releases/piano-practice-companion-debug.apk` attached, and the notes of `releases/<tag>.md` (or a list of the commits when there is no such file) |
 
 The web demo needs GitHub Pages turned on once: **Settings → Pages → Build and

@@ -29,3 +29,7 @@ studio/public/licks/licks_weimar*
 # Helper to build the Android APK on this computer, and the APK it copies here
 /build-apk.bat
 /app-debug.apk
+
+# Browser test results (Playwright)
+studio/test-results/
+studio/playwright-report/

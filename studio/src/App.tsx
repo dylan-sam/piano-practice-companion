@@ -26,9 +26,10 @@ import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
 import { TopbarMenu } from './ui/TopbarMenu'
 import { DisplayMenu } from './ui/DisplayMenu'
-import { chorusesForKeys, NO_PRACTICE, practiceChange, type PracticeSettings } from './music/practice'
+import { chorusesForKeys, NO_PRACTICE, practiceChange, rampedBpm, type PracticeSettings } from './music/practice'
 import { Practice } from './ui/Practice'
 import { StyleLab } from './ui/StyleLab'
+import { useWindowKeys } from './ui/useWindowKeys'
 import { Transport } from './ui/Transport'
 import { handlePracticeShortcut, type PracticeShortcuts } from './ui/shortcuts'
 import { Wordmark } from './ui/AppLink'
@@ -212,7 +213,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   // During practice the chorus decides the key on the stand and the tempo
   const chorus = position ? Math.min(position.chorus, choruses - 1) : 0
   const shownTranspose = playing ? chorusTranspose(transpose, practice.keyStep, chorus) : transpose
-  const liveBpm = clampBpm(bpm + practice.ramp * (playing ? chorus : 0))
+  const liveBpm = rampedBpm(bpm, practice, playing ? chorus : 0, BPM_RANGE)
 
   // Tempo changes only the playback rate; the arrangement is not regenerated
   useEffect(() => {
@@ -274,22 +275,12 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       if (practice.loop) changePractice({ ...practice, loop: null })
     },
   }
-  const shortcutsRef = useRef(shortcuts)
-  useEffect(() => {
-    shortcutsRef.current = shortcuts
-  })
-
-  // The registered listener uses the latest arrangement without accumulating handlers.
+  // Escape cancels loop picking; the practice shortcuts run on every key press
   const editing = draft !== null
-  useEffect(() => {
-    // Escape cancels loop picking; the practice shortcuts run on every key press
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPicking(null)
-      handlePracticeShortcut(e, editing, shortcutsRef.current)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [editing])
+  useWindowKeys((e) => {
+    if (e.key === 'Escape') setPicking(null)
+    handlePracticeShortcut(e, editing, shortcuts)
+  })
 
   // Follow the audio clock to highlight the current bar
   useHeardBeat(playing, playerRef, (beat) => {

@@ -9,7 +9,7 @@ import type { Timeline } from '../engine/timeline'
 import { warmUpMidi } from '../engine/warmup'
 import { loadBundledLeadSheets } from '../library/bundled'
 import { loadTunes } from '../library/db'
-import { loadJson, saveJson } from '../library/storage'
+import { useStoredSettings } from '../library/useStoredSettings'
 import { melodyClef, type NoteWriting, type Spelled } from '../music/abc'
 import type { Chart as ChartData } from '../music/chart'
 import { prettyNoteName } from '../music/chords'
@@ -26,8 +26,10 @@ import {
   answerChart, fromSource, GUESS_CHOICES, judge, melodyAloneMidi, pickExcerpt, spellingOf, transposeGuesses,
   type Alterations, type DictationSource, type Excerpt, type Guess, type Guesses, type NoteResult,
 } from './melodicDictation'
-import { keyReferenceMidi, keyReferences, measureAt, transposeFor, type KeyChoice, type KeyReference } from './nameProgression'
+import { keyReferenceMidi, measureAt, referenceForKey, transposeFor, type KeyChoice, type KeyReference } from './nameProgression'
+import { ExerciseStatus, KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
 import { MidiButton } from './ReadingControls'
+import { useWindowKeys } from '../ui/useWindowKeys'
 
 const SETTINGS_KEY = 'eartraining:melodic-dictation'
 const BPM_RANGE: [number, number] = [40, 240]
@@ -59,8 +61,7 @@ function isSettings(value: unknown): value is DictationSettings {
 const SOURCE_NAMES: Record<DictationSource, string> = { both: 'Songs and licks', songs: 'Songs', licks: 'Licks' }
 const ALTERATION_NAMES: Record<Alterations, string> = { any: 'With or without alterations', none: 'No alterations', with: 'With alterations' }
 // Button text and keyboard shortcut of each key reference
-const REFERENCE_LABELS: Record<KeyReference, string> = { tonic: 'Tonic', 'major cadence': 'Cadence', 'minor cadence': 'Cadence' }
-const REFERENCE_KEYS = ['T', 'Y']
+const REFERENCE_KEYS = ['T', 'Y'] // keyboard shortcuts of the tonic and the cadence
 // Classes of the hidden notes on the sheet
 const RESULT_CLASS: Record<NoteResult, string> = { correct: 'lead-note-correct', wrong: 'lead-note-wrong', missing: 'lead-note-missed' }
 
@@ -82,7 +83,7 @@ export function MelodicDictation() {
 
   const [tunes, setTunes] = useState<Tune[] | null>(null)
   const [error, setError] = useState('')
-  const [settings, setSettingsState] = useState<DictationSettings>(() => loadJson(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings))
+  const [settings, setSettings] = useStoredSettings<DictationSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
   const [excerpt, setExcerpt] = useState<Excerpt | null>(null)
   const [guesses, setGuesses] = useState<Record<number, Guess>>({})
   const [selected, setSelected] = useState<number | null>(null)
@@ -104,14 +105,6 @@ export function MelodicDictation() {
     setPosition(null)
   }, () => STYLES.map(warmUpMidi))
   const mixer = useMixer(playerRef, readiness)
-
-  /** Change some settings and keep them. */
-  const setSettings = (change: Partial<DictationSettings>) => {
-    const next = { ...settings, ...change }
-    setSettingsState(next)
-    saveJson(SETTINGS_KEY, next)
-    return next
-  }
 
   /** Stop whatever is playing. */
   const stop = useCallback(() => {
@@ -326,7 +319,6 @@ export function MelodicDictation() {
     if (selected !== null && !results) write(selected, { pitch: note }, true)
   }, (note) => playerRef.current?.liveNoteOff(note))
 
-  const keysRef = useRef<(e: KeyboardEvent) => void>(() => {})
   /**
    * Keyboard shortcuts: Space plays, T tonic, Y cadence, letters A-G write a note near the one
    * before, up/down move it (Ctrl: an octave), + - = sharp, flat, natural, left/right choose the
@@ -349,9 +341,8 @@ export function MelodicDictation() {
         e.preventDefault()
         moveSelected(key === 'ArrowUp' ? 7 : -7)
       }
-    } else if (REFERENCE_KEYS.includes(upper) && excerpt) {
-      const reference = keyReferences(minor)[REFERENCE_KEYS.indexOf(upper)]
-      if (reference) void playReference(reference)
+    } else if (excerpt && referenceForKey(key, minor, REFERENCE_KEYS)) {
+      void playReference(referenceForKey(key, minor, REFERENCE_KEYS)!)
     } else if (/^[A-Ga-g]$/.test(key) && selected !== null) {
       const spelled = nearestLetter(upper, pitchBefore(selected), majorPc)
       write(selected, { pitch: spelledPitch(spelled), spelled }, true)
@@ -366,15 +357,7 @@ export function MelodicDictation() {
     else if (key === '=') setAccidental(0)
     else if (key === 'Delete' || key === 'Backspace') clearSelected()
   }
-  useEffect(() => {
-    keysRef.current = onKeys
-  })
-  useEffect(() => {
-    // Always call the latest handler, registered once
-    const onKey = (e: KeyboardEvent) => keysRef.current(e)
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  useWindowKeys(onKeys)
 
   // ---- The sheet ----
 
@@ -417,19 +400,6 @@ export function MelodicDictation() {
     : at ? `Bar ${at.measure + 1} of ${excerpt?.chart.bars.length ?? 0}`
       : playing ? 'Count-in'
         : tally.notes ? `${tally.correct}/${tally.notes} notes right` : 'Melodic Dictation'
-
-  const keyControl = (
-    <label className="control"><span className="label">Key</span>
-      <select className="select" value={String(keyChoice)} onChange={(event) => {
-        const value = event.target.value
-        chooseKey(value === 'song' || value === 'random' ? value : Number(value))
-      }}>
-        <option value="song">Source key{excerpt && keyChoice === 'song' ? ` (${prettyNoteName(excerpt.chart.key)})` : ''}</option>
-        <option value="random">Random key{excerpt && keyChoice === 'random' ? ` (${prettyNoteName(keyPc)})` : ''}</option>
-        {Array.from({ length: 12 }, (_, pc) => <option key={pc} value={pc}>{prettyNoteName(pc)}</option>)}
-      </select>
-    </label>
-  )
 
   return (
     <div className="app exercise dictation">
@@ -495,10 +465,8 @@ export function MelodicDictation() {
       </header>
 
       <main className="stage exercise-stage dictation-stage">
-        {error && <p className="exercise-error" role="alert">{error}</p>}
+        <ExerciseStatus error={error} readiness={readiness} keyboard={keyboard} midiNeeded={false} />
         {!tunes && !error && <p className="exercise-loading">Loading songs and licks…</p>}
-        {readiness.kind === 'error' && <p className="exercise-error" role="alert">{readiness.message}</p>}
-        {keyboard.error && <p className="exercise-error" role="alert">{keyboard.error}</p>}
         {excerpt && sheetChart && (
           <>
             <LeadSheet chart={sheetChart} style={style} transpose={transpose}
@@ -506,16 +474,8 @@ export function MelodicDictation() {
               writing={writing} noteClasses={noteClasses} staffInput={staffInput} zoom={SHEET_ZOOM} />
 
             <section className="dictation-pad" aria-label="Write the notes">
-              <div className="answers-reference" role="group" aria-label="Hear the key">
-                <span className="label">Hear the key</span>
-                {keyReferences(minor).map((reference, i) => (
-                  <button key={reference} className="band-toggle" onClick={() => void playReference(reference)}
-                    disabled={readiness.kind !== 'ready'} aria-pressed={playing === reference}
-                    title={`${reference === 'tonic' ? 'Tonic' : minor ? 'Minor cadence (i–iv–V–i)' : 'Major cadence (I–IV–V–I)'} (${REFERENCE_KEYS[i]})`}>
-                    {REFERENCE_LABELS[reference]}
-                  </button>
-                ))}
-              </div>
+              <KeyReferenceButtons minor={minor} shortcuts={REFERENCE_KEYS} playing={playing}
+                disabled={readiness.kind !== 'ready'} onPlay={(reference) => void playReference(reference)} />
 
               {!checked && (
                 <div className="dictation-tools" role="group" aria-label="The selected note">
@@ -595,7 +555,8 @@ export function MelodicDictation() {
         onPianoPattern={(id) => change({ patternId: id })}
         keyPc={keyPc}
         onKey={(pc) => chooseKey(pc)}
-        keyControl={keyControl}
+        keyControl={<KeyChoiceControl choice={keyChoice} onChoose={chooseKey} sourceKey={excerpt?.chart.key ?? null}
+          currentKey={keyPc} sourceLabel="Source key" />}
         bpm={bpm}
         bpmRange={BPM_RANGE}
         onBpm={setBpm}

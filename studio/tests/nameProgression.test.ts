@@ -3,11 +3,11 @@ import bankJson from '../public/exercises/name-progression.json'
 import { arrange } from '../src/engine/arrange'
 import { buildTimeline } from '../src/engine/timeline'
 import {
-  cadenceMidi, keyReferences, mistakeWeight, mostConfused, progressionSteps, recordAnswer, romanSymbol, transposeFor, withProgression,
+  cadenceMidi, keyReferences, measureAt, mistakeWeight, referenceForKey, mostConfused, progressionSteps, recordAnswer, romanSymbol, transposeFor, withProgression,
   cellWidths, CUSTOM_LEVEL, LEVELS, levelName, levelProgressions, MIN_QUESTIONS, nextLevel, pickQuestion, playable, questionChart,
   questionId, tonicMidi, type Progression, type Question, type QuestionBank,
 } from '../src/exercises/nameProgression'
-import { ROW_CELLS } from '../src/music/chart'
+import { chartFromMeasures, ROW_CELLS } from '../src/music/chart'
 import { getStyle } from '../src/styles'
 
 const bank = bankJson as QuestionBank
@@ -245,5 +245,23 @@ describe('results', () => {
       counts[asked.progression.id as 'a' | 'b']++
     }
     expect(counts.b / counts.a).toBeGreaterThan(2.4)
+  })
+})
+
+describe('key references and the playback highlight', () => {
+  it('play a reference from its keyboard shortcut, in button order', () => {
+    expect(referenceForKey('k', true, ['K', 'C', 'M'])).toBe('tonic')
+    expect(referenceForKey('C', true, ['K', 'C', 'M'])).toBe('minor cadence')
+    expect(referenceForKey('m', null, ['K', 'C', 'M'])).toBe('minor cadence')
+    expect(referenceForKey('M', false, ['K', 'C', 'M'])).toBeUndefined()
+    expect(referenceForKey('x', null, ['K', 'C', 'M'])).toBeUndefined()
+  })
+
+  it('find the bar playing after the count-in, and none after the end', () => {
+    const chart = chartFromMeasures({ title: 'Line', style: 'swing', key: 0, bpm: 120 }, [['C^7'], ['A-7'], ['D-7'], ['G7']])
+    const timeline = buildTimeline(chart, 0, 1, { ending: false })
+    expect(measureAt(timeline, 1)).toBeNull() // the count-in
+    expect(measureAt(timeline, timeline.countIn + 5)).toMatchObject({ measure: 1, beatInBar: 1 })
+    expect(measureAt(timeline, timeline.totalBeats)).toBeNull()
   })
 })

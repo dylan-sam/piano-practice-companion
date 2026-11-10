@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import pkg from './package.json' with { type: 'json' }
@@ -10,4 +11,8 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [react()],
+  // Unit tests only: the browser tests in e2e/ run with Playwright
+  test: {
+    include: ['tests/**/*.test.{ts,tsx}'],
+  },
 })

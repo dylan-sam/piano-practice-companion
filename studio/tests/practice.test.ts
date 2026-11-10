@@ -6,7 +6,7 @@ import { chartToMusic, irealLink } from '../src/formats/irealWrite'
 import { chartFromMeasures, playbackOrder } from '../src/music/chart'
 import { deleteBar, emptyChart, insertBar, setTime, updateBar } from '../src/music/edit'
 import { barToInput, parseBarInput, toChartSymbol } from '../src/music/notation'
-import { chorusesForKeys, NO_PRACTICE, practiceChange, sections } from '../src/music/practice'
+import { applyPracticeChange, chorusesForKeys, NO_PRACTICE, practiceChange, rampedBpm, sections, type PracticeSettings } from '../src/music/practice'
 import { getStyle } from '../src/styles'
 
 const tune = chartFromMeasures({ title: 'Practice Tune', composer: 'Some Writer', style: 'swing', key: 0, bpm: 132 }, [
@@ -161,5 +161,31 @@ describe('practice changes while the band plays', () => {
     expect(chorusesForKeys(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 2 }, 1)).toBe(6)
     expect(chorusesForKeys(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 2 }, 8)).toBe(8)
     expect(chorusesForKeys({ ...NO_PRACTICE, keyStep: 5 }, { ...NO_PRACTICE, keyStep: 5, ramp: 2 }, 3)).toBe(3)
+  })
+})
+
+describe('applying new practice settings', () => {
+  /** Which action a change takes, and with how many choruses. */
+  const action = (from: PracticeSettings, to: PracticeSettings, playing: boolean, choruses = 1) => {
+    let taken = ''
+    applyPracticeChange(from, to, choruses, playing, {
+      restart: (_, count) => { taken = `restart ${count}` },
+      goOn: (_, count) => { taken = `goOn ${count}` },
+      keep: (_, count) => { taken = `keep ${count}` },
+    })
+    return taken
+  }
+
+  test('starts again for a new loop, goes on for new keys while playing, keeps the rest', () => {
+    expect(action(NO_PRACTICE, { ...NO_PRACTICE, loop: [0, 3] }, true)).toBe('restart 1')
+    expect(action(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 5 }, true)).toBe('goOn 12')
+    expect(action(NO_PRACTICE, { ...NO_PRACTICE, keyStep: 5 }, false)).toBe('keep 12')
+    expect(action(NO_PRACTICE, { ...NO_PRACTICE, ramp: 4 }, true, 3)).toBe('keep 3')
+  })
+
+  test('speeds up each chorus within the tempo range', () => {
+    expect(rampedBpm(100, { ...NO_PRACTICE, ramp: 4 }, 2, [40, 300])).toBe(108)
+    expect(rampedBpm(290, { ...NO_PRACTICE, ramp: 10 }, 3, [40, 300])).toBe(300)
+    expect(rampedBpm(120, NO_PRACTICE, 5, [40, 300])).toBe(120)
   })
 })

@@ -19,12 +19,14 @@ import { Chart } from '../ui/Chart'
 import { Wordmark } from '../ui/AppLink'
 import { Transport } from '../ui/Transport'
 import {
-  accuracy, BANK_URL, CUSTOM_LEVEL, keyReferenceMidi, keyReferences, LEVELS, levelName, levelProgressions, measureAt, MIN_CUSTOM,
+  accuracy, BANK_URL, CUSTOM_LEVEL, keyReferenceMidi, LEVELS, levelName, levelProgressions, measureAt, MIN_CUSTOM,
   mistakeWeight, mostConfused, nextLevel, playable,
-  PASS_MARK, pickQuestion, questionChart, questionId, recordAnswer, ROUND_LENGTH, type KeyReference,
+  PASS_MARK, pickQuestion, questionChart, questionId, recordAnswer, referenceForKey, ROUND_LENGTH, type KeyReference,
   transposeFor, withProgression, type Asked, type KeyChoice, type QuestionBank, type Results,
 } from './nameProgression'
 import { NARROW_QUERY } from '../ui/useNarrowScreen'
+import { useWindowKeys } from '../ui/useWindowKeys'
+import { KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
 
 const STORAGE = 'eartraining:name-progression'
 const BPM_RANGE: [number, number] = [40, 240]
@@ -61,12 +63,6 @@ function useNarrow(): boolean {
 const keyLabel = (pc: number, minor: boolean | null) =>
   `${prettyNoteName(pc)} ${minor === null ? '(major or minor)' : minor ? 'minor' : 'major'}`
 
-// Button text of each key reference: full when both cadences are offered, short otherwise
-const REFERENCE_LABELS: Record<KeyReference, { text: string; short: string }> = {
-  tonic: { text: 'Tonic', short: 'Tonic' },
-  'major cadence': { text: 'Major cadence (I\u2013IV\u2013V\u2013I)', short: 'Cadence' },
-  'minor cadence': { text: 'Minor cadence (i\u2013iv\u2013V\u2013i)', short: 'Cadence' },
-}
 // Keyboard shortcuts of the offered references, in button order: tonic, cadence, minor cadence
 const REFERENCE_KEYS = ['K', 'C', 'M']
 
@@ -339,7 +335,6 @@ export function NameProgression() {
     save('results', {})
   }
 
-  const keysRef = useRef<(e: KeyboardEvent) => void>(() => {})
   /** Keyboard shortcuts: Space plays, K tonic, C cadence, M minor cadence (mode unknown), 1-9 answer or listen, Enter goes on. */
   const onKeys = (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement | null)?.tagName ?? ''
@@ -348,9 +343,8 @@ export function NameProgression() {
       e.preventDefault()
       if (playing === 'line') stop()
       else void playChart()
-    } else if (asked && REFERENCE_KEYS.includes(e.key.toUpperCase())) {
-      const reference = keyReferences(asked.question.minor)[REFERENCE_KEYS.indexOf(e.key.toUpperCase())]
-      if (reference) void playReference(reference)
+    } else if (asked && referenceForKey(e.key, asked.question.minor, REFERENCE_KEYS)) {
+      void playReference(referenceForKey(e.key, asked.question.minor, REFERENCE_KEYS)!)
     } else if (/^[1-9]$/.test(e.key)) {
       const option = options[Number(e.key) - 1]
       if (option) choose(option.id)
@@ -358,15 +352,7 @@ export function NameProgression() {
       advance()
     }
   }
-  useEffect(() => {
-    keysRef.current = onKeys
-  })
-  useEffect(() => {
-    // Always call the latest handler, registered once
-    const onKey = (e: KeyboardEvent) => keysRef.current(e)
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  useWindowKeys(onKeys)
 
   const style = getStyle(styleId)
   const mixerProps = mixer(style.comp.program)
@@ -379,28 +365,6 @@ export function NameProgression() {
         : playing === 'line'
           ? 'Count-in'
           : `${round.answered}/${ROUND_LENGTH} answered · ${round.correct} correct`
-
-  // The key menu of the transport: the song's key, a random key, or one of the twelve keys
-  const keyControl = hideKey ? (
-    <div className="control">
-      <span className="label">Key</span>
-      <span className="exercise-key-hidden">Song key hidden</span>
-    </div>
-  ) : (
-    <label className="control">
-      <span className="label">Key</span>
-      <select className="select" value={String(keyChoice)}
-        onChange={(e) => chooseKey(e.target.value === 'song' || e.target.value === 'random' ? e.target.value : Number(e.target.value))}>
-        <option value="song">Song key{asked && keyChoice === 'song' ? ` (${prettyNoteName(asked.question.key)})` : ''}</option>
-        <option value="random">Random key{keyChoice === 'random' ? ` (${prettyNoteName(keyPc)})` : ''}</option>
-        {Array.from({ length: 12 }, (_, pc) => (
-          <option key={pc} value={pc}>
-            {prettyNoteName(pc)}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
 
   return (
     <div className="app exercise">
@@ -509,21 +473,8 @@ export function NameProgression() {
                 <span className="label">
                   {answer ? `In the gap: ${listenedLabel}${listening === asked.progression.id ? ' (the song)' : ''}` : 'Fill the gap'}
                 </span>
-                <div className="answers-reference" role="group" aria-label="Hear the key">
-                  <span className="label">Hear the key</span>
-                  {keyReferences(asked.question.minor).map((reference, i) => {
-                    const label = REFERENCE_LABELS[reference]
-                    // With one cadence the mode is known, so the short name is enough
-                    const text = asked.question.minor === null ? label.text : label.short
-                    return (
-                      <button key={reference} className="band-toggle" onClick={() => void playReference(reference)}
-                        disabled={readiness.kind !== 'ready'} aria-pressed={playing === reference}
-                        title={`${label.text} (${REFERENCE_KEYS[i]})`}>
-                        {text}
-                      </button>
-                    )
-                  })}
-                </div>
+                <KeyReferenceButtons minor={asked.question.minor} shortcuts={REFERENCE_KEYS} playing={playing}
+                  disabled={readiness.kind !== 'ready'} onPlay={(reference) => void playReference(reference)} />
               </div>
               <div className="answer-grid">
                 {options.map((option, i) => {
@@ -614,7 +565,8 @@ export function NameProgression() {
         onPianoPattern={(id) => change({ patternId: id })}
         keyPc={keyPc}
         onKey={(pc) => asked && change({ transpose: offsetToKey(asked.question.key, pc) })}
-        keyControl={keyControl}
+        keyControl={<KeyChoiceControl choice={keyChoice} onChoose={chooseKey} sourceKey={asked?.question.key ?? null}
+          currentKey={keyPc} fixed={hideKey ? 'Song key hidden' : undefined} />}
         bpm={bpm}
         bpmRange={BPM_RANGE}
         onBpm={setBpm}

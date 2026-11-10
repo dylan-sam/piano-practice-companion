@@ -77,18 +77,31 @@ function endingNote(reg: Register, slot: Slot): NoteEvent {
   }
 }
 
-// Rule-based walking bass for swing
-function walkingBass(slots: Slot[], reg: Register): NoteEvent[] {
+/**
+ * A bass line through the slots: the ending chord holds its root, and every other slot is played
+ * by `playSlot` from the note before it (`prev`), towards the next chord. The last note of a slot
+ * leads into the next one.
+ */
+function bassLine(slots: Slot[], reg: Register, playSlot: (slot: Slot, next: Chord, prev: number) => NoteEvent[]): NoteEvent[] {
   const events: NoteEvent[] = []
   let prev = reg.nearest(slots[0]?.chord.bass ?? 0, reg.center)
-
   slots.forEach((slot, i) => {
-    const next = slots[i + 1]?.chord ?? slot.chord
     if (slot.measure === -1) {
       events.push(endingNote(reg, slot))
       return
     }
+    const played = playSlot(slot, slots[i + 1]?.chord ?? slot.chord, prev)
+    events.push(...played)
+    prev = played.at(-1)?.note ?? prev
+  })
+  return events
+}
 
+// Rule-based walking bass for swing: the root on beat 1, passing notes, an approach to the next chord
+function walkingBass(slots: Slot[], reg: Register): NoteEvent[] {
+  return bassLine(slots, reg, (slot, next, from) => {
+    const events: NoteEvent[] = []
+    let prev = from
     for (let b = 0; b < slot.beats; b++) {
       let note: number
       if (b === 0) {
@@ -112,9 +125,8 @@ function walkingBass(slots: Slot[], reg: Register): NoteEvent[] {
       )
       prev = note
     }
+    return events
   })
-
-  return events
 }
 
 // Resolves a pattern degree to a real note, relative to the chord's bass note
@@ -146,42 +158,24 @@ function resolveTone(reg: Register, note: BassNote, root: number, chord: Chord, 
 
 // Bass played from style patterns (bossa, ballad, pop...)
 function patternBass(slots: Slot[], reg: Register, patterns: Partial<Record<string, BassNote[][]>>, swing: number) {
-  const events: NoteEvent[] = []
-  let prev = reg.nearest(slots[0]?.chord.bass ?? 0, reg.center)
-
-  slots.forEach((slot, i) => {
-    const next = slots[i + 1]?.chord ?? slot.chord
-    if (slot.measure === -1) {
-      events.push(endingNote(reg, slot))
-      return
-    }
-
+  return bassLine(slots, reg, (slot, next, prev) => {
     // Without an exact match (e.g. 3 beats in a 4/4 style) the longest pattern is rearranged
     const pattern = patternFor(patterns, slot.beats, !!slot.compound, { at: 0, dur: 0.9, tone: 'R' })
     const root = reg.nearest(slot.chord.bass, reg.anchor(prev))
     const feel = slot.compound ? 0.5 : swing
     const placed = swingPlacer(pattern.map((note) => note.at), feel)
-
-    for (const note of pattern) {
-      const n = resolveTone(reg, note, root, slot.chord, next)
-      events.push(
-        humanize(
-          {
-            tick: toTicks(slot.start + placed(note.at)),
-            channel: CHANNEL,
-            note: n,
-            velocity: note.vel ?? (note.at === 0 ? 96 : 86),
-            duration: toTicks(note.dur),
-          },
-          6,
-          5,
-        ),
-      )
-      prev = n
-    }
+    return pattern.map((note) => humanize(
+      {
+        tick: toTicks(slot.start + placed(note.at)),
+        channel: CHANNEL,
+        note: resolveTone(reg, note, root, slot.chord, next),
+        velocity: note.vel ?? (note.at === 0 ? 96 : 86),
+        duration: toTicks(note.dur),
+      },
+      6,
+      5,
+    ))
   })
-
-  return events
 }
 
 // Render a bass part over the slots

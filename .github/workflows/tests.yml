@@ -1,0 +1,51 @@
+# Check every push and pull request: the app's types, lint and unit tests, then the browser tests
+# (e2e/) on the built app, as published for the web demo.
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: studio/pnpm-lock.yaml
+      - name: Install the app's dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Types
+        run: npx tsc -b
+      - name: Lint
+        run: pnpm run lint
+      - name: Unit tests
+        run: pnpm test
+      - name: Install Chromium for the browser tests
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests
+        run: pnpm run test:e2e
+      - name: Keep the traces of failed browser tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: studio/test-results
+          retention-days: 7

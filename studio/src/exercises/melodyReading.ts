@@ -5,7 +5,11 @@
 // (it can still be put right inside the window), and a note still unplayed when its window ends
 // is missed. Windows never reach past half the gap to the next note, so fast runs stay fair.
 
-import type { MelodyOccurrence } from '../engine/melody'
+import { arrange, type Arrangement } from '../engine/arrange'
+import { melodyOccurrences, type MelodyOccurrence } from '../engine/melody'
+import { withoutMelody, type Chart } from '../music/chart'
+import type { PracticeSettings } from '../music/practice'
+import { getStyle } from '../styles'
 
 export type NoteResult = 'correct' | 'wrong' | 'missed'
 
@@ -125,4 +129,24 @@ export function accuracy(score: MelodyScore): number | null {
 /** The average timing of the correct notes in milliseconds at a tempo (early < 0 < late). */
 export function averageOffsetMs(score: MelodyScore, bpm: number): number | null {
   return score.correct ? Math.round((score.offset / score.correct) * (60000 / bpm)) : null
+}
+
+/** A chart arranged for the band, with its melody notes as the judge expects them. */
+export interface MelodyArrangement {
+  arrangement: Arrangement
+  notes: MelodyOccurrence[]
+}
+
+/**
+ * Arrange a lead sheet (or a chart with a lick) to read its melody: the band plays the chords,
+ * and the melody too when it guides (`guide`); the notes are where the band places them (with
+ * the style's swing, in each chorus's key). A chunk of an endless line (`chunk`) does not end
+ * like a song, and only the first one has a count-in.
+ */
+export function arrangeMelody(chart: Chart, styleId: string, patternId: string | null, transpose: number, choruses: number,
+  practice: PracticeSettings, guide: boolean, chunk?: { countIn: boolean }): MelodyArrangement {
+  const style = getStyle(styleId)
+  const options = { loop: practice.loop, keyStep: practice.keyStep, ...(chunk ? { ending: false, countIn: chunk.countIn } : {}) }
+  const arrangement = arrange(guide ? chart : withoutMelody(chart), style, transpose, choruses, options, patternId)
+  return { arrangement, notes: melodyOccurrences(chart, arrangement.timeline, style.swing, transpose, practice.keyStep) }
 }

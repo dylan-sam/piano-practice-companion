@@ -47,3 +47,28 @@ export function chorusesForKeys(from: PracticeSettings, to: PracticeSettings, ch
   const needed = to.keyStep ? 12 / gcd(to.keyStep, 12) : 0
   return to.keyStep !== from.keyStep && choruses < needed ? needed : choruses
 }
+
+/** The tempo of a chorus with Practice's speed-up: `ramp` more per chorus, kept within the range. */
+export function rampedBpm(bpm: number, practice: PracticeSettings, chorus: number, range: [number, number]): number {
+  return Math.max(range[0], Math.min(range[1], bpm + practice.ramp * chorus))
+}
+
+/** What to do with a playing song when the practice settings change (see `applyPracticeChange`). */
+export interface PracticeActions {
+  restart: (next: PracticeSettings, choruses: number) => void // a new loop: start the song again
+  goOn: (next: PracticeSettings, choruses: number) => void // new keys while the band plays: go on from where it is
+  keep: (next: PracticeSettings, choruses: number) => void // only remember them (a tempo ramp, or nothing playing)
+}
+
+/**
+ * Apply new practice settings: a new loop starts the song again, new keys go on from where the
+ * band is (with the choruses needed to go round them), anything else is only kept.
+ */
+export function applyPracticeChange(from: PracticeSettings, to: PracticeSettings, choruses: number, playing: boolean,
+  actions: PracticeActions): void {
+  const change = practiceChange(from, to)
+  const nextChoruses = chorusesForKeys(from, to, choruses)
+  if (change === 'loop') actions.restart(to, nextChoruses)
+  else if (change === 'keys' && playing) actions.goOn(to, nextChoruses)
+  else actions.keep(to, nextChoruses)
+}

@@ -1,9 +1,14 @@
 // The controls shared by the melody reading screens: how notes are judged (in the Scoring button
-// of the bottom bar), the score line and the MIDI keyboard button.
+// of the bottom bar), the sheet with its score line, and the MIDI keyboard button.
 
 import type { useMidiKeyboard } from '../audio/useMidiKeyboard'
+import type { Bar } from '../engine/timeline'
+import type { Chart } from '../music/chart'
+import type { StyleDefinition } from '../styles/types'
+import { LeadSheet } from '../ui/LeadSheet'
 import { Popover } from '../ui/Popover'
-import { accuracy, averageOffsetMs, type MelodyScore, type Strictness } from './melodyReading'
+import type { useLoopPicking } from '../ui/useLoopPicking'
+import { accuracy, averageOffsetMs, type MelodyScore, type NoteResult, type Strictness } from './melodyReading'
 import type { ReadingSettings } from './useMelodyJudging'
 
 /** The controls of how notes are judged: timing window, any octave, guide melody. */
@@ -90,5 +95,39 @@ export function MidiButton({ keyboard }: { keyboard: ReturnType<typeof useMidiKe
         : <>Waiting for<span className="topbar-long"> MIDI</span> keyboard</>
         : <>Connect<span className="topbar-long"> MIDI keyboard</span><span className="topbar-short"> MIDI</span></>}
     </button>
+  )
+}
+
+/**
+ * The sheet being read: the lead sheet with the bar being played and the judged notes, a loop
+ * being picked on it, then the score line and how to play (`hint`).
+ */
+export function ReadingSheet({ chart, style, transpose, position, beat, playing, loopPicking, loop, feedback, score, total, bpm, hint }: {
+  chart: Chart
+  style: StyleDefinition
+  transpose: number
+  position: Bar | null // the bar sounding now
+  beat: number
+  playing: boolean
+  loopPicking: ReturnType<typeof useLoopPicking>
+  loop: [number, number] | null // the Practice loop
+  feedback: Record<string, NoteResult>
+  score: MelodyScore
+  total: number
+  bpm: number
+  hint: string
+}) {
+  const first = loopPicking.firstBar
+  return (
+    <>
+      <LeadSheet chart={chart} style={style} transpose={transpose}
+        activeMeasure={position && position.measure >= 0 ? position.measure : null}
+        beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4}
+        range={first !== null ? [first, first] : loop}
+        onBarClick={loopPicking.picking ? loopPicking.chooseBar : undefined} autoScroll={playing}
+        noteFeedback={feedback} />
+      <MelodyScoreLine score={score} total={total} bpm={bpm} />
+      <p className="sight-hint">{hint}</p>
+    </>
   )
 }

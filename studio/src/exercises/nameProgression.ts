@@ -4,7 +4,7 @@
 import { CHANNELS } from '../engine/arrange'
 import { toTicks, type NoteEvent } from '../engine/events'
 import { writeMidi } from '../engine/midiWriter'
-import type { Timeline } from '../engine/timeline'
+import { barAtBeat, type Timeline } from '../engine/timeline'
 import { ROW_CELLS, type BarChord, type Chart, type TimeSignature } from '../music/chart'
 import { keyPrefersFlats, noteName, offsetToKey } from '../music/chords'
 
@@ -200,8 +200,8 @@ export function questionChart(question: Question, styleId: string, maxBarsPerRow
 
 /** The written bar sounding at a beat of the timeline, for the playback highlight. */
 export function measureAt(timeline: Timeline, beat: number): { measure: number; beatInBar: number; barBeats: number } | null {
-  const bar = timeline.bars.findLast((b) => b.start <= beat + 1e-6)
-  if (!bar || beat < timeline.countIn || beat >= timeline.totalBeats) return null
+  const bar = barAtBeat(timeline, beat)
+  if (!bar || beat < timeline.countIn) return null
   return { measure: bar.measure, beatInBar: beat - bar.start, barBeats: bar.beats }
 }
 
@@ -250,6 +250,12 @@ export function keyReferenceMidi(reference: KeyReference, keyPc: number, minor: 
 }
 
 // ---------- Key ----------
+
+/** The key reference a keyboard shortcut plays (`shortcuts` are in button order), if any. */
+export function referenceForKey(key: string, minor: boolean | null, shortcuts: string[]): KeyReference | undefined {
+  const index = shortcuts.indexOf(key.toUpperCase())
+  return index < 0 ? undefined : keyReferences(minor)[index]
+}
 
 /** Song key, a random key for each question, or one fixed tonic (pitch class). */
 export type KeyChoice = 'song' | 'random' | number
