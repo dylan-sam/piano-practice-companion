@@ -293,11 +293,11 @@ makes it, and the result.
   stays on bar 9.
 - **Result:** `measure` 8, `beat` 11.
 
-The same reading handles **beat 0**: some BiaB chords on the last beat of a bar
+The same reading handles **beat 0** (2,295 BiaB songs): some BiaB chords on the last beat of a bar
 are written as beat 0 of the next bar (`3.0` for bar 2, beat 4 in 4/4). Beats
 start at 1, so beat 0 is read as the last beat of the bar before.
 
-### Beats and lengths counted by music21 (Wikifonia, Nottingham, When in Rome, Schubert)
+### Beats and lengths counted by music21 (Wikifonia, Nottingham, When in Rome, Schubert: 752 songs)
 
 - **Problem:** these collections count beats as music21 does: in 6/8, 9/8 and
   12/8 a beat is a dotted quarter, so a 6/8 bar has 2 beats and a 12/8 bar 4.
@@ -352,7 +352,7 @@ start at 1, so beat 0 is read as the last beat of the bar before.
   Chords already right (`Gm/b-`) are left alone.
 - **Result:** D/F♯.
 
-### Grace chords (2,504 chords, mostly Wikifonia)
+### Grace chords (2,504 chords in 474 songs, mostly Wikifonia)
 
 - **Problem:** a chord of zero length, followed by another at the same place,
   never sounds but showed in charts and exercises.

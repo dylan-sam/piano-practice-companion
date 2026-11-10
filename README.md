@@ -280,54 +280,15 @@ database itself, as described above, has none of these problems. Nothing is
 edited by hand, so a rebuild always gives the same result. Each fix gives the
 problem, an example, what the import does, and the result in the database.
 
+Only the fixes that concerned more than 100 songs are shown here. Other fixes
+were made (chord positions in the Jazz Corpus and in Band-in-a-Box waltzes,
+beats 10 to 12 of 12/8 bars, keys of the Jazz Corpus, Nottingham slash chords,
+songs without a key or a title, endless tunes...): the details are in
+[docs/DATA.md](docs/DATA.md#corrections-to-choco).
+
 #### 1. Chords in the wrong place
 
-**Jazz Corpus (76 songs)**
-
-- **Problem:** ChoCo placed every chord where it *ends*, minus one bar,
-  instead of where it starts. That is right only for chords lasting exactly
-  one bar.
-- **Example:** `| Dm7 G7 | Cmaj7 | Cmaj7 |` came out with Dm7 half a bar before
-  the song starts, G7 on beat 1 of bar 1, and Cmaj7 in bar 3.
-- **Fix:** the chord *lengths* were right, so the chords are laid end to end
-  again from bar 1, beat 1, each starting where the one before ends.
-- **Now:** Dm7 on bar 1, beat 1; G7 on bar 1, beat 3; Cmaj7 on bar 2 for two
-  bars.
-
-**Band-in-a-Box songs in 3/4 and other meters such as 6/8 (95 songs)**
-
-- **Problem:** ChoCo moved from one chord to the next as if every bar had 4
-  beats, so in other meters the chords drift away from their beats.
-- **Example:** in a waltz with one chord per bar, the second chord was on
-  beat 2 of bar 2, and the next ones went on drifting.
-- **Fix:** the lengths were right here too, so the chords are laid end to end
-  again. Songs in 4/4 and 2/2 were right and are kept as they are.
-- **Now:** one chord on beat 1 of every bar, as in the original song.
-
-**Beats 10 to 12 of 12/8 bars (781 chords in 98 songs)**
-
-- **Problem:** in its files, ChoCo writes a position as a single number,
-  bar + beat / 10: bar 8, beat 3 is `8.3`. That works for beats 1 to 9 only.
-  A 12/8 bar has 12 beats, and beats 10, 11 and 12 overflow into the next
-  bar's number.
-- **Example:** bar 8, beat 10 is written `8 + 10/10 = 9.0`, and bar 8, beat 11
-  `8 + 11/10 = 9.1`, which looks exactly like bar 9, beat 1. Read naively, the
-  chord jumps to the next bar.
-- **Fix:** the number alone cannot tell the two apart, so the import looks at
-  the chord before, whose position and length are known. Take bar 8 of a 12/8
-  song: chord A starts on beat 1 and lasts 10 beats, so it ends on beat 11.
-  The next chord, B, is written `9.1`. Had A ended on bar 9, beat 1, it would
-  have lasted 12 beats, not 10. So B is not on bar 9: it starts where A ends,
-  on bar 8, beat 11. In short, when a chord is written at the position where
-  the previous chord's end would overflow (beat 10 or more), it is put back on
-  that beat of the previous bar. When the numbers do match bar 9, the chord
-  stays on bar 9.
-- **Now:** B is stored with `measure` 8 and `beat` 11, right after A, as in
-  the original score. This guess is needed only because the information is
-  lost in ChoCo's files; the database writes bar and beat separately, so the
-  problem cannot happen again once a song is stored.
-
-**Beat 0 in Band-in-a-Box bars**
+**Beat 0 in Band-in-a-Box bars (2,295 songs)**
 
 - **Problem:** some Band-in-a-Box chords on the last beat of a bar are written
   as beat 0 of the next bar. Beats start at 1, so beat 0 does not exist.
@@ -337,7 +298,7 @@ problem, an example, what the import does, and the result in the database.
 
 #### 2. Chords with the wrong length
 
-**Wikifonia, Nottingham, When in Rome, Schubert Winterreise**
+**Wikifonia, Nottingham, When in Rome, Schubert Winterreise (752 songs)**
 
 - **Problem:** these collections count beats as the music21 library does: in
   6/8, 9/8 or 12/8 a beat is a dotted quarter (three eighths), so a 6/8 bar
@@ -386,17 +347,6 @@ problem, an example, what the import does, and the result in the database.
 
 #### 4. Wrong or missing keys
 
-**Jazz Corpus chords written in C (76 songs)**
-
-- **Problem:** the corpus writes every song transposed to C, with the song's
-  real key beside it. ChoCo kept both, so the chords did not match their key.
-  The keys were also misspelt (`C:majoror`).
-- **Example:** a song in F was stored as `Dm7 G7 C` in the key of F, which
-  reads as vi-ii-V instead of ii-V-I.
-- **Fix:** every chord is transposed from C to the song's key, and the key is
-  spelt correctly.
-- **Now:** `Gm7 C7 F` in F, a ii-V-I.
-
 **Major or minor missing or wrong (Band-in-a-Box, Rock Corpus, Real Book, Wikifonia)**
 
 - **Problem:** Band-in-a-Box and the Rock Corpus give only the key's note (C,
@@ -414,25 +364,9 @@ problem, an example, what the import does, and the result in the database.
   43,126 keys stay undecided and keep only their note; the app then shows
   "(major or minor)".
 
-**No key at all (38 songs)**
-
-- **Problem:** a few entries have no key, which the Roman numerals and the
-  exercises need.
-- **Fix and now:** they are left out of the catalog.
-
 #### 5. Wrong chord symbols
 
-**Nottingham slash chords (445 chords in 82 tunes)**
-
-- **Problem:** the tunes write a sharp bass as `+` (ABC notation), and ChoCo
-  dropped the sharp.
-- **Example:** `D/f+` (D with F♯ in the bass) was stored as D/F.
-- **Fix:** the chords are read again from the original tunes, and the
-  corrected chords are kept in `choco-nottingham-bass-5fe168f.zip`
-  (rebuilt by `build_nottingham_fix.py`).
-- **Now:** D/F♯.
-
-**iReal Pro chord symbols**
+**iReal Pro chord symbols (25,287 charts)**
 
 - **Problem:** ChoCo's conversion of iReal Pro charts damaged chord symbols.
 - **Example:** `F*maj7*` (a chord with custom text) became `Faj7`, `7alt`
@@ -444,20 +378,12 @@ problem, an example, what the import does, and the result in the database.
 
 #### 6. Entries that cannot be played
 
-**Grace chords (2,504 chords, mostly Wikifonia)**
+**Grace chords (2,504 chords in 474 songs, mostly Wikifonia)**
 
 - **Problem:** a chord of zero length, followed by another chord at the same
   place. It never sounds, but it showed in the chart and in the exercises.
 - **Fix:** it is dropped; an entry left with no chord at all is left out.
 - **Now:** only the chord that sounds remains.
-
-**Endless Nottingham tunes (6 tunes)**
-
-- **Problem:** ChoCo writes out each tune's repeats, and for six tunes this
-  went wrong and produced 1,000 to 2,000 bars.
-- **Fix:** tunes over 500 bars are left out (the longest correct tune is far
-  shorter).
-- **Now:** no tune in the catalog runs on for thousands of bars.
 
 **Broken repeat signs (273 forum charts)**
 
@@ -469,19 +395,9 @@ problem, an example, what the import does, and the result in the database.
 - **Now:** these charts are left out, and the import log lists them with
   the reason.
 
-**Missing titles (76 Jazz Corpus songs)**
-
-- **Problem:** the Jazz Corpus has no titles, and the empty titles made the
-  songs look like duplicates of each other (and of songs whose title is in
-  another alphabet).
-- **Fix:** they are named "Jazz Corpus sequence 1", "Jazz Corpus sequence 2"...,
-  and titles in other alphabets (Greek, Cyrillic, Japanese) are compared
-  letter by letter instead of as empty text.
-- **Now:** every song has a title and stays separate in the search.
-
 Every chord is then written in one notation
-([chord notation](docs/CHORD_NOTATION.md)). The full account, with the numbers
-behind each fix: [docs/DATA.md](docs/DATA.md).
+([chord notation](docs/CHORD_NOTATION.md)). The full account, with every fix
+and the numbers behind it: [docs/DATA.md](docs/DATA.md).
 
 ## Getting started
 
