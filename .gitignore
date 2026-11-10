@@ -25,3 +25,7 @@ weimar/
 data/weimar*
 studio/public/leadsheets/weimar*
 studio/public/licks/licks_weimar*
+
+# Helper to build the Android APK on this computer, and the APK it copies here
+/build-apk.bat
+/app-debug.apk
