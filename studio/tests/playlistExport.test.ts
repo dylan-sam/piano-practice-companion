@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { chartFromMeasures } from '../src/music/chart'
 import type { Tune } from '../src/music/songs'
-import { orderSavedTunes, parseStudioPlaylists, playlistNames, serializeStudioPlaylists } from '../src/library/playlistExport'
+import { exportTunes, orderSavedTunes, parseStudioPlaylists, playlistNames, serializeStudioPlaylists } from '../src/library/playlistExport'
 
 /** Create one saved tune with a distinct chart and playlist. */
 function tune(title: string, playlist: string, source: Tune['source'] = 'import'): Tune {
@@ -13,22 +13,26 @@ function tune(title: string, playlist: string, source: Tune['source'] = 'import'
 
 const tunes = [
   tune('Zebra', 'Jazz'), tune('Alpha', 'My tunes', 'own'),
-  tune('Bravo', 'Folk'), tune('ChoCo result', 'ChoCo', 'choco'),
+  tune('Bravo', 'Folk'), tune('ChoCo result', 'ChoCo', 'choco'), tune('Linked', 'Shared with me', 'link'),
 ]
 
 describe('saved playlist ordering and export', () => {
   it('shows the selected playlist first, other saved playlists next, and excludes fetched ChoCo scores', () => {
-    expect(orderSavedTunes(tunes, 'Jazz').map((item) => item.chart.title)).toEqual(['Zebra', 'Alpha', 'Bravo'])
-    expect(orderSavedTunes(tunes).map((item) => item.chart.title)).toEqual(['Alpha', 'Bravo', 'Zebra'])
-    expect(playlistNames(tunes)).toEqual(['My tunes', 'Folk', 'Jazz'])
+    expect(orderSavedTunes(tunes, 'Jazz').map((item) => item.chart.title)).toEqual(['Zebra', 'Alpha', 'Bravo', 'Linked'])
+    expect(orderSavedTunes(tunes).map((item) => item.chart.title)).toEqual(['Alpha', 'Bravo', 'Zebra', 'Linked'])
+    expect(playlistNames(tunes)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
   })
 
-  it('round-trips all playlists or one selected playlist', () => {
+  it('round-trips all saved songs, or the written, shared or imported ones', () => {
     const all = parseStudioPlaylists(serializeStudioPlaylists(tunes))
-    expect(all.map((list) => list.name)).toEqual(['My tunes', 'Folk', 'Jazz'])
-    expect(all.flatMap((list) => list.charts.map((chart) => chart.title))).toEqual(['Alpha', 'Bravo', 'Zebra'])
-    const selected = parseStudioPlaylists(serializeStudioPlaylists(tunes, 'Jazz'))
-    expect(selected.map((list) => [list.name, list.charts[0].title])).toEqual([['Jazz', 'Zebra']])
+    expect(all.map((list) => list.name)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
+    expect(all.flatMap((list) => list.charts.map((chart) => chart.title))).toEqual(['Alpha', 'Bravo', 'Zebra', 'Linked'])
+    const titles = (group: 'own' | 'link' | 'import') =>
+      parseStudioPlaylists(serializeStudioPlaylists(tunes, group)).map((list) => [list.name, list.charts.map((c) => c.title)])
+    expect(titles('own')).toEqual([['My tunes', ['Alpha']]])
+    expect(titles('link')).toEqual([['Shared with me', ['Linked']]])
+    expect(titles('import')).toEqual([['Folk', ['Bravo']], ['Jazz', ['Zebra']]])
+    expect(exportTunes(tunes, 'import')).toHaveLength(2)
   })
 
   it('rejects malformed files before saving any tune', () => {

@@ -37,10 +37,21 @@ export function orderSavedTunes(tunes: Tune[], selected = ''): Tune[] {
     a.chart.title.localeCompare(b.chart.title))
 }
 
-/** Encode one or all saved playlists without browser-specific record IDs. */
-export function serializeStudioPlaylists(tunes: Tune[], selected?: string): string {
-  const available = savedTunes(tunes)
-  const names = playlistNames(tunes).filter((name) => selected === undefined || name === selected)
+/**
+ * What the Export menu downloads: the songs written or edited in the app ('own'), the ones
+ * opened from a Studio link ('link'), the imported ones ('import'), or all three ('all').
+ */
+export type ExportGroup = 'own' | 'link' | 'import' | 'all'
+
+/** The saved tunes of an export group. */
+export function exportTunes(tunes: Tune[], group: ExportGroup = 'all'): Tune[] {
+  return savedTunes(tunes).filter((tune) => group === 'all' || tune.source === group)
+}
+
+/** Encode the saved tunes of a group by playlist, without browser-specific record IDs. */
+export function serializeStudioPlaylists(tunes: Tune[], group: ExportGroup = 'all'): string {
+  const available = exportTunes(tunes, group)
+  const names = playlistNames(available)
   if (!names.length) throw new Error('No saved tunes to export')
   const playlists = names.map((name) => ({
     name, charts: available.filter((tune) => (tune.playlist ?? 'My tunes') === name).map((tune) => tune.chart),

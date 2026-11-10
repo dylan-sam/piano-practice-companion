@@ -9,7 +9,7 @@ import { chartFromHash, labFromHash, shareUrl, styleShareUrl } from './formats/s
 import { addTunes, loadTunes, removePlaylist, removeTune, saveTune } from './library/db'
 import { CHORD_SOURCES, importTunes, LEAD_SOURCES } from './library/importTunes'
 import { fetchChocoTune } from './library/choco'
-import { playlistNames, serializeStudioPlaylists } from './library/playlistExport'
+import { exportTunes, serializeStudioPlaylists, type ExportGroup } from './library/playlistExport'
 import { loadMyStyles, myStyleId, removeMyStyle, saveMyStyle } from './library/myStyles'
 import { hasMelody, withoutMelody, type Chart as ChartData } from './music/chart'
 import { offsetToKey, prettyNoteName } from './music/chords'
@@ -89,6 +89,14 @@ const NO_LEAD_SHEETS = 'No lead sheets yet. Import a MusicXML lead sheet or a St
 // The style being made in the Pattern Creator is kept in the browser between visits
 const LAB_KEY = 'eartraining:style-lab'
 const LAB_STYLE = 'lab' // style id used while the lab is open
+
+// The choices of the Export menu: a Studio JSON file, to import again with Import -> Studio export
+const EXPORT_CHOICES: { group: ExportGroup; name: string; desc: string; file: string }[] = [
+  { group: 'own', name: 'Songs I wrote or edited', desc: 'New songs, and catalog or example songs you edited (My tunes).', file: 'my-songs' },
+  { group: 'link', name: 'Shared with me via link', desc: 'The songs opened from a Studio link, with your edits.', file: 'shared-with-me' },
+  { group: 'import', name: 'Imported', desc: 'The playlists added with Import, with your edits.', file: 'imported' },
+  { group: 'all', name: 'All 3', desc: 'Everything above, in one file.', file: 'all-songs' },
+]
 
 /** The style being made in the Pattern Creator, as last saved in the browser. */
 function loadLab(): LabStyle | null {
@@ -388,10 +396,10 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     return result
   }, [showAddedTunes])
 
-  /** Download a portable JSON copy of one or all saved playlists. */
-  const downloadStudioExport = (selected?: string) => {
-    const content = serializeStudioPlaylists(tunes, selected)
-    const filename = selected ? selected.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : 'all-playlists'
+  /** Download a portable JSON copy of the saved songs of a group (written, shared, imported or all). */
+  const downloadStudioExport = (group: ExportGroup) => {
+    const content = serializeStudioPlaylists(tunes, group)
+    const filename = EXPORT_CHOICES.find((choice) => choice.group === group)?.file
     const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }))
     const link = document.createElement('a')
     link.href = url
@@ -561,7 +569,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     // Non-breaking spaces keep each part on one line when the readout wraps on phones
     return `Chorus\u00a0${position.chorus + 1}/${choruses}  Bar\u00a0${position.measure + 1}${extras ? `  ${extras}` : ''}`
   })()
-  const exportPlaylists = playlistNames(tunes)
+  // The songs of each export choice, to show their number (an empty choice is greyed out)
+  const exportCounts = Object.fromEntries(EXPORT_CHOICES.map(({ group }) => [group, exportTunes(tunes, group).length]))
 
   // The Android back button closes, the last opened first: the tune drawer, the editor (without
   // saving), the Pattern Creator and loop picking (menus and dialogs register themselves)
@@ -609,23 +618,19 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
                 </div>
               )}
             </Popover>
-            <Popover id="export-playlists" className="share" label="Export My Tunes">
+            <Popover id="export-playlists" className="share" label="Export">
               {(close) => (
                 <div className="share-panel">
-                  {exportPlaylists.length === 0 ? <p className="share-desc">No saved playlists yet.</p> : (
-                    <>
-                      <button className="share-option" onClick={() => { downloadStudioExport(); close() }}>
-                        <span className="share-name">All saved playlists</span>
-                        <span className="share-desc">Download a Studio JSON backup.</span>
-                      </button>
-                      {exportPlaylists.map((name) => (
-                        <button key={name} className="share-option" onClick={() => { downloadStudioExport(name); close() }}>
-                          <span className="share-name">{name}</span>
-                          <span className="share-desc">Export this playlist.</span>
-                        </button>
-                      ))}
-                    </>
-                  )}
+                  {EXPORT_CHOICES.map(({ group, name, desc }) => (
+                    // An empty choice stays in the menu, greyed out
+                    <button key={group} className="share-option" disabled={!exportCounts[group]}
+                      onClick={() => { downloadStudioExport(group); close() }}>
+                      <span className="share-name">{name}</span>
+                      <span className="share-desc">
+                        {desc} {exportCounts[group] ? `${exportCounts[group]} song${exportCounts[group] === 1 ? '' : 's'}.` : 'None yet.'}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               )}
             </Popover>

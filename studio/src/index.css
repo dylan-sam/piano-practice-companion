@@ -3444,3 +3444,9 @@ input.fader::-moz-range-thumb {
     display: none;
   }
 }
+
+/* A menu choice with nothing to do (an empty Export choice) */
+.share-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

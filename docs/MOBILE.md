@@ -57,7 +57,7 @@ The back button never quits the app by surprise
 
 | Open now | One press of back |
 |---|---|
-| a menu, panel or dialog (Settings, Display, Practice, Mixer, ⋯, Share, Export My Tunes, Import, the tune drawer, the chart editor, the Pattern Creator, loop picking) | closes the last one opened, without saving; press again for the one before |
+| a menu, panel or dialog (Settings, Display, Practice, Mixer, ⋯, Share, Export, Import, the tune drawer, the chart editor, the Pattern Creator, loop picking) | closes the last one opened, without saving; press again for the one before |
 | nothing, on a screen (player or an exercise) | goes back to the main menu |
 | nothing, on the main menu | leaves the app |
 

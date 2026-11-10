@@ -70,7 +70,9 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Display**: Roman numerals (each chord as a degree of the key, following key
   changes), minor written C− or Cm, and % for a bar that repeats the bar before.
 - **Your own charts**: write or edit a chart (**Edit Song**), import iReal Pro
-  links and playlists, export your playlists to a file (**Export My Tunes**),
+  links and playlists, export your songs to a file (**Export**: the songs you
+  wrote or edited, the ones shared with you via link, the imported ones, or all
+  3),
   and share a chart as a link that opens in this app or in iReal Pro. The
   **Songs** list shows each playlist under a bar with its name; the playlist
   you choose comes first.

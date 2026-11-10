@@ -186,8 +186,8 @@ playlist, then the other saved playlists, then the catalog's results.
 |---|---|---|
 | New, Edit | Studio | write or change a chart, saved as a tune |
 | Import → iReal Pro | Studio's tune list | adds iReal Pro links or playlist files as a playlist |
-| Import → Studio export | Studio's tune list | restores a file made by Export My Tunes, with its playlist names |
-| Export My Tunes | Studio's top bar | downloads one playlist, or all, as a JSON file of editable charts (catalog songs opened for preview are not included) |
+| Import → Studio export | Studio's tune list | restores a file made by Export, with its playlist names |
+| Export | Studio's top bar | downloads, as a JSON file of editable charts: the songs written or edited in the app (My tunes; an edited shared or imported song stays in its own group), the songs shared with you via link, the imported playlists, or all 3 (catalog songs opened for preview and the shipped songs are not included) |
 | Share → Copy Studio link | Studio's top bar | a link that opens the chart in this app; nothing is uploaded |
 | Share → Copy iReal Pro link | Studio's top bar | an `irealb://` link that opens in iReal Pro |
 
