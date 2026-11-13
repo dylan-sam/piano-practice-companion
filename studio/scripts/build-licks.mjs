@@ -15,6 +15,7 @@ try {
   const { buildLickCatalog } = await server.ssrLoadModule('/scripts/lickCatalog.ts')
   console.log(buildLickCatalog({
     leadSheets: resolve(studio, 'public/leadsheets/catalog.json'),
+    catalog: resolve(studio, 'public/catalog'),
     weimar: resolve(root, 'weimar/weimar_solos.json'),
     out: resolve(studio, 'public/licks/licks.json'),
     outWeimar: resolve(root, 'weimar/licks_weimar.json'),

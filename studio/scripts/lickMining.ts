@@ -382,6 +382,16 @@ export function mineLicks(sources: MelodySource[], options: MiningOptions): { ca
   return { candidates, rejected }
 }
 
+/** In how many songs each context appears, read from the chords only (the melody is not needed). */
+export function contextFrequency(charts: Chart[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const chart of charts) {
+    const line = timelineOf({ chart, source: '', license: '', tune: chart.title })
+    for (const category of new Set(findWindows(line).map((w) => w.category))) counts.set(category, (counts.get(category) ?? 0) + 1)
+  }
+  return counts
+}
+
 // Names of the chord degrees a pattern starts on
 const DEGREES = ['root', 'b9', '9th', 'minor 3rd', 'major 3rd', '11th', '#11', '5th', 'b13', '13th', 'minor 7th', 'major 7th']
 const FAMILY_NAMES: Record<string, string> = { maj: 'major chord', min: 'minor chord', dom: 'dominant chord', half: 'half-diminished chord', dim: 'diminished chord', sus: 'sus chord' }

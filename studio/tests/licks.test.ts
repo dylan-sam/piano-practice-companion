@@ -8,7 +8,7 @@ import { isLickInfo, onLickGrid } from '../src/music/licks'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { barsFromChords, makeLickChart, parseChords, parseNotes, transposeSymbol } from '../scripts/lickCharts'
 import { chordScale, eighthLine, generatedPlaylists, guideToneLine, nearest, PROGRESSIONS, VOCABULARY } from '../scripts/lickExercises'
-import { findWindows, lickOf, snapToGrid, timelineOf, type MelodySource } from '../scripts/lickMining'
+import { contextFrequency, findWindows, lickOf, snapToGrid, timelineOf, type MelodySource } from '../scripts/lickMining'
 import { chartProblem } from '../scripts/lickCatalog'
 
 const note = (bar: number, at: number, beats: number, pitch = 60) => ({ bar, at, beats, pitch })
@@ -146,6 +146,20 @@ describe('lick mining', () => {
     const line = timelineOf(source)
     const window = findWindows(line).find((w) => w.category === 'ii-V-I major')!
     expect(lickOf(line, window, { minNotesPerBeat: 1 })).toBe('does not land on a chord tone of the I')
+  })
+})
+
+describe('context frequency', () => {
+  it('counts each context once per song', () => {
+    const song = (spans: [string, number][]) => ({ ...solo([]).chart, bars: barsFromChords(spans) }) as Chart
+    // Two ii-V-Is in the first song, one in the second, and a V-I with no ii in the second only
+    const counts = contextFrequency([
+      song([['C-7', 2], ['F7', 2], ['Bb^7', 4], ['C-7', 2], ['F7', 2], ['Bb^7', 4]]),
+      song([['D-7', 2], ['G7', 2], ['C^7', 4], ['A7', 4], ['D^7', 4]]),
+    ])
+    expect(counts.get('ii-V-I major')).toBe(2)
+    expect(counts.get('V-I')).toBe(1)
+    expect(counts.get('minor ii-V-i')).toBeUndefined()
   })
 })
 
