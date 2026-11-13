@@ -39,7 +39,6 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const [chosen, setChosen] = useState<string[]>([]) // progressions a song must contain
   const [matchAll, setMatchAll] = useState(true)
   const [filterOpen, setFilterOpen] = useState(false)
-  const filtering = chosen.length > 0
   const showActions = !!(onImport || onNew)
   const searchCatalog = !!onLoadChoco
 
@@ -47,8 +46,13 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   // Playlists that can be removed: saved in this browser (not bundled with the build)
   const removable = useMemo(() => new Set(playlistNames(tunes)), [tunes])
   const activePlaylist = playlists.includes(playlist) ? playlist : ALL
+  // With a playlist chosen, the list shows only its songs: no ChoCo search or progression filter
+  const inPlaylist = activePlaylist !== ALL
+  const showCatalog = searchCatalog && !inPlaylist
+  const filtering = showCatalog && chosen.length > 0
+  const shownGroups = showCatalog ? scoreGroups : []
 
-  // A selected playlist leads the saved tunes; the remaining playlists stay searchable.
+  // The saved tunes: the chosen playlist's only, or all of them
   const matches = useMemo(() => {
     const q = fold(query.trim())
     return orderSavedTunes(tunes, activePlaylist)
@@ -103,7 +107,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
     <nav className="library" aria-label="Songs" inert={disabled}>
       <div className="library-head">
         <h2 className="label">
-          Songs <span className="library-count">{scoreGroups.length + (filtering ? 0 : matches.length)}</span>
+          Songs <span className="library-count">{shownGroups.length + (filtering ? 0 : matches.length)}</span>
         </h2>
         {showActions && <span className="library-actions">
           {onNew && <button className="library-import" onClick={onNew}>
@@ -118,13 +122,13 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       <input
         className="library-search"
         type="search"
-        placeholder={searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
+        placeholder={inPlaylist ? 'Search this playlist' : searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
         aria-label="Search songs"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {catalog.length > 0 && (
+      {showCatalog && catalog.length > 0 && (
         <div className="progression-filter">
           <div className="progression-filter-bar">
             <button className="library-import" aria-expanded={filterOpen} onClick={() => setFilterOpen(!filterOpen)}>
@@ -229,13 +233,13 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       {matches.length > LIMIT && !filtering && (
         <p className="library-more">{matches.length - LIMIT} more. Search to narrow the list.</p>
       )}
-      {scoreError && <p className="library-more">{scoreError}</p>}
-      {scoreGroups.length > 0 && <h3 className="label">ChoCo scores</h3>}
-      {scoreGroups.length >= SCORE_LIMIT && (
+      {showCatalog && scoreError && <p className="library-more">{scoreError}</p>}
+      {shownGroups.length > 0 && <h3 className="label">ChoCo scores</h3>}
+      {shownGroups.length >= SCORE_LIMIT && (
         <p className="library-more">Showing the first {SCORE_LIMIT}. Type a title to narrow the list.</p>
       )}
       <ul className="library-list">
-        {scoreGroups.map((group) => (
+        {shownGroups.map((group) => (
           <li key={group.id} className="score-group">
             <button className="tune" onClick={() => void openVersion(versionToOpen(group, selectedVersions[group.id]))}>
               <span className="tune-title">{group.title}</span>
@@ -255,7 +259,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
           </li>
         ))}
       </ul>
-      {(filtering || matches.length === 0) && scoreGroups.length === 0 && (
+      {(filtering || matches.length === 0) && shownGroups.length === 0 && (
         <p className="library-more">{!tunes.length && emptyText ? emptyText : 'No songs match.'}</p>
       )}
     </nav>

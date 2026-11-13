@@ -25,16 +25,16 @@ export function playlistNames(tunes: Tune[], listed = false): string[] {
     .sort((a, b) => (a === 'My tunes' ? -1 : b === 'My tunes' ? 1 : a.localeCompare(b)))
 }
 
-/** Put the selected playlist first, followed by My tunes and other saved lists. */
+/**
+ * The saved tunes to list: only the selected playlist's, or every playlist (My tunes first). Titles
+ * sort with their numbers in order ("Lick 2" before "Lick 10").
+ */
 export function orderSavedTunes(tunes: Tune[], selected = ''): Tune[] {
-  // Export order of a tune's playlist: the selected one, then My tunes, then the rest
-  const rank = (tune: Tune) => {
-    const name = tune.playlist ?? 'My tunes'
-    return selected && name === selected ? 0 : name === 'My tunes' ? 1 : 2
-  }
-  return listedTunes(tunes).sort((a, b) => rank(a) - rank(b) ||
-    (a.playlist ?? 'My tunes').localeCompare(b.playlist ?? 'My tunes') ||
-    a.chart.title.localeCompare(b.chart.title))
+  const name = (tune: Tune) => tune.playlist ?? 'My tunes'
+  const rank = (tune: Tune) => (name(tune) === 'My tunes' ? 0 : 1)
+  return listedTunes(tunes).filter((tune) => !selected || name(tune) === selected)
+    .sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b)) ||
+      a.chart.title.localeCompare(b.chart.title, undefined, { numeric: true }))
 }
 
 /**

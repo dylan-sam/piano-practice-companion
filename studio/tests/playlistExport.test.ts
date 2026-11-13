@@ -17,10 +17,15 @@ const tunes = [
 ]
 
 describe('saved playlist ordering and export', () => {
-  it('shows the selected playlist first, other saved playlists next, and excludes fetched ChoCo scores', () => {
-    expect(orderSavedTunes(tunes, 'Jazz').map((item) => item.chart.title)).toEqual(['Zebra', 'Alpha', 'Bravo', 'Linked'])
+  it('lists only the selected playlist, or every saved playlist, never fetched ChoCo scores', () => {
+    expect(orderSavedTunes(tunes, 'Jazz').map((item) => item.chart.title)).toEqual(['Zebra'])
     expect(orderSavedTunes(tunes).map((item) => item.chart.title)).toEqual(['Alpha', 'Bravo', 'Zebra', 'Linked'])
     expect(playlistNames(tunes)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
+  })
+
+  it('sorts numbered titles in number order', () => {
+    const licks = ['Lick 10', 'Lick 2', 'Lick 1'].map((title) => tune(title, 'Licks'))
+    expect(orderSavedTunes(licks, 'Licks').map((item) => item.chart.title)).toEqual(['Lick 1', 'Lick 2', 'Lick 10'])
   })
 
   it('round-trips all saved songs, or the written, shared or imported ones', () => {

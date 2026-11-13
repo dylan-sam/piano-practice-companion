@@ -70,7 +70,7 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   3),
   and share a chart as a link that opens in this app or in iReal Pro. The
   **Songs** list shows each playlist under a bar with its name; the playlist
-  you choose comes first.
+  you choose is shown alone, its songs in number order.
 - **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
   and the band plays it without its melody.
 
