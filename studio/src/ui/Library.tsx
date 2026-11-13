@@ -19,6 +19,8 @@ interface LibraryProps {
 }
 
 const ALL = ''
+const CHOCO = '\u0001choco' // the ChoCo catalog, listed with the playlists (no playlist can have this name)
+const CHOCO_NAME = 'ChoCo chord charts'
 const LIMIT = 250 // long playlists are filtered by search rather than scrolled
 // Fold a text for search: lower case, no accents
 const fold = (s: string) =>
@@ -43,21 +45,30 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const searchCatalog = !!onLoadChoco
 
   const playlists = useMemo(() => playlistNames(tunes, true), [tunes])
+  // The Playlist menu: the saved playlists and, where the catalog is searched, the ChoCo charts
+  const choices = useMemo(() => {
+    const named = playlists.map((name) => ({ value: name, label: name }))
+    if (!searchCatalog) return named
+    return [...named, { value: CHOCO, label: CHOCO_NAME }]
+      .sort((a, b) => (a.value === 'My tunes' ? -1 : b.value === 'My tunes' ? 1 : a.label.localeCompare(b.label)))
+  }, [playlists, searchCatalog])
   // Playlists that can be removed: saved in this browser (not bundled with the build)
   const removable = useMemo(() => new Set(playlistNames(tunes)), [tunes])
-  const activePlaylist = playlists.includes(playlist) ? playlist : ALL
-  // With a playlist chosen, the list shows only its songs: no ChoCo search or progression filter
-  const inPlaylist = activePlaylist !== ALL
+  const activePlaylist = choices.some((c) => c.value === playlist) ? playlist : ALL
+  // A chosen playlist is listed alone: its saved songs, or the ChoCo search and progression filter
+  const inPlaylist = activePlaylist !== ALL && activePlaylist !== CHOCO
   const showCatalog = searchCatalog && !inPlaylist
+  const showSaved = activePlaylist !== CHOCO
   const filtering = showCatalog && chosen.length > 0
   const shownGroups = showCatalog ? scoreGroups : []
 
-  // The saved tunes: the chosen playlist's only, or all of them
+  // The saved tunes: the chosen playlist's only, all of them, or none for the ChoCo charts
   const matches = useMemo(() => {
     const q = fold(query.trim())
+    if (!showSaved) return []
     return orderSavedTunes(tunes, activePlaylist)
       .filter((t) => !q || fold(`${t.chart.title} ${t.chart.composer ?? ''}`).includes(q))
-  }, [tunes, query, activePlaylist])
+  }, [tunes, query, activePlaylist, showSaved])
 
   const canRemove = activePlaylist !== ALL && activePlaylist !== 'Examples' && removable.has(activePlaylist)
 
@@ -122,7 +133,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       <input
         className="library-search"
         type="search"
-        placeholder={inPlaylist ? 'Search this playlist' : searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
+        placeholder={inPlaylist ? 'Search this playlist' : !showSaved ? 'Search ChoCo title or artist' : searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
         aria-label="Search songs"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -167,7 +178,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         </div>
       )}
 
-      {playlists.length > 1 && (
+      {choices.length > 1 && (
         <div className="library-filter">
           <select
             className="select"
@@ -179,9 +190,9 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
             }}
           >
             <option value={ALL}>All playlists</option>
-            {playlists.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {choices.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>
