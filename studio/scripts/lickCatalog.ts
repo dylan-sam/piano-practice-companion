@@ -7,23 +7,19 @@
 //                                   patterns from the Weimar Jazz Database solos (ODbL 1.0)
 //   data/licks.log                  what was kept and turned down, and why
 //
-// The playlists of licks from standards are in the order of how many songs of the song catalog
-// (studio/public/catalog) have their context, most common first.
-//
 // The Weimar licks are built only when weimar/weimar_solos.json is there (made by
 // weimar_playlist.py from wjazzd.db, see docs/DATA.md). Every chart is checked: chart format,
 // chord symbols, the lick grid (onLickGrid) and range.
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { gunzipSync } from 'node:zlib'
+import { dirname } from 'node:path'
 import { isChart, type Chart } from '../src/music/chart'
 import { onLickGrid } from '../src/music/licks'
 import { isChartSymbol } from '../src/music/notation'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { generatedPlaylists } from './lickExercises'
 import {
-  candidateChart, contextFrequency, distinctPatterns, findPatterns, mineLicks, patternChart, selectLicks,
+  candidateChart, distinctPatterns, findPatterns, mineLicks, patternChart, selectLicks,
   type MelodySource, type MiningOptions, type Selection,
 } from './lickMining'
 
@@ -33,14 +29,13 @@ const HIGHEST = 96 // C7
 const PATTERN_NOTES = 7 // a common pattern is a run of 7 notes...
 const PATTERN_PLAYERS = 3 // ...played by at least 3 different players
 
-// Order of the mined categories in the playlists (licks from standards: see byFrequency)
+// Order of the mined categories in the playlists
 const CATEGORIES = ['ii-V-I major', 'minor ii-V-i', 'ii-V', 'V-I', 'I-vi-ii-V turnaround', 'Blues I7-IV7',
   'Major chord', 'Minor chord', 'Dominant chord', 'Altered dominant', 'Half-diminished chord', 'Diminished chord']
 
 /** Paths of the inputs and outputs. */
 export interface LickPaths {
   leadSheets: string // the shipped lead sheet catalog (OpenEWLD and Nottingham)
-  catalog: string // the bundled song catalog (studio/public/catalog: index.bin and charts-N.bin)
   weimar: string // weimar/weimar_solos.json (optional, not in git)
   out: string
   outWeimar: string
@@ -80,39 +75,14 @@ function writePlaylists(path: string, playlists: { name: string; charts: Chart[]
   return kept.reduce((sum, p) => sum + p.charts.length, 0)
 }
 
-/** The default version of every song of the bundled catalog (see src/library/catalog.ts). */
-function readCatalog(dir: string): Chart[] {
-  const read = <T>(name: string): T => JSON.parse(gunzipSync(readFileSync(join(dir, name))).toString('utf8')) as T
-  const index = read<{ songs: [string, ...unknown[]][][] }>('index.bin')
-  const shards = new Map<number, string[]>()
-  for (const [version] of index.songs) {
-    const shard = version[7] as number
-    shards.set(shard, [...(shards.get(shard) ?? []), version[0]])
-  }
-  return [...shards].flatMap(([shard, ids]) => {
-    const charts = read<Record<string, Chart>>(`charts-${shard}.bin`)
-    return ids.map((id) => charts[id])
-  })
-}
-
-/** The categories, those found in the most songs first (ties keep the CATEGORIES order); logged. */
-function byFrequency(charts: Chart[], log: string[]): string[] {
-  const counts = contextFrequency(charts)
-  const order = [...CATEGORIES].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0))
-  log.push(`Song catalog: ${charts.length} songs; songs with each context, the order of the licks from standards:`)
-  for (const category of order) log.push(`  ${category}: ${counts.get(category) ?? 0}`)
-  log.push('')
-  return order
-}
-
-/** Mine one collection, its categories in `order`, and log what came of it. */
-function mine(label: string, sources: MelodySource[], options: MiningOptions, selection: Selection, prefix: string, order: string[], log: string[]): Chart[] {
+/** Mine one collection and log what came of it. */
+function mine(label: string, sources: MelodySource[], options: MiningOptions, selection: Selection, prefix: string, log: string[]): Chart[] {
   const { candidates, rejected } = mineLicks(sources, options)
   const chosen = selectLicks(candidates, selection)
   log.push(`${label}: ${sources.length} songs, ${candidates.length} windows make licks, ${chosen.length} kept`)
   for (const [reason, count] of [...rejected].sort((a, b) => b[1] - a[1])) log.push(`  turned down (${reason}): ${count}`)
   const charts: Chart[] = []
-  for (const category of order) {
+  for (const category of CATEGORIES) {
     const list = chosen.filter((c) => c.window.category === category).sort((a, b) => a.level - b.level || b.score - a.score)
     if (list.length) log.push(`  ${category}: ${list.length} of ${candidates.filter((c) => c.window.category === category).length}`)
     list.forEach((c, i) => charts.push(candidateChart(c, i + 1, prefix)))
@@ -120,9 +90,9 @@ function mine(label: string, sources: MelodySource[], options: MiningOptions, se
   return charts
 }
 
-/** Group charts into playlists by lick category, in `order`, under a name prefix. */
-function byCategory(charts: Chart[], prefix: string, order: string[]): { name: string; charts: Chart[] }[] {
-  return order.map((category) => ({ name: `${prefix}${category}`, charts: charts.filter((c) => c.lick?.category === category) }))
+/** Group charts into playlists by lick category, under a name prefix. */
+function byCategory(charts: Chart[], prefix: string): { name: string; charts: Chart[] }[] {
+  return CATEGORIES.map((category) => ({ name: `${prefix}${category}`, charts: charts.filter((c) => c.lick?.category === category) }))
     .filter((p) => p.charts.length)
 }
 
@@ -142,14 +112,13 @@ export function buildLickCatalog(paths: LickPaths): string {
   const folk: MelodySource[] = collection('Nottingham').filter((chart) => chart.time[0] === 4 && chart.time[1] === 4).map((chart) => ({
     chart, source: 'Nottingham Music Database', license: 'CC BY 4.0', tune: chart.title, folk: true,
   }))
-  const common = byFrequency(readCatalog(paths.catalog), log)
-  const standardLicks = mine('OpenEWLD melodies', standards, { minNotesPerBeat: 0.75 }, { perCategory: 40, perTune: 2, perPlayer: 2 }, 'Standards: ', common, log)
-  const folkLicks = mine('Nottingham folk tunes (4/4)', folk, { minNotesPerBeat: 1.5 }, { perCategory: 40, perTune: 1, perPlayer: 1 }, 'Folk: ', CATEGORIES, log)
+  const standardLicks = mine('OpenEWLD melodies', standards, { minNotesPerBeat: 0.75 }, { perCategory: 40, perTune: 2, perPlayer: 2 }, 'Standards: ', log)
+  const folkLicks = mine('Nottingham folk tunes (4/4)', folk, { minNotesPerBeat: 1.5 }, { perCategory: 40, perTune: 1, perPlayer: 1 }, 'Folk: ', log)
   log.push('')
   const main = [
     ...generated,
-    ...byCategory(standardLicks, 'Licks from standards: ', common),
-    ...byCategory(folkLicks, 'Licks from folk tunes: ', CATEGORIES),
+    ...byCategory(standardLicks, 'Licks from standards: '),
+    ...byCategory(folkLicks, 'Licks from folk tunes: '),
   ]
   const written = writePlaylists(paths.out, main, log, true)
   let summary = `${written} charts in ${paths.out}`
@@ -160,12 +129,12 @@ export function buildLickCatalog(paths: LickPaths): string {
       chart, source: 'Weimar Jazz Database', license: 'ODbL 1.0', tune: chart.title,
       performer: chart.composer?.replace(/ solo$/, '') ?? 'unknown',
     }))
-    const weimarLicks = mine('Weimar Jazz Database solos', sources, { minNotesPerBeat: 1 }, { perCategory: 60, perTune: 2, perPlayer: 6 }, 'Weimar: ', CATEGORIES, log)
+    const weimarLicks = mine('Weimar Jazz Database solos', sources, { minNotesPerBeat: 1 }, { perCategory: 60, perTune: 2, perPlayer: 6 }, 'Weimar: ', log)
     const found = findPatterns(sources, PATTERN_NOTES, PATTERN_PLAYERS)
     const patterns = distinctPatterns(found, 160).map((p, i) => patternChart(p, i + 1)).filter((c): c is Chart => !!c).slice(0, 120)
     log.push(`Common patterns: ${found.length} runs of ${PATTERN_NOTES} notes shared by ${PATTERN_PLAYERS} players or more, ${patterns.length} kept`)
     log.push('')
-    const weimar = [...byCategory(weimarLicks, 'Weimar licks: ', CATEGORIES), { name: 'Weimar licks: common patterns', charts: patterns }]
+    const weimar = [...byCategory(weimarLicks, 'Weimar licks: '), { name: 'Weimar licks: common patterns', charts: patterns }]
     const count = writePlaylists(paths.outWeimar, weimar, log, false)
     summary += `, ${count} in ${paths.outWeimar}`
   } else {

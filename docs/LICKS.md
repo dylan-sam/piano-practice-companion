@@ -143,8 +143,6 @@ For each song:
    motion, starting a phrase, between 1.5 and 3.5 notes a beat, and varied note
    lengths. Duplicates (the same notes at the same times) are left out.
 
-The playlists of licks from standards come in the order of how common their context is in the song catalog: how many of its songs (default versions, read from `studio/public/catalog`) have that context at least once, most common first. The counts are in `data/licks.log`; the other collections keep the order of the contexts table.
-
 Within a playlist the licks are ordered by level, then by rank. The level is 1
 for fewer than 1.25 notes a beat, 2 below 2.25, else 3, one more (up to 3)
 with triplets or sixteenths.
