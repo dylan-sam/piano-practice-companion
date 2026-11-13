@@ -1,4 +1,4 @@
-Lick database built 2026-11-09
+Lick database built 2026-11-13
 
 Generated exercises and vocabulary:
   Exercises: triads: 33
@@ -21,16 +21,16 @@ OpenEWLD melodies: 498 songs, 883 windows make licks, 301 kept
   turned down (leap wider than an octave): 4
   turned down (long rest inside): 2
   turned down (range wider than a 12th): 1
-  ii-V-I major: 40 of 101
-  minor ii-V-i: 6 of 10
-  ii-V: 35 of 65
-  V-I: 40 of 153
-  I-vi-ii-V turnaround: 23 of 37
-  Blues I7-IV7: 36 of 45
-  Major chord: 40 of 232
-  Minor chord: 40 of 65
-  Dominant chord: 40 of 174
-  Diminished chord: 1 of 1
+  ii-V-I major: 40 of 101, openings shared by 853 to 10 melodies
+  minor ii-V-i: 6 of 10, openings shared by 608 to 3 melodies
+  ii-V: 35 of 65, openings shared by 744 to 5 melodies
+  V-I: 40 of 153, openings shared by 687 to 2 melodies
+  I-vi-ii-V turnaround: 23 of 37, openings shared by 792 to 2 melodies
+  Blues I7-IV7: 36 of 45, openings shared by 815 to 3 melodies
+  Major chord: 40 of 232, openings shared by 853 to 3 melodies
+  Minor chord: 40 of 65, openings shared by 853 to 1 melodies
+  Dominant chord: 40 of 174, openings shared by 815 to 4 melodies
+  Diminished chord: 1 of 1, openings shared by 89 to 89 melodies
 Nottingham folk tunes (4/4): 512 songs, 362 windows make licks, 99 kept
   turned down (too few notes): 685
   turned down (a note is held over the start): 27

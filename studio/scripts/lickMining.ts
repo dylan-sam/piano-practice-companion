@@ -382,6 +382,33 @@ export function mineLicks(sources: MelodySource[], options: MiningOptions): { ca
   return { candidates, rejected }
 }
 
+const OPENING_NOTES = 4 // a lick's opening: its first four notes (every lick has at least four)
+
+/** A key for the intervals between successive pitches. */
+function intervalKey(pitches: number[]): string {
+  return pitches.slice(1).map((pitch, i) => pitch - pitches[i]).join(',')
+}
+
+/**
+ * How many melodies contain the opening of each lick: its first OPENING_NOTES notes, by their
+ * intervals, so in any key and any rhythm. The lick's own song counts too.
+ */
+export function openingFrequency(candidates: Candidate[], melodies: MelodySource[]): Map<Candidate, number> {
+  const openings = new Map(candidates.map((c) => [c, intervalKey(c.notes.slice(0, OPENING_NOTES).map((n) => n.pitch))]))
+  const wanted = new Set(openings.values())
+  const songs = new Map<string, number>()
+  for (const melody of melodies) {
+    const pitches = timelineOf(melody).notes.map((n) => n.pitch)
+    const found = new Set<string>()
+    for (let i = 0; i + OPENING_NOTES <= pitches.length; i++) {
+      const key = intervalKey(pitches.slice(i, i + OPENING_NOTES))
+      if (wanted.has(key)) found.add(key)
+    }
+    for (const key of found) songs.set(key, (songs.get(key) ?? 0) + 1)
+  }
+  return new Map([...openings].map(([c, key]) => [c, songs.get(key) ?? 0]))
+}
+
 // Names of the chord degrees a pattern starts on
 const DEGREES = ['root', 'b9', '9th', 'minor 3rd', 'major 3rd', '11th', '#11', '5th', 'b13', '13th', 'minor 7th', 'major 7th']
 const FAMILY_NAMES: Record<string, string> = { maj: 'major chord', min: 'minor chord', dom: 'dominant chord', half: 'half-diminished chord', dim: 'diminished chord', sus: 'sus chord' }

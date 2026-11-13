@@ -143,7 +143,7 @@ For each song:
    motion, starting a phrase, between 1.5 and 3.5 notes a beat, and varied note
    lengths. Duplicates (the same notes at the same times) are left out.
 
-Within a playlist the licks are ordered by level, then by rank. The level is 1
+In each playlist of licks from standards, the licks come by how common their opening is: in how many of the shipped lead sheet melodies (standards and folk tunes) their first four notes appear, by their intervals, so in any key and any rhythm; ties by level, then by rank. `data/licks.log` gives the range for each playlist. In the other playlists the licks are ordered by level, then by rank. The level is 1
 for fewer than 1.25 notes a beat, 2 below 2.25, else 3, one more (up to 3)
 with triplets or sixteenths.
 

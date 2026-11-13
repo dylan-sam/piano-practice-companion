@@ -8,7 +8,7 @@ import { isLickInfo, onLickGrid } from '../src/music/licks'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { barsFromChords, makeLickChart, parseChords, parseNotes, transposeSymbol } from '../scripts/lickCharts'
 import { chordScale, eighthLine, generatedPlaylists, guideToneLine, nearest, PROGRESSIONS, VOCABULARY } from '../scripts/lickExercises'
-import { findWindows, lickOf, snapToGrid, timelineOf, type MelodySource } from '../scripts/lickMining'
+import { findWindows, lickOf, openingFrequency, snapToGrid, timelineOf, type MelodySource } from '../scripts/lickMining'
 import { chartProblem } from '../scripts/lickCatalog'
 
 const note = (bar: number, at: number, beats: number, pitch = 60) => ({ bar, at, beats, pitch })
@@ -139,6 +139,18 @@ describe('lick mining', () => {
     if (typeof lick === 'string') throw new Error(lick)
     expect(lick.chords).toEqual([['D-7', 2], ['G7', 2], ['C^7', 4]])
     expect(lick.notes.map((n) => n.pitch % 12)).toEqual([5, 9, 0, 4, 2, 11, 7, 5, 4]) // F A C E D B G F E
+  })
+  it('counts the melodies that share a lick\'s opening, in any key and rhythm', () => {
+    const notes: [number, number, number, number][] = [[0, 0, 0.5, 63], [0, 0.5, 0.5, 67], [0, 1, 0.5, 70], [0, 1.5, 0.5, 74],
+      [0, 2, 0.5, 72], [0, 2.5, 0.5, 69], [0, 3, 0.5, 65], [0, 3.5, 0.5, 63], [1, 0, 2, 62]]
+    const source = solo(notes)
+    const line = timelineOf(source)
+    const lick = lickOf(line, findWindows(line).find((w) => w.category === 'ii-V-I major')!, { minNotesPerBeat: 1 })
+    if (typeof lick === 'string') throw new Error(lick)
+    // Up a tone, in quarter notes: the same first four notes' intervals; another melody does not have them
+    const moved = solo(notes.map(([, , , pitch], i) => [Math.floor(i / 4), i % 4, 1, pitch + 2]))
+    const other = solo(notes.map(([bar, at, beats, pitch]) => [bar, at, beats, 60 + (pitch % 3)]))
+    expect(openingFrequency([lick], [source, moved, other]).get(lick)).toBe(2)
   })
   it('turns down a window whose line does not land on the I', () => {
     const source = solo([[0, 0, 0.5, 63], [0, 0.5, 0.5, 67], [0, 1, 0.5, 70], [0, 1.5, 0.5, 74],

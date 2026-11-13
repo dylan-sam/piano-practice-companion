@@ -7,6 +7,9 @@
 //                                   patterns from the Weimar Jazz Database solos (ODbL 1.0)
 //   data/licks.log                  what was kept and turned down, and why
 //
+// The licks from standards are listed, in each playlist, by how many of the shipped melodies
+// share their opening (openingFrequency), most common first; the other collections by level.
+//
 // The Weimar licks are built only when weimar/weimar_solos.json is there (made by
 // weimar_playlist.py from wjazzd.db, see docs/DATA.md). Every chart is checked: chart format,
 // chord symbols, the lick grid (onLickGrid) and range.
@@ -19,8 +22,8 @@ import { isChartSymbol } from '../src/music/notation'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { generatedPlaylists } from './lickExercises'
 import {
-  candidateChart, distinctPatterns, findPatterns, mineLicks, patternChart, selectLicks,
-  type MelodySource, type MiningOptions, type Selection,
+  candidateChart, distinctPatterns, findPatterns, mineLicks, openingFrequency, patternChart, selectLicks,
+  type Candidate, type MelodySource, type MiningOptions, type Selection,
 } from './lickMining'
 
 const FORMAT = 'ear-training-studio-playlists'
@@ -75,16 +78,23 @@ function writePlaylists(path: string, playlists: { name: string; charts: Chart[]
   return kept.reduce((sum, p) => sum + p.charts.length, 0)
 }
 
-/** Mine one collection and log what came of it. */
-function mine(label: string, sources: MelodySource[], options: MiningOptions, selection: Selection, prefix: string, log: string[]): Chart[] {
+/**
+ * Mine one collection and log what came of it. The licks of a category are listed by level, then
+ * rank; with `melodies`, first by how many of them share the lick's opening.
+ */
+function mine(label: string, sources: MelodySource[], options: MiningOptions, selection: Selection, prefix: string, log: string[],
+  melodies?: MelodySource[]): Chart[] {
   const { candidates, rejected } = mineLicks(sources, options)
   const chosen = selectLicks(candidates, selection)
+  const frequency = melodies ? openingFrequency(chosen, melodies) : new Map<Candidate, number>()
+  const common = (c: Candidate) => frequency.get(c) ?? 0
   log.push(`${label}: ${sources.length} songs, ${candidates.length} windows make licks, ${chosen.length} kept`)
   for (const [reason, count] of [...rejected].sort((a, b) => b[1] - a[1])) log.push(`  turned down (${reason}): ${count}`)
   const charts: Chart[] = []
   for (const category of CATEGORIES) {
-    const list = chosen.filter((c) => c.window.category === category).sort((a, b) => a.level - b.level || b.score - a.score)
-    if (list.length) log.push(`  ${category}: ${list.length} of ${candidates.filter((c) => c.window.category === category).length}`)
+    const list = chosen.filter((c) => c.window.category === category).sort((a, b) => common(b) - common(a) || a.level - b.level || b.score - a.score)
+    if (list.length) log.push(`  ${category}: ${list.length} of ${candidates.filter((c) => c.window.category === category).length}` +
+      (melodies ? `, openings shared by ${common(list[0])} to ${common(list[list.length - 1])} melodies` : ''))
     list.forEach((c, i) => charts.push(candidateChart(c, i + 1, prefix)))
   }
   return charts
@@ -112,7 +122,8 @@ export function buildLickCatalog(paths: LickPaths): string {
   const folk: MelodySource[] = collection('Nottingham').filter((chart) => chart.time[0] === 4 && chart.time[1] === 4).map((chart) => ({
     chart, source: 'Nottingham Music Database', license: 'CC BY 4.0', tune: chart.title, folk: true,
   }))
-  const standardLicks = mine('OpenEWLD melodies', standards, { minNotesPerBeat: 0.75 }, { perCategory: 40, perTune: 2, perPlayer: 2 }, 'Standards: ', log)
+  const melodies: MelodySource[] = shipped.flatMap((p) => p.charts).map((chart) => ({ chart, source: '', license: '', tune: chart.title }))
+  const standardLicks = mine('OpenEWLD melodies', standards, { minNotesPerBeat: 0.75 }, { perCategory: 40, perTune: 2, perPlayer: 2 }, 'Standards: ', log, melodies)
   const folkLicks = mine('Nottingham folk tunes (4/4)', folk, { minNotesPerBeat: 1.5 }, { perCategory: 40, perTune: 1, perPlayer: 1 }, 'Folk: ', log)
   log.push('')
   const main = [
