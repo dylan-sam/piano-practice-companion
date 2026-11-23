@@ -65,12 +65,12 @@ describe('melody to ABC', () => {
   })
 
   test('a bar without notes is a whole-bar rest', () => {
-    expect(body(chart([note(0, 0, 4, 60)]))).toBe('"C\u03947"C16 | "C\u03947"Z |')
+    expect(body(chart([note(0, 0, 4, 60)]))).toBe('"C\u03947"C16 | "C\u03947"z16 |')
   })
 
   test('repeats and endings are drawn', () => {
     const c = chart([note(0, 0, 4, 60)], [{ repeatStart: true }, { ending: 1, repeatEnd: true }, { ending: 2, barline: 'final' }])
-    expect(body(c)).toBe('|:"C\u03947"C16 |[1 "C\u03947"Z :|[2 "C\u03947"Z |]')
+    expect(body(c)).toBe('|:"C\u03947"C16 |[1 "C\u03947"z16 :|[2 "C\u03947"z16 |]')
   })
 
   test('a rehearsal mark starts a new staff line', () => {

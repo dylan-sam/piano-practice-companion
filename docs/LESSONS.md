@@ -22,7 +22,7 @@ and **ear training** (2 to 4).
 
 | Unit | Weeks | Theme | Songs |
 |---|---|---|---|
-| 1 | 1 to 4 | Time, chords and the first song | Avalon |
+| 1 | 1 to 4 | Time, chords and the first song | Avalon (in F, then C) |
 | 2 | 5 to 10 | The 12-bar blues | Study Blues, Tin Roof Blues |
 | 3 | 11 to 16 | The ii-V-I | Oh Lady Be Good, Honeysuckle Rose |
 | 4 | 17 to 22 | Song form and Rhythm Changes | Just You, Just Me; I Got Rhythm; What Is This Thing Called Love? |
@@ -63,6 +63,27 @@ Sheet Sightreading, the band's piano muted so the left hand is heard:
 
 The new patterns are in `left_hand_patterns.py` (the Lessons tab entries), so
 they are in the Piano pattern menu of every screen too.
+
+## Scales
+
+Each unit brings one new scale idea and keeps the earlier ones:
+
+| Unit | New idea |
+|---|---|
+| 1 | the major pentatonic of the key over the whole song; the chord's own notes on beat 1 |
+| 2 | the key's minor pentatonic and blues scale over a whole blues; then each dominant 7th's Mixolydian |
+| 3 | a ii-V-I as one scale: Dorian, Mixolydian and major share the notes of the I's major scale; guide tones |
+| 4 | a V7 going to a minor chord takes Mixolydian ♭9 ♭13; the bebop dominant scale over a V7 going to major |
+| 5 | a pentatonic on each chord's root (minor over a minor chord), long notes and space |
+| 6 | Dorian over long minor chords; the minor pentatonic a 5th up |
+
+Each lesson song has a **scale map** (`studio/src/lessons/scaleMaps.ts`): its
+parts (bars), and for each part the scales to try, over which chords, and why,
+in a few words. The map is shown on the song's improvising steps (**Scales for
+this song**, named in the key the step plays) and under the sheet of Free
+Improvisation, following the part being played. The idea order follows Kelly and
+Rasmussen (major, Dorian and Mixolydian first, chord tones as the best notes,
+the blues scale with the blues).
 
 ## Steps and their links
 

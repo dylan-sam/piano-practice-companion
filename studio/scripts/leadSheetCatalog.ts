@@ -148,6 +148,10 @@ const titleKey = (title: string) => title.normalize('NFD').replace(/[\u0300-\u03
 /** The melody's opening as a fingerprint: the same tune under another title is a duplicate. */
 const melodyKey = (chart: Chart) => chart.melody!.notes.slice(0, 24).map((n) => n.pitch - chart.melody!.notes[0].pitch).join(',')
 
+// Keys the source gets wrong (its key signature, not the song's key), by source and title:
+// checked against the melody and the final chord. Both songs are in F
+const KEY_FIXES: Record<string, number> = { 'OpenEWLD Avalon': 5, 'OpenEWLD Tea for two': 5 }
+
 /** Build the catalog and its log. */
 export async function buildCatalog(options: { openewld: string; nottingham: string; out: string; log: string }): Promise<string> {
   const candidates = [...await readOpenEwld(options.openewld), ...readNottingham(options.nottingham)]
@@ -192,6 +196,11 @@ export async function buildCatalog(options: { openewld: string; nottingham: stri
     melodies.set(melodyKey(c.chart), c)
     if (!kept.has(c.source)) kept.set(c.source, [])
     kept.get(c.source)!.push(c)
+    const fixedKey = KEY_FIXES[`${c.source} ${c.title}`]
+    if (fixedKey !== undefined && fixedKey !== c.chart.key) {
+      lines.push(`KEY FIXED  ${where} "${c.title}": ${c.chart.key} -> ${fixedKey}`)
+      c.chart.key = fixedKey
+    }
     for (const warning of c.warnings) lines.push(`WARNING    ${where} "${c.title}": ${warning}`)
     lines.push(`OK         ${where} "${c.title}"`)
     count(c.source, 'ok')

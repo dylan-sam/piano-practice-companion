@@ -62,6 +62,12 @@ test('Free Improvisation writes out and colours the keys played', async ({ page 
   }
   await expect.poll(() => page.locator('[class*="tone-note-"], .abcjs-note').count()).toBeGreaterThan(0)
   await expect(page.getByRole('status', { name: 'Note colours' })).toContainText('chord tones')
+  // The scales under the sheet: the chord sounding, and Avalon's ideas for the part playing (or all of them)
+  const scales = page.getByRole('region', { name: 'Scales' })
+  await expect(scales).toContainText('Now:')
+  await expect(scales).toContainText('In the key: F major pentatonic')
+  await scales.getByRole('button', { name: 'Show all' }).click()
+  await expect(scales).toContainText('B (bars 17 to 24)')
 })
 
 test('Delete all my data asks once more, then forgets everything', async ({ page }) => {

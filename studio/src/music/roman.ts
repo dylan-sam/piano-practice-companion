@@ -31,3 +31,19 @@ export function keyChange(comment: string | undefined): number | null {
   const base = MAJOR_STEPS[LETTERS.indexOf(match[1])]
   return (base + (match[2] === 'b' ? -1 : match[2] === '#' ? 1 : 0) + 12) % 12
 }
+
+/**
+ * The key of each written bar of a chart, as a pitch class: the chart's key, changed by a bar's
+ * key changes (catalog charts: `keys`, or an older "Key: ..." comment) from where they happen.
+ * A bar takes the key in force at its downbeat.
+ */
+export function barKeys(chart: { key: number; bars: { keys?: { beats: number; key: number }[]; comment?: string }[] }): number[] {
+  let key = chart.key
+  return chart.bars.map((bar) => {
+    const changes = bar.keys ?? (keyChange(bar.comment) !== null ? [{ beats: 0, key: keyChange(bar.comment)! }] : [])
+    const atDownbeat = key
+    for (const change of changes) key = change.key
+    return changes.some((change) => change.beats < 1e-6) ? changes.filter((change) => change.beats < 1e-6).at(-1)!.key : atDownbeat
+  })
+}
+

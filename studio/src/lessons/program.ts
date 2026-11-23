@@ -172,7 +172,7 @@ const C = 0, F = 5, Bb = 10, G = 7, Eb = 3
 export const PROGRAM: LessonUnit[] = [
   {
     id: 'u1', title: 'Time, chords and the first song', weeks: 'Weeks 1 to 4',
-    goal: 'Play a song with both hands in time and improvise a little over it, in C, then F.',
+    goal: 'Play a song with both hands in time and improvise a little over it, in F, then C.',
     source: 'Kelly and Rasmussen, A Guide to Exploring Jazz Improvisation, Book 1, Module 1',
     weekList: [
       { week: 1, steps: [
@@ -199,9 +199,9 @@ export const PROGRAM: LessonUnit[] = [
       { week: 4, steps: [
         hands(4, 1, 'Major 3rds in half steps: lower note first', 'Intervals, both hands.'),
         hands(4, 2, 'Rhythm on C7: groups of 3 eighth notes and an eighth rest', 'Groups of 3, then 4 and 5 eighths: phrases that start on any beat.', { check: 'melody' }),
-        ...song(4, 'avalon', 2, { key: F, bpm: 90, done: 'in F at 90 BPM' }),
-        ...song(4, 'avalon', 3, { key: F, bpm: 90, done: 'two keys (C and F) at 90 BPM' }),
-        improvise(4, 'avalon', 'One chorus over the two-feel.', { key: F, bpm: 90 }),
+        ...song(4, 'avalon', 2, { key: C, bpm: 90, done: 'in C at 90 BPM' }),
+        ...song(4, 'avalon', 3, { key: C, bpm: 90, done: 'two keys (F and C) at 90 BPM' }),
+        improvise(4, 'avalon', 'One chorus over the two-feel.', { key: C, bpm: 90 }),
         ear(4, 'dictation', '4 notes, then 6.'),
       ] },
     ],

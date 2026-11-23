@@ -10,7 +10,7 @@ import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { useHeardBeat, usePlayer } from '../audio/usePlayer'
 import { BASE_BPM, type Arrangement } from '../engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from '../engine/pianoPatterns'
-import { barAtBeat, type Timeline } from '../engine/timeline'
+import { barAtBeat, slotAtBeat, type Timeline } from '../engine/timeline'
 import { warmUpMidi } from '../engine/warmup'
 import { reportError } from '../errorReports'
 import { loadBundledLeadSheets } from '../library/bundled'
@@ -19,6 +19,7 @@ import { useLessonLink } from '../lessons/lessonLink'
 import { useLessonSong } from '../lessons/useLessonSong'
 import { CHORD_SOURCES } from '../library/importTunes'
 import { hasMelody, type Chart as ChartData } from '../music/chart'
+import { barKeys } from '../music/roman'
 import { NO_PRACTICE } from '../music/practice'
 import { getStyle, STYLES } from '../styles'
 import { Wordmark } from '../ui/AppLink'
@@ -28,7 +29,9 @@ import { LeadSheet } from '../ui/LeadSheet'
 import { Mixer } from '../ui/Mixer'
 import { Transport } from '../ui/Transport'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from './ExerciseControls'
-import { writeLine, type PlayedKey } from './improvisation'
+import { chordAfter, writeLine, type PlayedKey } from './improvisation'
+import { ScalePanel } from '../lessons/ScaleMap'
+import { scaleMapFor } from '../lessons/scaleMaps'
 import { arrangeMelody } from './melodyReading'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ToneColorsLine } from './ReadingControls'
@@ -45,8 +48,9 @@ const SOURCES: { id: SourceMode; text: string }[] = [
   { id: 'pick', text: 'Pick a song' }, { id: 'random', text: 'Random song' }, { id: 'infinite', text: 'Infinite progressions' },
 ]
 const HINT = 'Improvise over the chords as the band plays: nothing is right or wrong. Each key is written out and coloured ' +
-  'by how it sits on the chord: black, a chord tone; green, a colour tone (9th, 13th...); blue, an approach tone (a half ' +
-  'step into a chord or colour tone: it turns blue once you resolve it); red, outside. Keys played together write the highest. ' +
+  "by how it sits on the chord: black, a chord tone; green, a note of the chord's scale or of the key's major pentatonic, " +
+  'minor pentatonic or blues scale; blue, an approach tone (a short note a half step from a chord or colour tone: it turns ' +
+  'blue once you resolve it); red, outside (a long one on beat 1 or 3 stays red). Keys played together write the highest. ' +
   'The page starts again at each chorus.'
 
 /** A chord chart arranged for the band (its melody, if any, is left out), and the infinite line it comes from. */
@@ -261,8 +265,13 @@ export function FreeImprovisation() {
   // with the band, a sixteenth at a time (the sheet is drawn again only when it changes)
   const held = keys.some((key) => key.end === null)
   const now = held ? Math.floor(beat * 4) / 4 : 0
-  const written = useMemo(() => (timeline ? writeLine(keys, timeline, chorus, transpose, style.swing, now) : null),
-    [keys, timeline, chorus, transpose, style.swing, now])
+  const keysOfBars = useMemo(() => (chords ? barKeys(chords) : []), [chords])
+  // The scale ideas under the sheet: the chord sounding, and a lesson song's map
+  const scaleMap = mode === 'infinite' ? undefined : scaleMapFor(tune?.chart.title)
+  const sounding = playing && timeline ? slotAtBeat(timeline, beat) : undefined
+  const playingSlot = sounding && sounding.chordIndex >= 0 ? sounding : undefined
+  const written = useMemo(() => (timeline ? writeLine(keys, timeline, chorus, transpose, style.swing, now, keysOfBars) : null),
+    [keys, timeline, chorus, transpose, style.swing, now, keysOfBars])
   const sheet = useMemo(() => (chords ? { ...chords, melody: { notes: written?.notes ?? [] } } : null), [chords, written])
   const noteClasses = useMemo(() => Object.fromEntries((written?.colors ?? []).map((color, index) => [index, `tone-note-${color}`])),
     [written])
@@ -296,6 +305,10 @@ export function FreeImprovisation() {
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4} autoScroll={playing}
             noteClasses={noteClasses} />
           <ToneColorsLine tones={written?.counts ?? { chord: 0, color: 0, approach: 0, outside: 0 }} />
+          <ScalePanel map={scaleMap} mapKey={scaleMap ? (scaleMap.tonic + transpose + 12) % 12 : 0}
+            songKey={((keysOfBars[position?.measure ?? 0] ?? chords!.key) + transpose + 12) % 12}
+            bar={playing && position && position.measure >= 0 ? position.measure : null}
+            chord={playingSlot?.chord ?? null} next={playingSlot && timeline ? chordAfter(timeline, playingSlot) : null} />
           <p className="sight-hint">{HINT}</p>
           <p className="sight-hint tone-legend">
             {TONE_COLORS.map((kind) => <span key={kind.id}><strong className={`tone-${kind.id}`}>{kind.label}</strong>: {kind.help}</span>)}

@@ -587,6 +587,10 @@ the [pattern audit](../PATTERN_AUDIT.md) gives their sources and menus.
 
 ## Lead sheets shipped with the app
 
+A few OpenEWLD sheets carry the wrong key (their key signature, not the song's
+key): `KEY_FIXES` in `studio/scripts/leadSheetCatalog.ts` corrects them when the
+catalog is built, logged as `KEY FIXED` (Avalon and Tea for Two, both in F).
+
 The Lead Sheet Player comes with **1,479 lead sheets** (melody and chords), in
 `studio/public/leadsheets/catalog.json`, from two collections that may be
 shared. Their sources are kept in the project root:

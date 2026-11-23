@@ -3580,3 +3580,15 @@ input.fader::-moz-range-thumb {
 .delete-data-confirm p { margin: 6px 0 10px; }
 .delete-data-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .delete-data-yes { background: #d95757; border-color: #d95757; color: #fff; }
+
+/* Scale ideas: the card of an improvising step, the panel under the sheet of Free Improvisation */
+.scale-card { margin: 6px 0; }
+.scale-card summary { cursor: pointer; font-weight: 600; }
+.scale-panel { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.scale-panel p { margin: 4px 0; }
+.scale-panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; margin-top: 8px; }
+.scale-section { margin: 6px 0; padding: 4px 8px; border-left: 3px solid transparent; }
+.scale-section ul { margin: 4px 0; padding-left: 18px; }
+.scale-section-current { border-left-color: #2e9d55; }
+.scale-name { font-weight: 600; }
+.scale-why { color: var(--ink-2); }

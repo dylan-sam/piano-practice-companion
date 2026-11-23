@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { navigate } from '../router'
 import { Wordmark } from '../ui/AppLink'
 import { lessonUrl } from './lessonLink'
+import { ScaleMapCard } from './ScaleMap'
+import { scaleMapFor } from './scaleMaps'
 import { ALL_STEPS, PROGRAM, type LessonStep, type LessonUnit, type StepKind } from './program'
 import { nextStep, useLessonProgress, type LessonProgress } from './useLessonProgress'
 
@@ -64,6 +66,7 @@ function StepCard({ item, progress, onDone, onTick, next }: {
   next: boolean // the suggested step
 }) {
   const done = progress.done.includes(item.id)
+  const map = item.link?.song ? scaleMapFor(item.link.song) : undefined
   const ticked = progress.ticked[item.id] ?? []
   return (
     <li className={`lesson-step${done ? ' lesson-step-done' : ''}${next ? ' lesson-step-next' : ''}`} id={item.id}>
@@ -77,6 +80,7 @@ function StepCard({ item, progress, onDone, onTick, next }: {
         <div><dt>How long</dt><dd>{item.minutes[0]} to {item.minutes[1]} minutes</dd></div>
         <div><dt>Done when</dt><dd>{item.done}</dd></div>
       </dl>
+      {item.kind === 'improvise' && map && <ScaleMapCard map={map} keyPc={item.link?.key ?? map.tonic} />}
       {item.selfCheck && <ul className="lesson-checks" aria-label="Self-check">
         {item.selfCheck.map((text, box) => (
           <li key={text}>
@@ -124,9 +128,9 @@ export function Lessons() {
           </p>
           <p>
             Nothing is locked: open any step at any time. Each step ends with a concrete target, such as "90% right at
-            80 BPM", rather than "until you know it"; take the time you need, and come back to earlier units at faster
-            tempos. Steps the app can check are ticked by themselves when you reach their target. Your progress is kept
-            on this device.
+            80 BPM", rather than "until you know it"; take the time you need. Start at a slower BPM during the first days
+            of the week if needed and increase the tempo slowly. Come back later to earlier units at faster tempos. Steps
+            the app can check are ticked by themselves when you reach their target. Your progress is kept on this device.
           </p>
           <p className="lessons-progress">{doneCount} of {ALL_STEPS.length} steps done.</p>
           {next && <p className="lessons-next">

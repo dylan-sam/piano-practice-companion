@@ -540,12 +540,34 @@ Each note is coloured after the note coloration of Impro-Visor, on the chord
 sounding where it starts, and the line under the sheet counts each kind (with
 its share) (`studio/src/exercises/toneColors.ts`):
 
-| Colour | Kind | Over C7 |
+| Colour | Kind | Over C7, in the key of F |
 |---|---|---|
 | black | chord tone | C E G B♭ |
-| green | colour tone: another note of the chord's scale (the scales of Lick Sightreading), except the 11th over a major 3rd, which clashes with it | D A |
-| blue | approach tone: an outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | F♯ then G |
-| red | outside: none of these | F♯ then F |
+| green | colour tone: another note of the chord's scale, except the 11th over a major 3rd (it clashes with it), or a note of the key's major pentatonic, minor pentatonic or blues scale | D A, and F A♭ B... |
+| blue | approach tone: a short outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | D♭ then C |
+| red | outside: none of these; a note of a beat or more on a strong beat (1 or 3 in 4/4) stays red even when it resolves | D♭ held on beat 1 |
+
+The chord's scale (`chordScale`) is read from its symbol, with three corrections
+from the chord after it:
+
+| Chord | Scale |
+|---|---|
+| major | major (Lydian with ♯11) |
+| dominant 7th | Mixolydian (the written alterations choose: ♭9 Phrygian dominant, ♯11 Lydian dominant, ♭13 Mixolydian ♭13, alt or ♯5 or ♯9 altered) |
+| a V (major triad or dominant 7th, nothing altered) going up a 4th to a minor chord | Mixolydian ♭9 ♭13 (G7 to Cm: G A♭ B C D E♭ F) |
+| a V going up a 4th to a major chord, even a triad | Mixolydian (G to C: F natural) |
+| minor 7th | Dorian |
+| minor 6th, minor-major 7th | melodic minor |
+| half-diminished | Locrian ♮2 |
+| diminished | the full diminished scale, 8 notes (whole step, half step) |
+| sus | Mixolydian |
+| augmented | Lydian augmented |
+
+Under the sheet, **Scales** follows the music: **Now** names the scale of the
+chord sounding with its notes, then the key's three scales. For a lesson song it
+adds the song's scale ideas for the part being played (**Show all** lists every
+part), from its scale map (`studio/src/lessons/scaleMaps.ts`,
+[LESSONS.md](LESSONS.md#scales)).
 
 Keys in the count-in are not written. Opened from a lesson, the band's piano
 starts muted so your left hand is heard.

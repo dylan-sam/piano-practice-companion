@@ -3,7 +3,7 @@
 // again from the keys at each change, so a note can still turn into an approach tone when the
 // next key resolves it.
 
-import { barAtBeat, slotAtBeat, type Bar, type Timeline } from '../engine/timeline'
+import { barAtBeat, slotAtBeat, type Bar, type Slot, type Timeline } from '../engine/timeline'
 import type { MelodyNote } from '../music/melody'
 import { NO_TONES, resolvesApproach, toneColor, type ToneColor, type ToneCounts } from './toneColors'
 
@@ -50,16 +50,29 @@ function placed(timeline: Timeline, beat: number, swing: number): { beat: number
   return moved && moved.measure >= 0 ? { beat: at, bar: moved } : null
 }
 
+/** The chord after a slot (a chord written again is the same chord), for the scale of a V. */
+export function chordAfter(timeline: Timeline, slot: Slot) {
+  const index = timeline.slots.indexOf(slot)
+  const same = (a: Slot) => a.chord.root === slot.chord.root && a.chord.quality === slot.chord.quality && a.chord.suffix === slot.chord.suffix
+  return timeline.slots.slice(index + 1).find((next) => next.chordIndex >= 0 && !same(next))?.chord ?? null
+}
+
+/** Whether a note starts on a strong beat of its bar (1 and 3 in 4/4, the downbeat otherwise) and lasts a beat or more. */
+const longOnStrongBeat = (at: number, beats: number, barBeats: number) =>
+  beats >= 1 - 1e-6 && Math.abs(at - Math.round(at)) < 1e-6 && (barBeats === 4 ? Math.round(at) % 2 === 0 : Math.round(at) === 0)
+
 /**
  * The keys played in one chorus, written out as a line in the written key (`transpose`: the
  * sounding key's distance from it). Keys struck together keep only the highest (the line
  * on top); each note lasts until its key goes up (`now` for a key still held) or the next note
  * starts, and at least a sixteenth (an eighth when swung). A bar played twice in the chorus
- * (repeats) shows its last pass. Each note is coloured on the chord sounding where it starts;
- * an outside note followed by a half step onto a chord or colour tone is an approach tone.
+ * (repeats) shows its last pass. Each note is coloured on the chord sounding where it starts,
+ * the chord after it and the key of its bar (`keys`: the written key of each bar, barKeys); a
+ * short outside note followed by a half step onto a chord or colour tone is an approach tone,
+ * a long one on a strong beat stays outside.
  */
 export function writeLine(keys: readonly PlayedKey[], timeline: Timeline, chorus: number, transpose: number, swing: number,
-  now: number): WrittenLine {
+  now: number, barKey: readonly number[] = []): WrittenLine {
   // The keys of this chorus on the grid, the highest of keys struck together
   const starts = new Map<number, { key: PlayedKey; bar: Bar; barIndex: number }>()
   for (const key of keys) {
@@ -77,17 +90,20 @@ export function writeLine(keys: readonly PlayedKey[], timeline: Timeline, chorus
   const chorusEnd = Math.max(...timeline.bars.filter((bar) => bar.chorus === chorus && bar.measure >= 0).map((bar) => bar.start + bar.beats))
   const notes: MelodyNote[] = []
   const colors: ToneColor[] = []
+  const long: boolean[] = [] // long outside notes on strong beats never become approach tones
   line.forEach(([start, { key, bar }], index) => {
     const up = key.end ?? now
     const end = Math.min(placed(timeline, up, swing)?.beat ?? up, line[index + 1]?.[0] ?? chorusEnd, chorusEnd)
     const beats = Math.max(Math.min(shortest(swing), chorusEnd - start), end - start)
     notes.push({ bar: bar.measure, at: start - bar.start, beats, pitch: key.pitch - transpose })
+    long.push(longOnStrongBeat(start - bar.start, beats, bar.beats))
     const slot = slotAtBeat(timeline, start)
-    colors.push(slot && slot.chordIndex >= 0 ? toneColor(key.pitch, slot.chord) : 'outside')
+    const keyPc = barKey[bar.measure] === undefined ? undefined : (barKey[bar.measure] + transpose + 12) % 12
+    colors.push(slot && slot.chordIndex >= 0 ? toneColor(key.pitch, slot.chord, { next: chordAfter(timeline, slot), keyPc }) : 'outside')
   })
-  // An outside note resolved a half step onto a chord or colour tone was an approach
+  // A short outside note resolved a half step onto a chord or colour tone was an approach
   for (let i = 0; i + 1 < colors.length; i++) {
-    if (colors[i] === 'outside' && resolvesApproach(notes[i].pitch, notes[i + 1].pitch, colors[i + 1])) colors[i] = 'approach'
+    if (colors[i] === 'outside' && !long[i] && resolvesApproach(notes[i].pitch, notes[i + 1].pitch, colors[i + 1])) colors[i] = 'approach'
   }
   const counts = { ...NO_TONES }
   for (const color of colors) counts[color]++

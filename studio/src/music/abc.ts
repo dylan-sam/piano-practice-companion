@@ -244,9 +244,12 @@ function writeBar(
     cut[cut.length - 1].text = (cut[cut.length - 1].text ?? '') + marks.end
   }
 
-  // A bar of rest only, with no chord change inside, is a whole-bar rest
+  // A bar of rest only, with no chord change inside, is one rest as long as the bar (a plain rest:
+  // abcjs draws a multi-bar rest "Z" with a "1" over it)
   if (cut.every((p) => p.pitch === null) && chords.length <= 1) {
-    return { body: `${cut.map((p) => p.text ?? '').join('')}Z`, events: [{ bar: index, at: 0, beats: length, rest: true }], carry: null }
+    const units = Math.round(length * UNIT)
+    const rest = SIMPLE_LENGTHS.includes(units) ? `z${units}` : 'Z' // an odd bar length (5/4...) keeps the multi-bar rest
+    return { body: `${cut.map((p) => p.text ?? '').join('')}${rest}`, events: [{ bar: index, at: 0, beats: length, rest: true }], carry: null }
   }
 
   // Accidentals in force in this bar, by letter and octave

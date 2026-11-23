@@ -41,3 +41,22 @@ describe('the Free Improvisation score line', () => {
     expect(html).toContain('<strong class="tone-outside">0</strong> outside 0 %')
   })
 })
+
+describe('chord scales in context', () => {
+  const chord = (symbol: string) => parseChord(symbol)!
+  test('a V going to a minor chord takes the b9 and b13, to a major chord Mixolydian, even as a triad', async () => {
+    const { chordScale } = await import('../src/exercises/toneColors')
+    expect(chordScale(chord('G7'), chord('C-7'))).toEqual([0, 1, 4, 5, 7, 8, 10])
+    expect(chordScale(chord('G'), chord('C'))).toEqual([0, 2, 4, 5, 7, 9, 10])
+    expect(chordScale(chord('G'), chord('D'))).toEqual([0, 2, 4, 5, 7, 9, 11]) // not a V: G major
+    expect(chordScale(chord('G7b9'), chord('C'))).toEqual([0, 1, 4, 5, 7, 8, 10]) // as written
+    expect(chordScale(chord('Bo7'), chord('C'))).toEqual([0, 2, 3, 5, 6, 8, 9, 11])
+  })
+
+  test("the key's pentatonics and blues scale are colour tones too", () => {
+    expect(toneColor(63, chord('C7'))).toBe('outside') // Eb over C7, no key
+    expect(toneColor(63, chord('C7'), { keyPc: 0 })).toBe('color') // in C minor pentatonic and C blues
+    expect(toneColor(68, chord('C7'), { keyPc: 0 })).toBe('outside') // Ab: in none of them
+    expect(toneColor(68, chord('G7'), { next: chord('C-'), keyPc: 0 })).toBe('color') // Ab: the b9 of G7 going to Cm
+  })
+})

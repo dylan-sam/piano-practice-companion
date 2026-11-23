@@ -42,3 +42,16 @@ describe("the band piano's attacks", () => {
     expect(attackBeats([0, 12, 24, 480, 960].map((tick) => ({ tick, channel: 1, note: 60, velocity: 80, duration: 100 })))).toEqual([0, 1, 2])
   })
 })
+
+describe('long outside notes', () => {
+  test('a long outside note on a strong beat stays outside, a short one resolves', () => {
+    // Db over C7 (no key given), then C: short on the "and" -> approach; long on beat 1 -> outside
+    expect(writeLine([key(61, 1.5, 1.9), key(60, 2)], timeline, 0, 0, 0.5, 4).colors[0]).toBe('approach')
+    expect(writeLine([key(61, 0, 1.9), key(60, 2)], timeline, 0, 0, 0.5, 4).colors[0]).toBe('outside')
+  })
+
+  test("the key of the bar makes the key's scales colour tones", () => {
+    expect(writeLine([key(63, 0)], timeline, 0, 0, 0.5, 1).colors).toEqual(['outside'])
+    expect(writeLine([key(63, 0)], timeline, 0, 0, 0.5, 1, [0, 0]).colors).toEqual(['color'])
+  })
+})
