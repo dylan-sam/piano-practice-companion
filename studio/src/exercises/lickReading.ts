@@ -30,7 +30,7 @@ export function chordSlots(chord: Chord): number[] {
     case 'min6': case 'minMaj7':
       return [0, 2, 3, 5, 7, 9, 11]
     case 'half':
-      return [0, 1, 3, 5, 6, 8, 10]
+      return [0, 2, 3, 5, 6, 8, 10] // Locrian natural 2: the jazz scale of a half-diminished chord
     case 'dim7': case 'dim':
       return [0, 2, 3, 5, 6, 8, 9]
     case 'dimMaj7':

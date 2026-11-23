@@ -33,7 +33,7 @@ test('lick playlists list their licks in order, easiest first', async ({ page })
   await page.goto('/sightreading/exercises')
   await check(page, /^Playlists/, ['Licks: Arpeggios'])
   const titles = await page.locator('.library-list .tune-title').allInnerTexts()
-  expect(titles[0]).toBe('Half-diminished arpeggio')
+  expect(titles[0]).toBe('Arpeggio 1-3-5-7, scale down to the 9')
   expect(titles.slice(1).every((title) => /arpeggio/i.test(title))).toBe(true)
 })
 

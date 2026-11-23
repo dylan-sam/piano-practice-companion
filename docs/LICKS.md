@@ -93,7 +93,7 @@ How the lines are made:
   nearest tone of the next chord when the chord changes.
 - **Chord scales** (`chordScale`): major 7th Ionian (Lydian with a #11), minor
   7th Dorian, minor 6th and minor-major Melodic minor, half-diminished
-  Locrian, diminished whole-half, dominant Mixolydian, with a b9 Phrygian
+  Locrian natural 2 (the jazz choice: a natural 9th), diminished whole-half, dominant Mixolydian, with a b9 Phrygian
   dominant, with #11 Lydian dominant, altered (alt, #5, #9) the altered scale.
 
 ## Vocabulary licks
@@ -102,7 +102,7 @@ How the lines are made:
 `lickExercises.ts`), each showing one device: "The Lick" (a traditional figure),
 3-to-9 arpeggios, 1-2-3-5 cells, bebop scale lines, enclosures, triplet
 arpeggios, b9 diminished arpeggios, the altered scale, the blue third, the blues
-scale, Lydian and Dorian colours, minor 9th arpeggios, and turnaround arpeggios.
+scale, upper-structure arpeggios (3-5-7-9-11), 1-2-3-5 climbs, and turnaround arpeggios.
 A test checks that every note on a beat belongs to the chord's scale (or is the
 blue third over a dominant).
 
@@ -156,22 +156,25 @@ with triplets or sixteenths.
 ## One-chord licks, by idea
 
 The licks over one chord (the 12 written ones and the 121 from standards) are listed by the
-idea they practise, not by where they come from (`studio/scripts/lickNaming.ts`). The notes
-are read as chord degrees (over C7, E is the 3, Ab the b13), and:
+idea they practise, not by where they come from (`studio/scripts/lickNaming.ts`). Lick
+Sightreading plays them over any chord, so each is read as it does (`lickShape`): every note is
+a degree, 1 to 7, of the chord's scale (Locrian natural 2 for a half-diminished chord, the
+whole-half diminished scale for a diminished one), or a chromatic note a half step under (b) or
+over (#) a degree. Over C7, E is the 3 and Bb the 7; over CΔ7, B is the 7. Then:
 
 | Group | When |
 |---|---|
-| Blues | over a major or dominant chord, it plays the blue third (#9) |
-| Approach notes | a note outside the chord's scale moves by a half step to a chord tone |
-| Colours | other notes outside the scale (#11, b6, major 7th over a dominant...) |
+| Blues | over a major or dominant chord, it plays the blue third (b3, a half step under the 3) |
+| Approach notes | a chromatic note moves by a half step to a chord tone |
+| Colours | other chromatic notes |
 | Arpeggios | at least half the moves are leaps and most notes are chord tones |
 | Scale lines | most moves are steps, with at most one change of direction |
 | Neighbours and turns | the rest: steps that turn around chord tones |
 
-The written licks name their group. A lick from standards is renamed after what it does, with
-its chord: "Dominant arpeggio down, root to 3rd", "Minor line, b5 approaching the 5th"; its
-degrees and its tune go to the line under the title ("1 b7 5 3 · La Cumparsita, bar 1"), and
-a title used twice in a group gets "(2)". In a group, the licks go from easy to hard: by level,
+The written licks name their group, and their names hold over any chord too ("Arpeggio
+1-3-5-7, scale down to the 9"). A lick from standards is renamed after what it does, with its
+degrees: "Arpeggio down 1-7-5-3", "Approach into the 5: b6-5-3-1"; its tune goes to the line
+under the title ("La Cumparsita, bar 1"), and a title used twice in a group gets "(2)". In a group, the licks go from easy to hard: by level,
 the written ones first, then fewer notes, then how common their opening is. Lick Sightreading
 shows the level as dots in the Lick menu.
 

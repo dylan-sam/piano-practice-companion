@@ -26,8 +26,12 @@ data/weimar*
 studio/public/leadsheets/weimar*
 studio/public/licks/licks_weimar*
 
-# Helper to build the Android APK on this computer, and the APK it copies here
+# Helpers for this computer (APK build, clean-up of old build files, the commit Claude prepares),
+# Claude's transfer files, and the APK the build copies here
 /build-apk.bat
+/clean-build.bat
+/commit.bat
+/.claude-transfer/
 /app-debug.apk
 
 # Browser test results (Playwright)

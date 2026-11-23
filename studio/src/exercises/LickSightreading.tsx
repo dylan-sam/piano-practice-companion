@@ -409,7 +409,7 @@ export function LickSightreading() {
             {lick && <p className="sight-hint lick-source">
               {lick.chart.title}{lick.chart.composer ? ` (${lick.chart.composer})` : ''}, level {lickInfo?.level ?? 1}
               {lickSymbol ? `, over ${lickSymbol.replace(/\^/g, '\u0394').replace(/h7/, '\u00f87')}` : ''}
-              {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones.' : ''}
+              {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones, and the numbers in its name are degrees of the chord it is played over (b: a half step under, #: a half step over).' : ''}
             </p>}
           </div>
           {chart && <ReadingSheet chart={chart} style={style} transpose={shownTranspose} position={position} beat={beat}

@@ -410,7 +410,7 @@ below it.
 |---|---|
 | Chords | **Pick a song** (chord charts: search the ChoCo catalog, or your own saved chord charts; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Chord Sightreading too; lead sheets are not offered), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break (the band never plays an ending between them); the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
 | Licks | check boxes, like the Progressions filter: the groups of one-chord licks of the [lick database](LICKS.md#one-chord-licks-by-idea) (133) to offer: Arpeggios, Scale lines, Neighbours and turns, Approach notes, Colours, Blues; none checked offers them all. Kept on this device |
-| Lick | one lick of the checked groups, listed by group from easy to hard, its level as dots (●, ●●, ●●●) and its name saying what it does ("Dominant arpeggio down, root to 3rd"); the line under it gives its chord degrees and its tune; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
+| Lick | one lick of the checked groups, listed by group from easy to hard, its level as dots (●, ●●, ●●●) and its name saying what it does in degrees of the chord it is played over ("Arpeggio down 1-7-5-3"; b and #: a half step under or over); the line under it gives its tune; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
 | Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Lead Sheet Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 
@@ -433,7 +433,7 @@ The lick is read as a **shape** relative to its own chord
    | dominant 7th | 0 2 4 5 7 9 10 (Mixolydian; #11 and b13 when written) |
    | dominant with b9 | 0 1 4 5 7 8 10 (Phrygian dominant) |
    | altered dominant (alt, #5, #9) | 0 1 4 6 8 8 10 (b9, #11, #5 = b13) |
-   | half-diminished | 0 1 3 5 6 8 10 (Locrian) |
+   | half-diminished | 0 2 3 5 6 8 10 (Locrian natural 2: a natural 9th) |
    | diminished 7th | 0 2 3 5 6 8 9 (whole-half) |
    | augmented | 0 2 4 6 8 9 11 |
    | sus | 0 2 5 5 7 9 10 |

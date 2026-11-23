@@ -30,7 +30,7 @@ describe('chord slots', () => {
   it('alter the tensions as the chord scale does', () => {
     expect(chordSlots(parseChord('C7alt')!)).toEqual([0, 1, 4, 6, 8, 8, 10])
     expect(chordSlots(parseChord('C7b9')!)).toEqual([0, 1, 4, 5, 7, 8, 10])
-    expect(chordSlots(parseChord('Ch7')!)).toEqual([0, 1, 3, 5, 6, 8, 10])
+    expect(chordSlots(parseChord('Ch7')!)).toEqual([0, 2, 3, 5, 6, 8, 10])
   })
 })
 
