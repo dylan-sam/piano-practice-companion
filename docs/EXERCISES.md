@@ -9,6 +9,7 @@ of a chord chart). In the **Improvisation** menu: **Free Improvisation**. The
 **Lessons** tab ([LESSONS.md](LESSONS.md)) opens them set up for each step. All remember your settings in the browser (or in the phone
 app).
 
+- [The song list](#the-song-list)
 - [Name the progression](#name-the-progression)
   - [A question](#a-question)
   - [Options](#options)
@@ -33,6 +34,21 @@ app).
   - [Chords and licks](#chords-and-licks)
   - [How the lick follows the chords](#how-the-lick-follows-the-chords)
 - [Free Improvisation](#free-improvisation)
+
+## The song list
+
+Every screen with a song list has a **Playlists** filter (check the playlists
+to list; none checked lists them all; **ChoCo charts** is the catalog, 28,000+
+songs) and a **Progressions** filter: the songs that contain **any of** the
+checked progressions (the default) or **all of** them. The catalog finds its own
+songs; the shipped lead sheets, imported playlists and saved songs are read in
+the app with the same rules (`studio/src/library/progressionMatch.ts`, after
+`find_progressions.py`): each chord is a degree of the song's key (or of a key
+it changes to) and a major or minor family, repeated chords count once, a chord
+with an altered 5th, a sus chord or N.C. breaks a progression, and a 7 in the
+progression (♭II7) wants a dominant 7th. The counts beside the progressions are
+those of the songs listed. My tunes alone (songs being written) has no
+progression filter.
 
 ## Name the progression
 
@@ -219,7 +235,7 @@ while bass and drums play along.
 
 | Mode | What it plays |
 |---|---|
-| **Pick a song** | any chart: search the catalog (with versions and the progression filter) or your saved playlists; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Lick Sightreading too |
+| **Pick a song** | any chart: search the catalog (with versions) or your saved playlists, with the progression filter for both; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Lick Sightreading too |
 | **Random song** | a random song of the catalog, if you like one containing a chosen progression |
 | **Infinite progressions** | an endless line of short catalog progressions (see below) |
 

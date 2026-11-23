@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react'
 export interface CheckOption {
   id: string
   label: string
-  count?: number // shown at the right, e.g. how many songs
+  count?: number | string // shown at the right, e.g. how many songs ('28,000+')
 }
 
 interface CheckFilterProps {

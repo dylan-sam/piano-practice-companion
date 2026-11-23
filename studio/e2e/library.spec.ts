@@ -37,9 +37,9 @@ test('lick playlists list their licks in order, easiest first', async ({ page })
   expect(titles.slice(1).every((title) => /arpeggio/i.test(title))).toBe(true)
 })
 
-test('the ChoCo chord charts are one of the playlists', async ({ page }) => {
+test('the ChoCo charts are one of the playlists', async ({ page }) => {
   await page.goto('/play-along/chords')
-  await check(page, /^Playlists/, ['ChoCo chord charts'])
+  await check(page, /^Playlists/, ['ChoCo charts'])
   await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toBeVisible()
   await expect(page.locator('.library-group')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Progressions/ })).toBeVisible()
@@ -48,9 +48,22 @@ test('the ChoCo chord charts are one of the playlists', async ({ page }) => {
   await check(page, /^Playlists/, ['Nottingham folk tunes'])
   await expect(page.locator('.library-group')).toHaveText(['Nottingham folk tunes'])
   await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toBeVisible()
-  await check(page, /^Playlists/, ['ChoCo chord charts'])
+  await check(page, /^Playlists/, ['ChoCo charts'])
   await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /^Progressions/ })).toHaveCount(0)
+  // The progressions are found in the other playlists too
+  await expect(page.getByRole('button', { name: /^Progressions/ })).toBeVisible()
+})
+
+test('the progressions are found in the shipped lead sheets, any of them by default', async ({ page }) => {
+  await page.goto('/sightreading/lead-sheets')
+  await check(page, /^Playlists/, ['OpenEWLD lead sheets'])
+  await expect(page.locator('.library-count')).toHaveText('498')
+  await check(page, /^Progressions/, ['vi – ii – V – I'])
+  await expect(page.getByRole('button', { name: 'Any of them' })).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(async () => Number(await page.locator('.library-count').innerText())).toBeLessThan(498)
+  await expect.poll(async () => Number(await page.locator('.library-count').innerText())).toBeGreaterThan(10)
+  // My tunes alone offers no progressions
+  await page.locator('.check-filter').first().getByRole('button', { name: 'Clear' }).click()
 })
 
 test('the Licks filter offers only the checked lick playlists', async ({ page }) => {

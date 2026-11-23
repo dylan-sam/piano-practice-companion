@@ -5,6 +5,8 @@ import type { Tune } from '../music/songs'
 import { getStyle } from '../styles'
 import { orderSavedTunes, playlistNames } from '../library/playlistExport'
 import { listProgressions, searchSongs } from '../library/catalog'
+import { chartProgressions, hasProgressions, patternFromLabel } from '../library/progressionMatch'
+import { BANK_URL, type QuestionBank } from '../exercises/nameProgression'
 import { SCORE_LIMIT, versionToOpen, type CatalogProgression, type ScoreGroup } from '../library/scoreSearch'
 
 interface LibraryProps {
@@ -20,7 +22,8 @@ interface LibraryProps {
 }
 
 const CHOCO = '\u0001choco' // the ChoCo catalog, listed with the playlists (no playlist can have this name)
-const CHOCO_NAME = 'ChoCo chord charts'
+const CHOCO_NAME = 'ChoCo charts'
+const CHOCO_COUNT = '28,000+' // songs of the ChoCo catalog (28,823 in its last build)
 const LIMIT = 250 // long playlists are filtered by search rather than scrolled
 // Fold a text for search: lower case, no accents
 const fold = (s: string) =>
@@ -29,7 +32,10 @@ const fold = (s: string) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
 
-/** The tune list: ChoCo search with a progression filter, saved tunes and playlists. */
+/**
+ * The tune list: ChoCo search, saved and shipped tunes and playlists, and a progression filter
+ * for all of them (the catalog finds its own songs; the others are read here).
+ */
 export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, onNew, emptyText, disabled, onRemovePlaylist }: LibraryProps) {
   const [query, setQuery] = useState('')
   const [scoreGroups, setScoreGroups] = useState<ScoreGroup[]>([])
@@ -39,7 +45,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const [confirming, setConfirming] = useState(false)
   const [catalog, setCatalog] = useState<CatalogProgression[]>([])
   const [chosen, setChosen] = useState<string[]>([]) // progressions a song must contain
-  const [matchAll, setMatchAll] = useState(true)
+  const [matchAll, setMatchAll] = useState(false) // any of the chosen progressions (or all of them)
   const showActions = !!(onImport || onNew)
   const searchCatalog = !!onLoadChoco
 
@@ -50,7 +56,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
     for (const tune of orderSavedTunes(tunes)) counts.set(tune.playlist ?? 'My tunes', (counts.get(tune.playlist ?? 'My tunes') ?? 0) + 1)
     const named = playlistNames(tunes, true).map((name) => ({ id: name, label: name, count: counts.get(name) }))
     if (!searchCatalog) return named
-    return [...named, { id: CHOCO, label: CHOCO_NAME }]
+    return [...named, { id: CHOCO, label: CHOCO_NAME, count: CHOCO_COUNT }]
       .sort((a, b) => (a.id === 'My tunes' ? -1 : b.id === 'My tunes' ? 1 : a.label.localeCompare(b.label)))
   }, [tunes, searchCatalog])
   // Playlists that can be removed: saved in this browser (not bundled with the build)
@@ -60,16 +66,42 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const pickedSaved = useMemo(() => picked.filter((id) => id !== CHOCO), [picked])
   const showCatalog = searchCatalog && (!picked.length || picked.includes(CHOCO))
   const showSaved = !picked.length || pickedSaved.length > 0
-  const filtering = showCatalog && chosen.length > 0
   const shownGroups = showCatalog ? scoreGroups : []
+  // The progressions offered: everywhere but in My tunes alone (songs being written)
+  const offersProgressions = catalog.length > 0 && !(picked.length === 1 && picked[0] === 'My tunes')
+  const progressionsChosen = useMemo(() => (offersProgressions ? chosen : []), [offersProgressions, chosen])
 
-  // The saved tunes of the checked playlists
+  // The progressions of each saved or shipped song, found once per list (progressionMatch.ts)
+  const patterns = useMemo(() => catalog.flatMap((p) => patternFromLabel(p.id, p.label) ?? []), [catalog])
+  // (just after the list is drawn: reading 1,500 songs takes a moment on a phone)
+  const [songProgressions, setSongProgressions] = useState<Map<string, Set<string>>>(() => new Map())
+  useEffect(() => {
+    if (!patterns.length) return
+    const timer = window.setTimeout(() => {
+      setSongProgressions(new Map(tunes.map((tune) => [tune.id, chartProgressions(tune.chart, patterns)])))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [tunes, patterns])
+
+  // How many songs of the list hold each progression: the catalog's (when it is listed) and those of the checked playlists
+  const progressionCounts = useMemo(() => {
+    const counts = new Map(catalog.map((p) => [p.id, showCatalog ? p.unique_song_count : 0]))
+    if (showSaved) {
+      for (const tune of orderSavedTunes(tunes, pickedSaved)) {
+        for (const id of songProgressions.get(tune.id) ?? []) counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [catalog, showCatalog, showSaved, tunes, pickedSaved, songProgressions])
+
+  // The saved tunes of the checked playlists, with the chosen progressions
   const matches = useMemo(() => {
     const q = fold(query.trim())
     if (!showSaved) return []
     return orderSavedTunes(tunes, pickedSaved)
       .filter((t) => !q || fold(`${t.chart.title} ${t.chart.composer ?? ''}`).includes(q))
-  }, [tunes, query, pickedSaved, showSaved])
+      .filter((t) => hasProgressions(songProgressions.get(t.id) ?? new Set(), progressionsChosen, matchAll))
+  }, [tunes, query, pickedSaved, showSaved, songProgressions, progressionsChosen, matchAll])
 
   // One saved playlist checked: it can be removed
   const removing = picked.length === 1 && pickedSaved.length === 1 ? pickedSaved[0] : ''
@@ -91,26 +123,31 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
     if (!searchCatalog) return
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      void searchSongs(query, chosen, matchAll, controller.signal)
+      void searchSongs(query, progressionsChosen, matchAll, controller.signal)
         .then((groups) => { setScoreGroups(groups); setScoreError('') })
         .catch((error: unknown) => {
           if (!controller.signal.aborted) setScoreError(String(error))
         })
     }, 180)
     return () => { window.clearTimeout(timer); controller.abort() }
-  }, [query, chosen, matchAll, searchCatalog])
+  }, [query, progressionsChosen, matchAll, searchCatalog])
 
   useEffect(() => {
-    // Load the progressions offered by the filter once
-    if (!searchCatalog) return
+    // Load the progressions offered by the filter once (for the saved and shipped songs too)
     const controller = new AbortController()
+    // Without the catalog (offline, no server), the progressions of Name the progression
+    const bank = () => fetch(BANK_URL, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() as Promise<QuestionBank> : null))
+      .then((loaded) => loaded?.progressions.map(({ id, label, unique_song_count }) => ({ id, label, unique_song_count })) ?? [])
     void listProgressions(controller.signal)
+      .then((list) => (list.length ? list : bank()))
+      .catch(bank)
       .then(setCatalog)
       .catch(() => {
-        // Without the list the filter is simply not offered
+        // Without either list the filter is simply not offered
       })
     return () => controller.abort()
-  }, [searchCatalog])
+  }, [])
 
   const chosenLabels = catalog.filter((p) => chosen.includes(p.id)).map((p) => p.label.replaceAll(' \u2013 ', '\u2013'))
 
@@ -118,7 +155,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
     <nav className="library" aria-label="Songs" inert={disabled}>
       <div className="library-head">
         <h2 className="label">
-          Songs <span className="library-count">{shownGroups.length + (filtering ? 0 : matches.length)}</span>
+          Songs <span className="library-count">{shownGroups.length + matches.length}</span>
         </h2>
         {showActions && <span className="library-actions">
           {onNew && <button className="library-import" onClick={onNew}>
@@ -162,10 +199,10 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         />
       )}
 
-      {showCatalog && catalog.length > 0 && (
+      {offersProgressions && (
         <CheckFilter
           name="Progressions"
-          options={catalog.map((p) => ({ id: p.id, label: p.label, count: p.unique_song_count }))}
+          options={catalog.map((p) => ({ id: p.id, label: p.label, count: progressionCounts.get(p.id) ?? 0 }))}
           chosen={chosen}
           onChange={setChosen}
           before={
@@ -182,11 +219,11 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
         />
       )}
 
-      {matches.length > 0 && !filtering && (
+      {matches.length > 0 && (
         <h3 className="label">Saved songs</h3>
       )}
       <ul className="library-list">
-        {(filtering ? [] : matches.slice(0, LIMIT)).map((tune, i, shown) => {
+        {matches.slice(0, LIMIT).map((tune, i, shown) => {
           // Each playlist starts under a bar with its name
           const name = tune.playlist ?? 'My tunes'
           const starts = i === 0 || (shown[i - 1].playlist ?? 'My tunes') !== name
@@ -210,7 +247,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
           )
         })}
       </ul>
-      {matches.length > LIMIT && !filtering && (
+      {matches.length > LIMIT && (
         <p className="library-more">{matches.length - LIMIT} more. Search to narrow the list.</p>
       )}
       {showCatalog && scoreError && <p className="library-more">{scoreError}</p>}
@@ -239,7 +276,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
           </li>
         ))}
       </ul>
-      {(filtering || matches.length === 0) && shownGroups.length === 0 && (
+      {matches.length === 0 && shownGroups.length === 0 && (
         <p className="library-more">{!tunes.length && emptyText ? emptyText : 'No songs match.'}</p>
       )}
     </nav>
