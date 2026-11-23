@@ -2586,6 +2586,10 @@ input.fader::-moz-range-thumb {
   flex-basis: 100%;
 }
 
+.lick-picker .check-filter-bar {
+  max-width: 420px;
+}
+
 .lick-picker .lick-source {
   flex-basis: 100%;
   margin: 0;
@@ -2869,9 +2873,25 @@ input.fader::-moz-range-thumb {
   gap: 6px;
 }
 
-.check-filter-bar .library-import[aria-expanded='true'] {
-  border-color: var(--ink-2);
+.check-filter-bar > .library-import,
+.check-filter-bar > .library-remove {
+  height: 32px;
+}
+
+/* The filter's button looks like a menu, as wide as the song list */
+.check-filter-toggle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.check-filter-toggle[aria-expanded='true'] {
+  border-color: var(--ink-2);
 }
 
 .check-filter-panel {

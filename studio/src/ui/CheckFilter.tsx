@@ -29,8 +29,8 @@ export function CheckFilter({ name, options, chosen, onChange, before, actions, 
   return (
     <div className="check-filter">
       <div className="check-filter-bar">
-        <button className="library-import" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {name}{chosen.length ? ` (${chosen.length})` : ''} {open ? '▴' : '▾'}
+        <button className="select check-filter-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {name}{chosen.length ? ` (${chosen.length})` : ''}
         </button>
         {chosen.length > 0 && (
           <button className="library-import" onClick={() => onChange([])}>

@@ -26,7 +26,7 @@ test('only the checked playlists are listed', async ({ page }) => {
   await expect(groups).toHaveText(['OpenEWLD lead sheets'])
   await page.getByRole('searchbox', { name: 'Search songs' }).fill('')
   await page.locator('.check-filter').getByRole('button', { name: 'Clear' }).click()
-  await expect(page.getByRole('button', { name: /^Playlists ▴/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Playlists$/ })).toBeVisible()
 })
 
 test('lick playlists list their licks in number order', async ({ page }) => {
