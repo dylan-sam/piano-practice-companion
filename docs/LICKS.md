@@ -10,6 +10,7 @@ rhythm) to build the vocabulary used when improvising.
 - [Exercises](#exercises)
 - [Vocabulary licks](#vocabulary-licks)
 - [Licks mined from melodies](#licks-mined-from-melodies)
+- [One-chord licks, by idea](#one-chord-licks-by-idea)
 - [Common patterns](#common-patterns)
 - [The format](#the-format)
 - [Rebuilding](#rebuilding)
@@ -24,8 +25,9 @@ listed in its own playlist:
 | File | Playlists | Charts | License |
 |---|---|---|---|
 | `studio/public/licks/licks.json` | Exercises: triads, seventh chords, guide tones and chord-tone lines, scales and scale patterns, approach notes and enclosures, intervals, rhythm | 222 | CC BY 4.0 |
-| | Licks: vocabulary | 24 | CC BY 4.0 |
-| | Licks from standards (OpenEWLD melodies), by context | 301 | public domain |
+| | Licks: vocabulary over progressions | 12 | CC BY 4.0 |
+| | One-chord licks, by idea: Arpeggios, Scale lines, Neighbours and turns, Approach notes, Colours, Blues ([how](#one-chord-licks-by-idea)) | 133: 12 written, 121 from standards | CC BY 4.0 and public domain |
+| | Licks from standards (OpenEWLD melodies) over progressions, by context | 180 | public domain |
 | | Licks from folk tunes (Nottingham Music Database), by context | 99 | CC BY 4.0 |
 | `weimar/licks_weimar.json` (not shipped, not in git) | Weimar licks, by context | 704 | ODbL 1.0 |
 | | Weimar licks: common patterns | 120 | ODbL 1.0 |
@@ -49,7 +51,7 @@ The contexts, for every mined collection:
 
 **Exercises Sightreading** lists them; the players and Lead Sheet
 Sightreading, which list songs, do not. **Lick Sightreading** writes any of the 133 one-chord
-licks (vocabulary and standards) over every chord of a chord chart or of an
+licks (written vocabulary and standards, listed by idea) over every chord of a chord chart or of an
 endless line of progressions ([how](EXERCISES.md#lick-sightreading)).
 
 ## The rhythm rule
@@ -104,6 +106,10 @@ scale, Lydian and Dorian colours, minor 9th arpeggios, and turnaround arpeggios.
 A test checks that every note on a beat belongs to the chord's scale (or is the
 blue third over a dominant).
 
+The 12 over one chord are listed with the licks from standards, by idea
+([below](#one-chord-licks-by-idea)); the 12 over a progression in **Licks: vocabulary over
+progressions**.
+
 ## Licks mined from melodies
 
 `studio/scripts/lickMining.ts` reads three collections:
@@ -146,6 +152,28 @@ For each song:
 In each playlist of licks from standards, the licks come by how common their opening is: in how many of the shipped lead sheet melodies (standards and folk tunes) their first four notes appear, by their intervals, so in any key and any rhythm; ties by level, then by rank. `data/licks.log` gives the range for each playlist. In the other playlists the licks are ordered by level, then by rank. The level is 1
 for fewer than 1.25 notes a beat, 2 below 2.25, else 3, one more (up to 3)
 with triplets or sixteenths.
+
+## One-chord licks, by idea
+
+The licks over one chord (the 12 written ones and the 121 from standards) are listed by the
+idea they practise, not by where they come from (`studio/scripts/lickNaming.ts`). The notes
+are read as chord degrees (over C7, E is the 3, Ab the b13), and:
+
+| Group | When |
+|---|---|
+| Blues | over a major or dominant chord, it plays the blue third (#9) |
+| Approach notes | a note outside the chord's scale moves by a half step to a chord tone |
+| Colours | other notes outside the scale (#11, b6, major 7th over a dominant...) |
+| Arpeggios | at least half the moves are leaps and most notes are chord tones |
+| Scale lines | most moves are steps, with at most one change of direction |
+| Neighbours and turns | the rest: steps that turn around chord tones |
+
+The written licks name their group. A lick from standards is renamed after what it does, with
+its chord: "Dominant arpeggio down, root to 3rd", "Minor line, b5 approaching the 5th"; its
+degrees and its tune go to the line under the title ("1 b7 5 3 · La Cumparsita, bar 1"), and
+a title used twice in a group gets "(2)". In a group, the licks go from easy to hard: by level,
+the written ones first, then fewer notes, then how common their opening is. Lick Sightreading
+shows the level as dots in the Lick menu.
 
 `data/licks.log` lists, for every collection, how many windows were turned
 down and why, and how many licks each context kept.
@@ -218,6 +246,7 @@ sheets (`studio/public/leadsheets/catalog.json`), so rebuild those first
 | `studio/scripts/lickCharts.ts` | chords into bars, note lines, the text notation of the vocabulary (`D4:8 F4:8t A4:4.`), transposition |
 | `studio/scripts/lickExercises.ts` | the exercises and the vocabulary |
 | `studio/scripts/lickMining.ts` | contexts, windows, grid snapping, ranking, common patterns |
+| `studio/scripts/lickNaming.ts` | the one-chord licks: chord degrees, groups, titles, order |
 | `studio/scripts/lickCatalog.ts` | builds and checks the files, writes the log |
 | `studio/tests/licks.test.ts` | tests, including both shipped files |
 

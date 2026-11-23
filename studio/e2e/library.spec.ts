@@ -29,11 +29,12 @@ test('only the checked playlists are listed', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^Playlists$/ })).toBeVisible()
 })
 
-test('lick playlists list their licks in number order', async ({ page }) => {
+test('lick playlists list their licks in order, easiest first', async ({ page }) => {
   await page.goto('/sightreading/exercises')
-  await check(page, /^Playlists/, ['Licks from standards: Major chord'])
+  await check(page, /^Playlists/, ['Licks: Arpeggios'])
   const titles = await page.locator('.library-list .tune-title').allInnerTexts()
-  expect(titles.slice(0, 3)).toEqual(['Standards: Major chord 1', 'Standards: Major chord 2', 'Standards: Major chord 3'])
+  expect(titles[0]).toBe('Half-diminished arpeggio')
+  expect(titles.slice(1).every((title) => /arpeggio/i.test(title))).toBe(true)
 })
 
 test('the ChoCo chord charts are one of the playlists', async ({ page }) => {
@@ -56,13 +57,15 @@ test('the Licks filter offers only the checked lick playlists', async ({ page })
   await page.goto('/sightreading/licks')
   const lick = page.getByRole('combobox', { name: 'Lick', exact: true })
   await expect(lick.locator('option').first()).toBeAttached({ timeout: 30_000 })
-  await check(page, /^Licks/, ['Standards: Dominant chord'])
+  await check(page, /^Licks/, ['Blues'])
   await expect(lick.locator('optgroup')).toHaveCount(1)
-  await expect(lick.locator('optgroup')).toHaveAttribute('label', 'Standards: Dominant chord')
+  await expect(lick.locator('optgroup')).toHaveAttribute('label', 'Blues')
   await expect(lick).toHaveValue(await lick.locator('option').first().getAttribute('value') ?? '')
-  // Random lick stays among the checked playlist's licks
+  // Random lick stays among the checked playlist's licks; each lick shows its level
+  const offered = await lick.locator('option').evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value))
   for (let i = 0; i < 3; i++) {
     await page.getByRole('button', { name: 'Random lick' }).click()
-    await expect(page.locator('.lick-source')).toContainText('Standards: Dominant chord')
+    expect(offered).toContain(await lick.inputValue())
   }
+  await expect(lick.locator('option').first()).toHaveText(/^\u25cf+ /)
 })

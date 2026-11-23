@@ -24,6 +24,11 @@ describe('saved playlist ordering and export', () => {
     expect(playlistNames(tunes)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
   })
 
+  it('keeps the order of a bundled playlist', () => {
+    const licks = ['Easy', 'Hard', 'Average'].map((title) => ({ ...tune(title, 'Licks'), source: 'bundled' as const }))
+    expect(orderSavedTunes(licks, ['Licks']).map((item) => item.chart.title)).toEqual(['Easy', 'Hard', 'Average'])
+  })
+
   it('sorts numbered titles in number order', () => {
     const licks = ['Lick 10', 'Lick 2', 'Lick 1'].map((title) => tune(title, 'Licks'))
     expect(orderSavedTunes(licks, ['Licks']).map((item) => item.chart.title)).toEqual(['Lick 1', 'Lick 2', 'Lick 10'])

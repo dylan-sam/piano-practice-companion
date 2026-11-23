@@ -53,9 +53,11 @@ const SOURCES: { id: SourceMode; text: string }[] = [
   { id: 'pick', text: 'Pick a song' }, { id: 'random', text: 'Random song' }, { id: 'infinite', text: 'Infinite progressions' },
 ]
 
-/** A lick playlist's name, short enough for the menu: "Licks from standards: V-I" is "Standards: V-I". */
+/** A lick playlist's name, short enough for the menu: "Licks: Arpeggios" is "Arpeggios". */
 const shortGroup = (name: string) =>
-  name.replace(/^Licks: vocabulary$/, 'Vocabulary').replace(/^Licks: /, '').replace(/^Licks from standards: /, 'Standards: ').replace(/^Licks from folk tunes: /, 'Folk: ')
+  name.replace(/^Licks: /, '').replace(/^Licks from standards: /, 'Standards: ').replace(/^Licks from folk tunes: /, 'Folk: ')
+/** A lick's level as dots, for the Lick menu: level 2 is "●●". */
+const levelDots = (level = 1) => '\u25cf'.repeat(level)
 
 /** Whether stored settings are usable. */
 function isSettings(value: unknown): value is LickSettings {
@@ -394,7 +396,7 @@ export function LickSightreading() {
                 {groups.filter((g) => !checkedGroups.length || checkedGroups.includes(g.id)).map((g) => (
                   <optgroup key={g.id} label={g.label}>
                     {offered.filter((item) => (item.playlist ?? '') === g.id).map((item) =>
-                      <option key={item.id} value={item.id} title={item.chart.composer}>{item.chart.title}</option>)}
+                      <option key={item.id} value={item.id} title={item.chart.composer}>{levelDots(item.chart.lick?.level)} {item.chart.title}</option>)}
                   </optgroup>
                 ))}
               </select>
@@ -405,7 +407,7 @@ export function LickSightreading() {
               Rest between licks: {settings.rest ? 'On' : 'Off'}
             </button>
             {lick && <p className="sight-hint lick-source">
-              {lick.chart.title}{lickInfo?.tune ? ` (${lickInfo.performer ? `${lickInfo.performer}, ` : ''}${lickInfo.tune}, bar ${lickInfo.bar})` : ''}
+              {lick.chart.title}{lick.chart.composer ? ` (${lick.chart.composer})` : ''}, level {lickInfo?.level ?? 1}
               {lickSymbol ? `, over ${lickSymbol.replace(/\^/g, '\u0394').replace(/h7/, '\u00f87')}` : ''}
               {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones.' : ''}
             </p>}

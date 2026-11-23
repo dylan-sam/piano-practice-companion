@@ -10,6 +10,7 @@
 import type { Chart } from '../src/music/chart'
 import { chordTones, parseChord, type Chord } from '../src/music/chords'
 import type { LickInfo } from '../src/music/licks'
+import type { LickGroup } from './lickNaming'
 import {
   line, makeLickChart, nameInC, parseChords, parseNotes, transposeSymbol,
   type ChordSpan, type TimedNote,
@@ -515,8 +516,9 @@ function rhythmExercises(): Chart[] {
 
 // Licks written for this project from common jazz devices (arpeggios, digital patterns, enclosures,
 // bebop scales, the blues scale). "The Lick" is a traditional figure shared by countless players.
-export const VOCABULARY: { title: string; chords: string; notes: string; context: string; tags: string[]; source?: string }[] = [
-  { title: 'The Lick', chords: 'C-7:4', notes: 'C4:8 D4:8 Eb4:8 F4:8 D4:4 Bb3:8 C4:8', context: 'min7', tags: ['traditional'], source: 'Traditional' },
+// One-chord licks name their group (see lickNaming.ts); the others are listed as vocabulary over progressions
+export const VOCABULARY: { title: string; chords: string; notes: string; context: string; tags: string[]; source?: string; group?: LickGroup }[] = [
+  { title: 'The Lick', chords: 'C-7:4', notes: 'C4:8 D4:8 Eb4:8 F4:8 D4:4 Bb3:8 C4:8', context: 'min7', tags: ['traditional'], source: 'Traditional', group: 'Scale lines' },
   { title: 'The Lick over ii-V-I', chords: 'D-7:4 G7b9:4 C^7:4', notes: 'D4:8 E4:8 F4:8 G4:8 E4:4 C4:8 D4:8 B3:8 D4:8 F4:8 A4:8 Ab4:8 F4:8 D4:8 B3:8 C4:2', context: 'ii-V-I', tags: ['traditional', 'arpeggio'], source: 'Traditional' },
   { title: '3-to-9 arpeggios', chords: 'D-7:4 G7alt:4 C^7:4', notes: 'F4:8 A4:8 C5:8 E5:8 D5:8 C5:8 A4:8 F4:8 B3:8 D4:8 F4:8 Ab4:8 G4:8 F4:8 Eb4:8 D4:8 E4:2', context: 'ii-V-I', tags: ['arpeggio', 'upper structure'] },
   { title: '1-2-3-5 cells', chords: 'D-7:4 G7:4 C^7:4', notes: 'D4:8 E4:8 F4:8 A4:8 C5:8 B4:8 A4:8 F4:8 G4:8 A4:8 B4:8 D5:8 F5:8 E5:8 D5:8 B4:8 C5:2', context: 'ii-V-I', tags: ['digital pattern'] },
@@ -528,17 +530,17 @@ export const VOCABULARY: { title: string; chords: string; notes: string; context
   { title: 'Diminished arpeggio from the b9', chords: 'G7b9:4 C^7:4', notes: 'Ab4:8 B4:8 D5:8 F5:8 Ab5:8 G5:8 F5:8 D5:8 E5:2', context: 'V-I', tags: ['arpeggio', 'diminished'] },
   { title: 'Altered scale down', chords: 'G7alt:4 C^7:4', notes: 'F5:8 Eb5:8 Db5:8 B4:8 Bb4:8 Ab4:8 G4:8 F4:8 E4:2', context: 'V-I', tags: ['altered scale'] },
   { title: 'Harmonic minor resolution', chords: 'G7b9:4 C-6:4', notes: 'D5:8 B4:8 Ab4:8 F4:8 D4:8 F4:8 B3:8 G3:8 C4:2', context: 'V-i', tags: ['arpeggio', 'harmonic minor'] },
-  { title: 'Blue third', chords: 'C7:8', notes: 'Eb4:8 E4:8 G4:8 A4:8 Bb4:8 A4:8 G4:8 E4:8 C4:2', context: 'dom7', tags: ['blues'] },
-  { title: 'Blues scale riff', chords: 'C7:4', notes: 'C5:8 Bb4:8 G4:8 F#4:8 F4:8 Eb4:8 C4:4', context: 'dom7', tags: ['blues', 'blues scale'] },
-  { title: 'Dominant arpeggios in triplets', chords: 'C7:4', notes: 'C4:8t E4:8t G4:8t Bb4:8t G4:8t E4:8t D4:8t F4:8t A4:8t C5:4', context: 'dom7', tags: ['arpeggio', 'triplets'] },
-  { title: 'Bebop scale down from the 7th', chords: 'C7:8', notes: 'Bb4:8 A4:8 G4:8 F4:8 E4:8 D4:8 C4:8 B3:8 Bb3:8 D4:8 F4:8 A4:8 G4:2', context: 'dom7', tags: ['bebop scale'] },
-  { title: 'Lydian colours', chords: 'C^7#11:8', notes: 'E4:8 G4:8 B4:8 D5:8 F#5:8 E5:8 D5:8 B4:8 C5:2', context: 'maj7', tags: ['arpeggio', 'upper structure'] },
-  { title: 'Major 7th with a lower neighbour', chords: 'C^7:8', notes: 'B3:8 C4:8 E4:8 G4:8 B4:8 D5:8 C5:8 A4:8 G4:2', context: 'maj7', tags: ['arpeggio'] },
-  { title: 'Dorian 1-2-3-5 climb', chords: 'C-7:8', notes: 'C4:8 D4:8 Eb4:8 G4:8 F4:8 G4:8 A4:8 C5:8 Bb4:2', context: 'min7', tags: ['digital pattern'] },
-  { title: 'Minor 9th arpeggio', chords: 'C-7:8', notes: 'Eb4:8t G4:8t Bb4:8t D5:4 C5:8 Bb4:8 G4:8 F4:8 Eb4:8 D4:8 C4:2', context: 'min7', tags: ['arpeggio', 'triplets'] },
-  { title: 'Minor pentatonic phrase', chords: 'C-7:8', notes: 'G4:8 Bb4:8 C5:8 Eb5:8 D5:8 C5:8 Bb4:8 G4:8 F4:4 Eb4:4 C4:2', context: 'min7', tags: ['pentatonic'] },
-  { title: 'Half-diminished arpeggio', chords: 'Ch7:4', notes: 'C4:8 Eb4:8 Gb4:8 Bb4:8 Ab4:8 Gb4:8 Eb4:8 D4:8', context: 'half', tags: ['arpeggio'] },
-  { title: 'Whole-half diminished run', chords: 'Co7:8', notes: 'C4:8 D4:8 Eb4:8 F4:8 Gb4:8 Ab4:8 A4:8 B4:8 C5:2', context: 'dim7', tags: ['diminished scale'] },
+  { title: 'Blue third', chords: 'C7:8', notes: 'Eb4:8 E4:8 G4:8 A4:8 Bb4:8 A4:8 G4:8 E4:8 C4:2', context: 'dom7', tags: ['blues'], group: 'Blues' },
+  { title: 'Blues scale riff', chords: 'C7:4', notes: 'C5:8 Bb4:8 G4:8 F#4:8 F4:8 Eb4:8 C4:4', context: 'dom7', tags: ['blues', 'blues scale'], group: 'Blues' },
+  { title: 'Dominant arpeggios in triplets', chords: 'C7:4', notes: 'C4:8t E4:8t G4:8t Bb4:8t G4:8t E4:8t D4:8t F4:8t A4:8t C5:4', context: 'dom7', tags: ['arpeggio', 'triplets'], group: 'Arpeggios' },
+  { title: 'Bebop scale down from the 7th', chords: 'C7:8', notes: 'Bb4:8 A4:8 G4:8 F4:8 E4:8 D4:8 C4:8 B3:8 Bb3:8 D4:8 F4:8 A4:8 G4:2', context: 'dom7', tags: ['bebop scale'], group: 'Scale lines' },
+  { title: 'Lydian colours', chords: 'C^7#11:8', notes: 'E4:8 G4:8 B4:8 D5:8 F#5:8 E5:8 D5:8 B4:8 C5:2', context: 'maj7', tags: ['arpeggio', 'upper structure'], group: 'Colours' },
+  { title: 'Major 7th with a lower neighbour', chords: 'C^7:8', notes: 'B3:8 C4:8 E4:8 G4:8 B4:8 D5:8 C5:8 A4:8 G4:2', context: 'maj7', tags: ['arpeggio'], group: 'Neighbours and turns' },
+  { title: 'Dorian 1-2-3-5 climb', chords: 'C-7:8', notes: 'C4:8 D4:8 Eb4:8 G4:8 F4:8 G4:8 A4:8 C5:8 Bb4:2', context: 'min7', tags: ['digital pattern'], group: 'Scale lines' },
+  { title: 'Minor 9th arpeggio', chords: 'C-7:8', notes: 'Eb4:8t G4:8t Bb4:8t D5:4 C5:8 Bb4:8 G4:8 F4:8 Eb4:8 D4:8 C4:2', context: 'min7', tags: ['arpeggio', 'triplets'], group: 'Arpeggios' },
+  { title: 'Minor pentatonic phrase', chords: 'C-7:8', notes: 'G4:8 Bb4:8 C5:8 Eb5:8 D5:8 C5:8 Bb4:8 G4:8 F4:4 Eb4:4 C4:2', context: 'min7', tags: ['pentatonic'], group: 'Blues' },
+  { title: 'Half-diminished arpeggio', chords: 'Ch7:4', notes: 'C4:8 Eb4:8 Gb4:8 Bb4:8 Ab4:8 Gb4:8 Eb4:8 D4:8', context: 'half', tags: ['arpeggio'], group: 'Arpeggios' },
+  { title: 'Whole-half diminished run', chords: 'Co7:8', notes: 'C4:8 D4:8 Eb4:8 F4:8 Gb4:8 Ab4:8 A4:8 B4:8 C5:2', context: 'dim7', tags: ['diminished scale'], group: 'Colours' },
   { title: 'Turnaround arpeggios', chords: 'C^7:2 A7:2 D-7:2 G7:2 C^7:4', notes: 'E4:8 G4:8 B4:8 A4:8 C#5:8 A4:8 E4:8 G4:8 F4:8 A4:8 C5:8 E5:8 D5:8 B4:8 G4:8 F4:8 E4:2', context: 'I-vi-ii-V', tags: ['arpeggio'] },
 ]
 
@@ -546,7 +548,7 @@ export const VOCABULARY: { title: string; chords: string; notes: string; context
 function vocabularyLicks(): Chart[] {
   return VOCABULARY.map((lick) => makeLickChart({
     title: lick.title, chords: parseChords(lick.chords), notes: parseNotes(lick.notes),
-    info: { kind: 'lick', category: 'Vocabulary', context: lick.context, source: lick.source ?? SOURCE, license: LICENSE,
+    info: { kind: 'lick', category: lick.group ?? 'Vocabulary', context: lick.context, source: lick.source ?? SOURCE, license: LICENSE,
       tags: lick.tags, level: /8t/.test(lick.notes) ? 2 : 1 },
   }))
 }

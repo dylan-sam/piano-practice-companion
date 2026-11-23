@@ -190,7 +190,8 @@ change at each repetition with the Practice button.
 ![Lick Sightreading](docs/images/lick-sightreading.png)
 
 Choose a **lick** (one of the 133 one-chord licks of the
-[database](#licks-and-exercises), or a random one) and where the chords come
+[database](#licks-and-exercises), listed by idea (arpeggios, scale lines, turns, approach
+notes, colours, blues) from easy to hard, or a random one) and where the chords come
 from: a chord chart (**Pick a song**: the ChoCo catalog or your own imported
 iReal Pro charts, with **Import** here too), **Random song** or **Infinite
 progressions** (as in Chord Sightreading). The lick is written and transposed over every chord. Play

@@ -27,14 +27,15 @@ export function playlistNames(tunes: Tune[], listed = false): string[] {
 
 /**
  * The saved tunes to list: those of the selected playlists, or of every playlist when none is
- * selected (My tunes first). Titles sort with their numbers in order ("Lick 2" before "Lick 10").
+ * selected (My tunes first). Saved titles sort with their numbers in order ("Lick 2" before
+ * "Lick 10"); bundled playlists keep the order of their file (licks go from easy to hard).
  */
 export function orderSavedTunes(tunes: Tune[], selected: string[] = []): Tune[] {
   const name = (tune: Tune) => tune.playlist ?? 'My tunes'
   const rank = (tune: Tune) => (name(tune) === 'My tunes' ? 0 : 1)
   return listedTunes(tunes).filter((tune) => !selected.length || selected.includes(name(tune)))
     .sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b)) ||
-      a.chart.title.localeCompare(b.chart.title, undefined, { numeric: true }))
+      (a.source === 'bundled' && b.source === 'bundled' ? 0 : a.chart.title.localeCompare(b.chart.title, undefined, { numeric: true })))
 }
 
 /**

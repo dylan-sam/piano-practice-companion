@@ -7,6 +7,9 @@
 //                                   patterns from the Weimar Jazz Database solos (ODbL 1.0)
 //   data/licks.log                  what was kept and turned down, and why
 //
+// The one-chord licks (written vocabulary and licks from standards) are listed by the idea they
+// practise, renamed after what they do and ordered from easy to hard (lickNaming.ts).
+//
 // The licks from standards are listed, in each playlist, by how many of the shipped melodies
 // share their opening (openingFrequency), most common first; the other collections by level.
 //
@@ -21,6 +24,7 @@ import { onLickGrid } from '../src/music/licks'
 import { isChartSymbol } from '../src/music/notation'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { generatedPlaylists } from './lickExercises'
+import { groupOneChordLicks, isOneChordContext } from './lickNaming'
 import {
   candidateChart, distinctPatterns, findPatterns, mineLicks, openingFrequency, patternChart, selectLicks,
   type Candidate, type MelodySource, type MiningOptions, type Selection,
@@ -126,9 +130,18 @@ export function buildLickCatalog(paths: LickPaths): string {
   const standardLicks = mine('OpenEWLD melodies', standards, { minNotesPerBeat: 0.75 }, { perCategory: 40, perTune: 2, perPlayer: 2 }, 'Standards: ', log, melodies)
   const folkLicks = mine('Nottingham folk tunes (4/4)', folk, { minNotesPerBeat: 1.5 }, { perCategory: 40, perTune: 1, perPlayer: 1 }, 'Folk: ', log)
   log.push('')
+  // One-chord licks, vocabulary and standards together, in their groups (Lick Sightreading)
+  const oneChord = (chart: Chart) => isOneChordContext(chart.lick?.context ?? '')
+  const vocabulary = generated.find((p) => p.name === 'Licks: vocabulary')?.charts ?? []
+  const grouped = groupOneChordLicks([...vocabulary.filter(oneChord), ...standardLicks.filter(oneChord)])
+  log.push('One-chord licks, by group:')
+  for (const { group, charts } of grouped) log.push(`  ${group}: ${charts.length}`)
+  log.push('')
   const main = [
-    ...generated,
-    ...byCategory(standardLicks, 'Licks from standards: '),
+    ...generated.filter((p) => p.name !== 'Licks: vocabulary'),
+    { name: 'Licks: vocabulary over progressions', charts: vocabulary.filter((chart) => !oneChord(chart)) },
+    ...grouped.map(({ group, charts }) => ({ name: `Licks: ${group}`, charts })),
+    ...byCategory(standardLicks.filter((chart) => !oneChord(chart)), 'Licks from standards: '),
     ...byCategory(folkLicks, 'Licks from folk tunes: '),
   ]
   const written = writePlaylists(paths.out, main, log, true)
