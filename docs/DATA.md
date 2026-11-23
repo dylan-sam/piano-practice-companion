@@ -580,7 +580,8 @@ catalog holds 143,324 passages. The exercises are built from them
 
 ## Piano patterns
 
-`data/left_hand_patterns.json` holds the 16 piano patterns offered in the app,
+`data/left_hand_patterns.json` holds the 24 piano patterns offered in the app
+(8 of them the Lessons tab's song patterns, [LESSONS.md](LESSONS.md)),
 with their styles and notes. Rebuild it with `python left_hand_patterns.py`;
 the [pattern audit](../PATTERN_AUDIT.md) gives their sources and menus.
 

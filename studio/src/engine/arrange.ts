@@ -6,7 +6,7 @@ import { generateBassPattern, type BassPatternId } from './bassPatterns'
 import { generateComp, pedalChanges } from './comp'
 import { generatePianoPattern, PIANO_PATTERNS, usesWalkingBass } from './pianoPatterns'
 import type { PianoPattern } from './pianoPatterns'
-import type { NoteEvent } from './events'
+import { PPQ, type NoteEvent } from './events'
 import { DRUM_CHANNEL, generateDrums } from './drums'
 import { writeMidi } from './midiWriter'
 import { buildTimeline, type PracticeOptions, type Timeline } from './timeline'
@@ -23,6 +23,18 @@ export const BASE_BPM = 120
 export interface Arrangement {
   midi: Uint8Array
   timeline: Timeline
+  pianoOnsets: number[] // the beats the band's piano (its pattern, or its comping) strikes, for the left-hand rhythm
+}
+
+/**
+ * The distinct beats some notes start on, sorted; the notes of a rolled or grace-noted chord
+ * (within 0.1 beat) count once.
+ *
+ *   notes at ticks 0, 12, 480, 960 -> [0, 1, 2]
+ */
+export function attackBeats(events: readonly NoteEvent[]): number[] {
+  const beats = [...new Set(events.map((event) => event.tick))].sort((a, b) => a - b).map((tick) => tick / PPQ)
+  return beats.filter((beat, index) => index === 0 || beat - beats[index - 1] > 0.1)
 }
 
 /** Use the chosen pattern as bass where appropriate and avoid doubling low figures. */
@@ -101,5 +113,5 @@ export function arrange(
       events: melodyEvents(chart, timeline, CHANNELS.melody, swing, transpose, practice.keyStep ?? 0),
     }] : []),
   ])
-  return { midi, timeline }
+  return { midi, timeline, pianoOnsets: attackBeats(patternEvents ?? comp) }
 }

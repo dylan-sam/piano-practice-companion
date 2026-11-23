@@ -26,7 +26,10 @@ import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from './ExerciseControls'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton } from './ReadingControls'
-import { ChordJudge, INFINITE_GROUPS, infiniteLine, isMistakes, mistakeKey, type InfiniteLine, type Mistakes } from './sightReading'
+import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonGoal } from '../lessons/useLessonGoal'
+import { LessonDone } from '../lessons/LessonDone'
+import { ChordJudge, INFINITE_GROUPS, infiniteLine, isMistakes, mistakeKey, VOICINGS, type InfiniteLine, type Mistakes, type Voicing } from './sightReading'
 import { useEndlessLine } from './useEndlessLine'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
 import { useBand } from './useBand'
@@ -36,6 +39,8 @@ type Feedback = Record<string, 'correct' | 'missed'>
 
 const MISTAKES_KEY = 'eartraining:sightreading:mistakes'
 const SEVENTHS_KEY = 'eartraining:sightreading:sevenths' // percent of 7th-chord versions
+const VOICING_KEY = 'eartraining:sightreading:voicing' // how chords must be voiced (voicing drills)
+const INFINITE_GOAL_CHORDS = 16 // a line reaches a lesson's target after this many chords judged
 const MIDI_PARTS = ['bass', 'drums'] as const
 const BPM_RANGE: [number, number] = [40, 300]
 // The three sources of chords
@@ -58,6 +63,9 @@ function arrangeForReading(chart: ChartData, styleId: string, patternId: BassPat
     { loop: practice.loop, keyStep: practice.keyStep, ending: false, countIn },
     null, { comp: false, bassPatternId: patternId })
 }
+
+/** Whether a stored value is a voicing drill. */
+const isVoicing = (value: unknown): value is Voicing => VOICINGS.some((option) => option.id === value)
 
 /** Name a visible chord target without exposing the chart's internal slot index. */
 function feedbackKey(slot: Slot): string {
@@ -84,6 +92,8 @@ export function ChordSightreading() {
   const [focus, setFocus] = useState(false)
   const [sevenths, setSevenths] = useState(() => loadJson(SEVENTHS_KEY, 50, (v) => typeof v === 'number' && v >= 0 && v <= 100))
   const seventhsRef = useRef(sevenths) // read when a chunk is prepared, so a new value applies at once
+  const [voicing, setVoicing] = useState<Voicing>(() => loadJson(VOICING_KEY, 'any', isVoicing))
+  const voicingRef = useRef(voicing) // read by every new judge, so a new voicing applies to the next chords
   const band = useBand<BassPatternId>(defaultBassPatternForStyle, BPM_RANGE)
   const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses, setChoruses, practice, setPractice } = band
 
@@ -96,6 +106,15 @@ export function ChordSightreading() {
     },
   })
   const { mode, tune } = source
+  // Opened from a lesson step: a voicing drill, an infinite line, its tempo
+  const lesson = useLessonLink()
+  useEffect(() => {
+    if (lesson?.voicing) changeVoicing(lesson.voicing, false)
+    if (lesson?.bpm) setBpm(lesson.bpm)
+    if (lesson?.infinite) source.chooseMode('infinite')
+    // Once, when the screen opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // A Practice loop picked on the chart: tap its first bar, then its last
   const loopPicking = useLoopPicking((loop) => changeArrangement(styleId, patternId, transpose, choruses, { ...practice, loop }))
 
@@ -159,7 +178,7 @@ export function ChordSightreading() {
     try {
       const arrangement = arrangeForReading(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses,
         nextPractice, countIn)
-      const judge = new ChordJudge(arrangement.timeline)
+      const judge = new ChordJudge(arrangement.timeline, { voicing: voicingRef.current })
       if (fromSeconds > 0) judge.expire(fromSeconds * BASE_BPM / 60) // already judged by the arrangement before
       else {
         setFeedback({})
@@ -206,7 +225,7 @@ export function ChordSightreading() {
       pending = { line, arrangement: arrangeForReading(line.chart, styleId, patternId, 0, 1, NO_PRACTICE, false), styleId, patternId }
     }
     infiniteRef.current = pending.line
-    judgeRef.current = new ChordJudge(pending.arrangement.timeline)
+    judgeRef.current = new ChordJudge(pending.arrangement.timeline, { voicing: voicingRef.current })
     setLine(pending.line)
     setTimeline(pending.arrangement.timeline)
     setFeedback({})
@@ -229,7 +248,7 @@ export function ChordSightreading() {
     // Normally the next chunk starts just before this one ends; this covers a missed switch
     if (endless.missed()) void switchToNext()
   }, () => STYLES.map(warmUpMidi))
-  const mixer = useMixer(playerRef, readiness)
+  const mixer = useMixer(playerRef, readiness, lesson?.mute)
   const mixerProps = mixer(style.comp.program)
 
   useEffect(() => {
@@ -325,6 +344,22 @@ export function ChordSightreading() {
     })
   }
 
+  /**
+   * Ask for another voicing: the judge playing now is made again, the chords already judged stay.
+   * A lesson's voicing is for this visit only (`keep` false).
+   */
+  const changeVoicing = (next: Voicing, keep = true) => {
+    setVoicing(next)
+    voicingRef.current = next
+    if (keep) saveJson(VOICING_KEY, next)
+    const current = judgeRef.current
+    if (current && timeline) {
+      const judge = new ChordJudge(timeline, { voicing: next })
+      judge.expire((playerRef.current?.heardPosition ?? 0) * BASE_BPM / 60)
+      judgeRef.current = judge
+    }
+  }
+
   /** Set how often 7th-chord versions are played; the next chunk is prepared again with it. */
   const changeSevenths = (value: number) => {
     setSevenths(value)
@@ -350,6 +385,14 @@ export function ChordSightreading() {
   // Held notes are spelled in the key on screen (F# rather than Gb in E), as the chords are
   const heldKey = chart ? (chart.key + shownTranspose + 12) % 12 : 0
   const mistakeCount = Object.values(mistakes).reduce((sum, count) => sum + count, 0)
+  // The lesson's target: every chord of a song judged, or enough of an infinite line
+  const results = Object.values(feedback)
+  const right = results.filter((result) => result === 'correct').length
+  const chordCount = timeline ? timeline.slots.filter((slot) => slot.chordIndex >= 0).length : 0
+  const reachedGoal = useLessonGoal(lesson, {
+    right, judged: results.length, bpm: liveBpm,
+    complete: mode === 'infinite' ? results.length >= INFINITE_GOAL_CHORDS : chordCount > 0 && results.length >= chordCount,
+  })
   const positionLabel = !chart ? 'Choose a song or start an infinite line' :
     beat < (timeline?.countIn ?? 0) && playing ? 'Count-in' :
       mode === 'infinite' ? `Chord ${activeIndex + 1} of this line` :
@@ -368,6 +411,14 @@ export function ChordSightreading() {
 
       <SongWorkspace source={source} modes={SOURCES} label="Sight-reading mode" tunes={source.tunes} catalog>
           <ExerciseStatus error={error} readiness={readiness} keyboard={keyboard} />
+          <div className="sight-picker">
+            <label className="control" title="How each chord must be voiced: the voicing drills of jazz piano, from shells to rootless and quartal voicings">
+              <span className="label">Voicing</span>
+              <select className="select" value={voicing} aria-label="Voicing" onChange={(event) => changeVoicing(event.target.value as Voicing)}>
+                {VOICINGS.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+              </select>
+            </label>
+          </div>
           {source.shown === 'random' && <RandomSongPicker catalog={catalog} onChoose={(id) => void source.openRandomSong(id)} />}
           {source.shown === 'infinite' && <div className="sight-picker">
             <button className="button button-primary" onClick={() => void startInfinite()}
@@ -403,7 +454,8 @@ export function ChordSightreading() {
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4}
             chordFeedback={feedback} selectedBar={loopPicking.firstBar}
             onBarClick={loopPicking.picking ? loopPicking.chooseBar : undefined} autoScroll={playing} />}
-          {chart && <p className="sight-hint">Play each chord on your keyboard before the next chord begins. Green means correct; red means its time expired.</p>}
+          {reachedGoal && <LessonDone />}
+          {chart && <p className="sight-hint">Play each chord on your keyboard before the next chord begins{voicing === 'any' ? '' : `, voiced as asked: ${VOICINGS.find((option) => option.id === voicing)?.text}`}. Green means correct; red means its time expired.</p>}
           {!chart && mode === 'pick' && <p className="sight-hint">Search ChoCo or a saved playlist, then select a song.</p>}
           <HeldNotes held={keyboard.held} keyPc={heldKey} />
       </SongWorkspace>

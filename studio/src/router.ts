@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react'
 
 export const ROUTES = {
   home: '/',
-  // The three areas of the main menu, each a menu of its screens
+  // The areas of the main menu, each a menu of its screens (Lessons is a screen of its own)
   playAlong: '/play-along',
   earTraining: '/ear-training',
   sightreading: '/sightreading',
@@ -15,6 +15,9 @@ export const ROUTES = {
   leadSheetSightreading: '/sightreading/lead-sheets',
   exerciseSightreading: '/sightreading/exercises',
   lickSightreading: '/sightreading/licks',
+  improvisation: '/improvisation',
+  freeImprovisation: '/improvisation/free',
+  lessons: '/lessons',
 } as const
 
 /** The menu one level up from a route: a screen's area menu, an area menu's main menu. */

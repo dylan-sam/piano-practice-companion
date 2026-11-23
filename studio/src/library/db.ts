@@ -49,3 +49,8 @@ export async function removeTune(id: string): Promise<void> {
 export async function saveTune(tune: Tune): Promise<void> {
   await db.tunes.put(tune)
 }
+
+/** Delete the whole tune library (Delete all my data). */
+export async function deleteLibrary(): Promise<void> {
+  await db.delete()
+}

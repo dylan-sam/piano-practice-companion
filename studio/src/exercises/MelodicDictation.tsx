@@ -29,9 +29,13 @@ import {
 import { keyReferenceMidi, measureAt, referenceForKey, transposeFor, type KeyChoice, type KeyReference } from './nameProgression'
 import { ExerciseStatus, KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
 import { MidiButton } from './ReadingControls'
+import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonGoal } from '../lessons/useLessonGoal'
+import { LessonDone } from '../lessons/LessonDone'
 import { useWindowKeys } from '../ui/useWindowKeys'
 
 const SETTINGS_KEY = 'eartraining:melodic-dictation'
+const LESSON_NOTES = 20 // notes written before a lesson step can be ticked
 const BPM_RANGE: [number, number] = [40, 240]
 const MAX_REPEATS = 4
 const START_BPM = 100 // excerpts start at most this fast
@@ -91,6 +95,8 @@ export function MelodicDictation() {
   const [results, setResults] = useState<Record<number, NoteResult> | null>(null)
   const [showMine, setShowMine] = useState(false) // after checking: the placed notes instead of the right ones
   const [tally, setTally] = useState({ notes: 0, correct: 0 }) // this visit's checked notes
+  // Opened from a lesson step: enough notes written, right enough, tick it
+  const reachedGoal = useLessonGoal(useLessonLink(), { right: tally.correct, judged: tally.notes, complete: tally.notes >= LESSON_NOTES, bpm: 0 })
 
   const [styleId, setStyleId] = useState('swing')
   const [patternId, setPatternId] = useState<string | null>(() => defaultPatternForStyle('swing'))
@@ -518,6 +524,7 @@ export function MelodicDictation() {
                       </div>
                     )}
                     <div className="feedback-round">This session: {tally.correct}/{tally.notes} notes right.</div>
+                    {reachedGoal && <LessonDone />}
                   </div>
                   <div className="feedback-actions">
                     <button className="topbar-button" aria-pressed={showMine} onClick={() => setShowMine(!showMine)}>

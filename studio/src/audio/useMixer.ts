@@ -27,12 +27,14 @@ export const compLabel = (program: number) => (program >= 24 && program <= 31 ? 
 
 /**
  * Hold the part volumes, mutes and master volume, and apply them to the player once it is ready.
- * Returns the props of the Mixer popover, given the comp instrument's General MIDI program.
+ * Returns the props of the Mixer popover, given the comp instrument's General MIDI program. A
+ * lesson step may ask for some parts muted at first (`mutedAtFirst`).
  */
-export function useMixer(playerRef: RefObject<Player | null>, readiness: Readiness) {
+export function useMixer(playerRef: RefObject<Player | null>, readiness: Readiness, mutedAtFirst: readonly Part[] = []) {
   // Levels kept from an earlier visit; parts added since then start at their default
   const [volumes, setVolumes] = useState(() => ({ ...DEFAULT_VOLUMES, ...loadJson(VOLUMES_KEY, DEFAULT_VOLUMES, isVolumes) }))
-  const [muted, setMuted] = useState(UNMUTED)
+  // A lesson step can open the screen with some parts muted
+  const [muted, setMuted] = useState(() => ({ ...UNMUTED, ...Object.fromEntries(mutedAtFirst.map((part) => [part, true])) }))
   const [master, setMaster] = useState(() => loadJson(MASTER_KEY, 100, isLevel))
   const [masterMuted, setMasterMuted] = useState(false)
   const level = useCallback(() => playerRef.current?.level() ?? { peak: -100, rms: -100 }, [playerRef])

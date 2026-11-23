@@ -1,7 +1,7 @@
 # Piano patterns
 
-The app offers **16 piano patterns** across its six styles, two to five per
-style, plus a "chord comping" entry (the style's own comping) for every style
+The app offers **24 piano patterns** across its six styles, two to nine per
+style (8 of them the Lessons tab's song patterns, [docs/LESSONS.md](docs/LESSONS.md)), plus a "chord comping" entry (the style's own comping) for every style
 except Blues. Patterns removed from the menus have been deleted from the
 catalog. Rebuild `data/left_hand_patterns.json` with
 `python left_hand_patterns.py`.
@@ -33,17 +33,25 @@ catalog. Rebuild `data/left_hand_patterns.json` with
 | Broken chords | `broken_chords` | Straight Pop/Rock, Ballad | scored example |
 | Ascending arpeggio | `arpeggio_ascending` | Ballad | scored example |
 | Rolled chords | `rolled_chords` | Ballad | scored example |
+| Two-feel: root and 5th | `two_feel` | Swing | adaptation (Lessons) |
+| Charleston chords | `charleston` | Swing | adaptation (Lessons) |
+| Bass shells: root, 3rd, 7th | `bass_shells` | Swing | adaptation (Lessons) |
+| Light stride: bass and shells | `light_stride` | Swing | adaptation (Lessons) |
+| Shells in the Charleston rhythm | `shells_charleston` | Swing | adaptation (Lessons) |
+| Two-note shells: root and 7th, root and 10th | `two_note_shells` | Swing | adaptation (Lessons) |
+| Broken chord: root, 5th, 10th | `broken_tenths` | Ballad | adaptation (Lessons) |
+| Quartal pad (stacked 4ths) | `quartal_pad` | Swing, Ballad | adaptation (Lessons) |
 
 The menus, with the default of each style first:
 
 | Style | Piano patterns |
 |---|---|
-| Swing | Swing chord comping, stride bass, walking bass |
+| Swing | Swing chord comping, stride bass, walking bass, two-feel, Charleston chords, bass shells, light stride, shells in the Charleston rhythm, two-note shells, quartal pad |
 | Blues | simple boogie, boogie walking bass, left-hand shuffle, New Orleans bass, boogie walking with chord shells |
 | Bossa Nova | Bossa chord comp 1 (the style's comping), blocked chords, bossa bass, Bossa chord comp 2 |
 | Latin | Latin montuno, Latin chord comping, tango bass, bossa bass |
 | Straight Pop/Rock | pop and rock bass, Straight Pop/Rock chord comping, broken chords |
-| Ballad | ascending arpeggio, Ballad chord comping, broken chords, rolled chords |
+| Ballad | ascending arpeggio, Ballad chord comping, broken chords, rolled chords, broken chord with tenths, quartal pad |
 
 ## Sources and fidelity
 

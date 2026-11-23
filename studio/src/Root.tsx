@@ -4,6 +4,8 @@ import { MelodicDictation } from './exercises/MelodicDictation.tsx'
 import { ChordSightreading } from './exercises/ChordSightreading.tsx'
 import { MelodySightreading } from './exercises/MelodySightreading.tsx'
 import { LickSightreading } from './exercises/LickSightreading.tsx'
+import { FreeImprovisation } from './exercises/FreeImprovisation.tsx'
+import { Lessons } from './lessons/Lessons.tsx'
 import { Menu } from './Home'
 import { routeUrl, ROUTES, usePath } from './router'
 
@@ -27,5 +29,7 @@ export default function Root() {
   if (path === ROUTES.leadSheetSightreading) return <MelodySightreading key="lead-sheets" kind="lead-sheets" />
   if (path === ROUTES.exerciseSightreading) return <MelodySightreading key="exercises" kind="exercises" />
   if (path === ROUTES.lickSightreading) return <LickSightreading />
+  if (path === ROUTES.freeImprovisation) return <FreeImprovisation />
+  if (path === ROUTES.lessons) return <Lessons />
   return <Menu path={path} />
 }

@@ -25,12 +25,17 @@ import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl } from './ExerciseControls'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ReadingPopover, ReadingSheet } from './ReadingControls'
-import { readingHint, readingTally } from './readingText'
-import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
+import { readingCount, readingHint, readingTally } from './readingText'
+import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonSong } from '../lessons/useLessonSong'
+import { useLessonOverride } from '../lessons/useLessonOverride'
+import { useLessonGoal } from '../lessons/useLessonGoal'
+import { LessonDone } from '../lessons/LessonDone'
+import { DEFAULT_READING, isReadingSettings, leftHandStage, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 import { useSongSource } from './useSongSource'
 import { useBand } from './useBand'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
-import { arrangeMelody } from './melodyReading'
+import { arrangeMelody, averageOffsetMs } from './melodyReading'
 
 const SETTINGS_KEY = 'eartraining:melody-reading'
 
@@ -63,7 +68,10 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
   const [playing, setPlaying] = useState(false)
   const [beat, setBeat] = useState(0)
   const [timeline, setTimeline] = useState<Timeline | null>(null)
-  const [settings, setSettings] = useStoredSettings<ReadingSettings>(SETTINGS_KEY, DEFAULT_READING, isReadingSettings)
+  const [stored, store] = useStoredSettings<ReadingSettings>(SETTINGS_KEY, DEFAULT_READING, isReadingSettings)
+  // Opened from a lesson step: its song, band, checking (for this visit) and muted parts
+  const lesson = useLessonLink()
+  const [settings, setSettings] = useLessonOverride(stored, store, lesson && { check: lesson.check, leftHand: lesson.leftHand })
   const band = useBand<string | null>(defaultPatternForStyle, BPM_RANGE)
   const { styleId, patternId, keyChoice, setKeyChoice, transpose, bpm, setBpm, choruses, setChoruses, practice, setPractice } = band
 
@@ -76,7 +84,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
       clear()
       setTimeline(null)
       setBeat(0)
-      band.takeSong(next.chart)
+      band.takeSong(next.chart, lessonSong.bandFor(next.id))
     },
   })
   const { mode, tune } = source
@@ -85,6 +93,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
 
   // Only what this screen reads: lead sheets (shipped and saved), or the exercises and licks
   const leadSheets = useMemo(() => source.tunes.filter(readable(kind)), [source.tunes, kind])
+  const lessonSong = useLessonSong(lesson, leadSheets, source.open)
   const chart = tune?.chart ?? null
   const style = getStyle(styleId)
   const position = timeline ? barAtBeat(timeline, beat) : null
@@ -103,11 +112,12 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     const player = playerRef.current
     if (!player) return
     try {
-      const { arrangement: { midi, timeline }, notes } = arrangeMelody(nextChart, nextStyle, nextPattern, nextTranspose,
+      const { arrangement, notes } = arrangeMelody(nextChart, nextStyle, nextPattern, nextTranspose,
         nextChoruses, nextPractice)
-      if (fromSeconds > 0) resume(notes, timeline, nextSettings, fromSeconds * BASE_BPM / 60)
+      const { midi, timeline } = arrangement
+      if (fromSeconds > 0) resume(notes, arrangement, nextSettings, fromSeconds * BASE_BPM / 60)
       else {
-        begin(notes, timeline, nextSettings)
+        begin(notes, arrangement, nextSettings)
         setBeat(0)
       }
       setTimeline(timeline)
@@ -124,7 +134,13 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     settleThrough(Infinity)
     setPlaying(false)
   }, () => STYLES.map(warmUpMidi))
-  const mixer = useMixer(playerRef, readiness)
+  const mixer = useMixer(playerRef, readiness, lesson?.mute)
+  // The lesson's target: the whole piece judged, right enough, fast enough
+  const count = readingCount(reading)
+  const reachedGoal = useLessonGoal(lesson, {
+    right: count.right, judged: count.judged, complete: count.total > 0 && count.judged >= count.total, bpm: liveBpm,
+    offsetMs: averageOffsetMs(reading.score, liveBpm),
+  })
 
   useEffect(() => { playerRef.current?.setRate(liveBpm / BASE_BPM) }, [liveBpm])
 
@@ -231,7 +247,9 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
           </div>}
           {tune && <ReadingSheet chart={tune.chart} style={style} transpose={shownTranspose} position={position} beat={beat}
             playing={playing} loopPicking={loopPicking} loop={practice.loop} feedback={feedback} chordFeedback={chordFeedback} reading={reading}
-            bpm={liveBpm} hint={readingHint(reading.checking, 'the melody')} />}
+            bpm={liveBpm} hint={readingHint(reading.checking, 'the melody', leftHandStage(settings))} />}
+          {reachedGoal && <LessonDone />}
+          {lessonSong.missing && <p className="sight-hint">The lesson's {words.item}, {lessonSong.missing}, is not in the app yet: choose another one, or import it.</p>}
           {!tune && mode === 'pick' && <p className="sight-hint">{words.choose}</p>}
           <HeldNotes held={keyboard.held} keyPc={heldKey} />
       </SongWorkspace>

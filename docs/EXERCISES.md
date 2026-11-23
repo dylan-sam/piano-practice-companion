@@ -1,11 +1,12 @@
 # Exercises
 
-The app has six exercises. In the **Ear Training** menu: **Name the
+The app has seven exercises. In the **Ear Training** menu: **Name the
 progression** and **Melodic Dictation**. In the **Sightreading** menu, with a MIDI keyboard: **Chord
 Sightreading** (playing chords), **Lead Sheet Sightreading** (playing the
 melody of a lead sheet), **Exercises Sightreading** (playing an exercise or a
 lick of a few bars) and **Lick Sightreading** (playing a lick over every chord
-of a chord chart). All remember your settings in the browser (or in the phone
+of a chord chart). In the **Improvisation** menu: **Free Improvisation**. The
+**Lessons** tab ([LESSONS.md](LESSONS.md)) opens them set up for each step. All remember your settings in the browser (or in the phone
 app).
 
 - [Name the progression](#name-the-progression)
@@ -31,6 +32,7 @@ app).
 - [Lick Sightreading](#lick-sightreading)
   - [Chords and licks](#chords-and-licks)
   - [How the lick follows the chords](#how-the-lick-follows-the-chords)
+- [Free Improvisation](#free-improvisation)
 
 ## Name the progression
 
@@ -285,6 +287,18 @@ More rules:
   on mistakes**, so a missed `Dm9` also brings back `Dm`.
 - Without a MIDI keyboard you can still listen; nothing is counted as missed.
 
+**Voicing** (above the chart) turns the screen into a voicing drill: each chord
+must then be voiced as asked (`matchesVoicing` in
+`studio/src/exercises/sightReading.ts`), here for `C7`:
+
+| Voicing | What counts | C7 |
+|---|---|---|
+| Any voicing (default) | the rules above | |
+| Shells | root at the bottom, 3rd and 7th (a triad's 6th), nothing else | C E B♭, C B♭ E |
+| Two hands | a shell under the 9th and 5th | C B♭ E, then D G |
+| Rootless | 3rd, 7th and 9th (5th or 13th allowed), no root | E A B♭ D, B♭ D E A |
+| Quartal | three or more notes a perfect 4th apart, all from the chord's scale | over `D-7`: E A D G |
+
 ### Infinite progressions
 
 An endless line of short progressions (two to four chords) from the catalog. It
@@ -363,7 +377,7 @@ Practice and Mixer (on phones, under Settings), so the sheet keeps the page.
 | Melody only (default) | the melody | the melody's notes, as below |
 | Chords only | the chord symbols | each chord, in any voicing, inversion or rhythm |
 | Melody and chords | the melody with the right hand, the chords with the left | both, each with its own score |
-| Improvise (note colours) | anything, over the chords | nothing: each key is coloured by how it sits on the chord (below) |
+| Melody, hands together | the melody with both hands, an octave apart | each note, once per hand |
 
 A chord counts once every required note of it has been played during the time
 it sounds, held together or one after the other (a broken chord, a comping
@@ -375,20 +389,21 @@ melody or passing notes played with it don't spoil it. The chord symbol turns
 With Melody and chords, a key that is not the melody note due but belongs to
 the chord sounding is the left hand's: it is not an extra key.
 
-**Improvise** follows the note coloration of Impro-Visor: nothing is right or
-wrong, and the score line shows how many keys landed on each kind of note (with
-their share) and the last 16 keys, each in its colour
-(`studio/src/exercises/toneColors.ts`):
+**Left hand** (shown when chords are checked) says what each chord wants from
+the left hand: the stages of learning a song's left hand
+(`LEFT_HAND_STAGES` in `studio/src/exercises/sightReading.ts`). A key struck up
+to the timing window before a chord counts for that chord.
 
-| Colour | Kind | Over C7 |
-|---|---|---|
-| black | chord tone | C E G B♭ |
-| green | colour tone: another note of the chord's scale (the scales of Lick Sightreading), except the 11th over a major 3rd, which clashes with it | D A |
-| blue | approach tone: an outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | F♯ then G |
-| red | outside: none of these | F♯ then F |
+| Left hand | A chord counts when |
+|---|---|
+| Bass note only | its bass (the root, or the note after the slash) is played |
+| Whole chord, any rhythm (default) | every required note is played, as above |
+| Whole chord on each beat | every required note is played, with a key near each of its beats |
+| The piano pattern's rhythm | its bass is among the notes, with a key near each attack of the band's piano (its pattern, or its comping) |
 
-Keys in the count-in are not coloured. The melody still plays: mute it in the
-Mixer to improvise over the band alone.
+**Melody, hands together** asks for each note twice: the written note and the
+same note an octave below (with Any octave, any two octaves of it), for scales
+and arpeggios with both hands. Each hand's note counts in the score.
 
 For the melody, every written note gets a window around its start (`TIMING_WINDOWS` in
 `studio/src/exercises/melodyReading.ts`):
@@ -423,8 +438,8 @@ percentage. The bar readout adds what was right out of what was judged. It start
 choruses, a Practice loop). What leaves the sheet as it is goes on from where
 the band is and keeps the score: a new style or piano pattern (the notes still
 to come are judged where the new style swings them), Timing and Any octave
-(the notes still to come are judged the new way) and Check (what is still to
-come is judged as now checked).
+(the notes still to come are judged the new way), Check and Left hand (what is
+still to come is judged as now checked).
 Practice > Keys and the speed-up go on from where the band is and keep the
 score: the notes still to come are judged in their new keys.
 
@@ -487,3 +502,34 @@ The lick is read as a **shape** relative to its own chord
 
 Over its own chord a lick comes back unchanged (the tests check every
 one-chord lick of the database).
+
+## Free Improvisation
+
+The band plays a chord chart (**Pick a song**: the shipped lead sheets, whose
+melody is left out, the ChoCo catalog or your own charts; **Random song**; or
+**Infinite progressions**, as in Chord Sightreading) and you improvise on a MIDI
+keyboard. Nothing is right or wrong: every key is written out on the chart as
+you play (`writeLine` in `studio/src/exercises/improvisation.ts`), and the page
+starts again at each chorus (each sheet of an infinite line).
+
+- Keys are written on a grid: sixteenths in a straight style, eighths in a swung
+  one (the swung "and" is written as an eighth). A bar played twice in a chorus
+  shows its last pass.
+- Keys struck together write only the highest (the line on top). A note lasts
+  until its key goes up or the next note starts; a held key grows with the band.
+- Notes are written in the key of the song, so they are spelled with its
+  sharps or flats.
+
+Each note is coloured after the note coloration of Impro-Visor, on the chord
+sounding where it starts, and the line under the sheet counts each kind (with
+its share) (`studio/src/exercises/toneColors.ts`):
+
+| Colour | Kind | Over C7 |
+|---|---|---|
+| black | chord tone | C E G B♭ |
+| green | colour tone: another note of the chord's scale (the scales of Lick Sightreading), except the 11th over a major 3rd, which clashes with it | D A |
+| blue | approach tone: an outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | F♯ then G |
+| red | outside: none of these | F♯ then F |
+
+Keys in the count-in are not written. Opened from a lesson, the band's piano
+starts muted so your left hand is heard.

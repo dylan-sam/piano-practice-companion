@@ -3,7 +3,7 @@ import { melodyOccurrences, type MelodyOccurrence } from '../src/engine/melody'
 import { buildTimeline } from '../src/engine/timeline'
 import { swingPlacer } from '../src/engine/events'
 import { chartFromMeasures } from '../src/music/chart'
-import { accuracy, averageOffsetMs, MelodyJudge, noteKey } from '../src/exercises/melodyReading'
+import { accuracy, averageOffsetMs, handsTogether, MelodyJudge, noteKey } from '../src/exercises/melodyReading'
 
 /** A melody note starting at a beat. */
 const note = (start: number, pitch: number, measure = 0): MelodyOccurrence =>
@@ -90,6 +90,17 @@ describe('melody note due', () => {
     expect(judge.isDue(5, 60)).toBe(false)
     judge.press(4, 60)
     expect(judge.isDue(4.1, 60)).toBe(false) // already played
+  })
+})
+
+describe('hands together', () => {
+  test('each note is played twice, an octave apart, in the same window', () => {
+    const judge = new MelodyJudge(handsTogether([note(4, 60), note(5, 62)]), 0.25, false)
+    expect(judge.total).toBe(4)
+    expect(judge.press(4.1, 48).result).toBe('correct')
+    expect(judge.press(4.12, 60).result).toBe('correct')
+    expect(judge.press(5, 62).result).toBe('correct')
+    expect(judge.expire(6).map((s) => s.result)).toEqual(['missed']) // the left hand's D
   })
 })
 

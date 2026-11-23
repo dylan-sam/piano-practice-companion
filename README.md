@@ -28,16 +28,24 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The main menu has three areas, each opening a menu of its screens:
+The main menu has the **Lessons** tab and four areas, each opening a menu of its screens:
 
 | Area | Screens |
 |---|---|
+| **Lessons** | a 30-week jazz piano program whose steps open the screens below, set up for each step ([docs/LESSONS.md](docs/LESSONS.md)) |
 | **Play along** | [Chord Player](#chord-player), [Lead Sheet Player](#lead-sheet-player) |
 | **Ear Training** | [Name the progression](#name-the-progression), [Melodic Dictation](#melodic-dictation) |
 | **Sightreading** (with a MIDI keyboard) | [Chord Sightreading](#chord-sightreading), [Lead Sheet Sightreading](#lead-sheet-sightreading), [Exercises Sightreading](#exercises-sightreading), [Lick Sightreading](#lick-sightreading) |
+| **Improvisation** (with a MIDI keyboard) | [Free Improvisation](#free-improvisation) |
 
 The back button (and the title at the top left of a screen) goes up one level:
 from a screen to its area's menu, then to the main menu.
+
+**Delete all my data**, at the bottom of the main menu, deletes everything the
+app keeps on the device (saved and imported songs and playlists, settings,
+styles, remembered mistakes, levels passed, lesson progress) after a second
+confirmation, to start afresh. Other sites served from the same address keep
+their data.
 
 <img src="docs/images/home.png" alt="The main menu" width="640">
 
@@ -159,6 +167,10 @@ fifth of a four-note chord may be left out. Three modes:
   through related keys, with a slider for how often seventh chords appear and
   **Focus on mistakes** for the chords you miss.
 
+**Voicing** turns it into a voicing drill: **Shells** (root, 3rd, 7th), **Two
+hands** (a shell under the 9th and 5th), **Rootless** (3rd, 7th, 9th) or
+**Quartal** (stacked 4ths from the chord's scale).
+
 ### Lead Sheet Sightreading
 
 Read a lead sheet and play its melody on a MIDI keyboard while bass, piano and
@@ -175,9 +187,10 @@ the percentage and your average timing (early or late, in milliseconds).
   - **Check**: **Melody only** (default), **Chords only** or **Melody and
     chords**, for playing the chords with the left hand under the melody.
     Chords count in any voicing, inversion or rhythm (broken, comped, walking).
-    **Improvise (note colours)**: nothing is judged; each key shows how it sits
-    on the chord sounding: chord tone (black), colour tone (green), approach
-    tone (blue), outside (red).
+    **Melody, hands together**: each note with both hands, an octave apart.
+  - **Left hand** (when chords are checked): **Bass note only**, **Whole chord,
+    any rhythm** (default), **Whole chord on each beat** or **The piano
+    pattern's rhythm**: the stages of learning a song's left hand.
   - **Timing**: Easy, Normal or Strict.
   - **Any octave**: count a note played in another octave than written.
 - The band plays the melody too; turn it down or mute it in the **Mixer**.
@@ -201,7 +214,16 @@ progressions** (as in Chord Sightreading). The lick is written and transposed ov
 it on a MIDI keyboard with the band; it is judged as in Lead Sheet Sightreading.
 **Rest between licks** leaves a rest as long as the lick after each one.
 
-All four exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
+### Free Improvisation
+
+Choose a song (the shipped lead sheets, the ChoCo catalog or your own charts), a
+**Random song** or **Infinite progressions**, and improvise with the band on a
+MIDI keyboard. Every key is written out on the chart as you play and coloured
+by how it sits on the chord: chord tone (black), colour tone (green), approach
+tone (blue, once you resolve it a half step away), outside (red). The page
+starts again at each chorus.
+
+All the exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
 ## The data
 
@@ -634,7 +656,8 @@ studio/                  the app (React, TypeScript, Vite) and its Android and i
 
 - [docs/DATA.md](docs/DATA.md): sources, database layout, curation, every correction, rebuilding.
 - [docs/CHORD_NOTATION.md](docs/CHORD_NOTATION.md): how chords are written, read from iReal Pro cells and played.
-- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression, Melodic Dictation and the four sightreading screens in detail.
+- [docs/EXERCISES.md](docs/EXERCISES.md): Name the progression, Melodic Dictation, the four sightreading screens and Free Improvisation in detail.
+- [docs/LESSONS.md](docs/LESSONS.md): the Lessons tab, its program, links and sources.
 - [docs/LICKS.md](docs/LICKS.md): the licks and exercises, how they are made and mined, and their rights.
 - [docs/MOBILE.md](docs/MOBILE.md): the Android and iOS apps, building and troubleshooting.
 - [studio/README.md](studio/README.md): the app, its styles and piano patterns.
@@ -706,8 +729,8 @@ authors. Google Play has no such restriction. This is not legal advice.
   Open Digital Press, 2023, CC BY 4.0).
 - **Ideas** (no code taken): the Check menu of the reading screens (melody,
   chords or both hands) follows the hand choice of
-  [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); its
-  Improvise mode follows the note coloration of
+  [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); the note
+  colours of Free Improvisation follow the note coloration of
   [Impro-Visor](https://github.com/Impro-Visor/Impro-Visor) (GPL-2.0-or-later).
 - **Fonts**: Petaluma (Steinberg), IBM Plex (IBM).
 

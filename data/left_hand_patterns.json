@@ -943,6 +943,347 @@
     "shell_variations": []
   },
   {
+    "id": "two_feel",
+    "name": "Two-feel: root and 5th",
+    "categories": [
+      "swing"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.5,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.5,
+        "role": "fifth_low",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "charleston",
+    "name": "Charleston chords",
+    "categories": [
+      "swing",
+      "blues"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)",
+      "Berklee basic piano voicing techniques"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.375,
+        "role": "chord",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "chord",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "bass_shells",
+    "name": "Bass shells: root, 3rd, 7th",
+    "categories": [
+      "swing"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.5,
+        "role": "shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.5,
+        "role": "shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "light_stride",
+    "name": "Light stride: bass and shells",
+    "categories": [
+      "swing"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.25,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.25,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.25,
+        "role": "fifth_low",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.25,
+        "role": "upper_shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "shells_charleston",
+    "name": "Shells in the Charleston rhythm",
+    "categories": [
+      "swing"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)",
+      "Berklee basic piano voicing techniques"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.375,
+        "role": "shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.125,
+        "role": "shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "two_note_shells",
+    "name": "Two-note shells: root and 7th, root and 10th",
+    "categories": [
+      "swing"
+    ],
+    "styles": [
+      "swing"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.5,
+        "role": "seventh_shell",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.5,
+        "role": "tenth_shell",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "broken_tenths",
+    "name": "Broken chord: root, 5th, 10th",
+    "categories": [
+      "ballad"
+    ],
+    "styles": [
+      "ballad"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 0.125,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.125,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.25,
+        "duration": 0.125,
+        "role": "tenth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.375,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.5,
+        "duration": 0.125,
+        "role": "root",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.625,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.125,
+        "role": "tenth",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.875,
+        "duration": 0.125,
+        "role": "fifth",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
+    "id": "quartal_pad",
+    "name": "Quartal pad (stacked 4ths)",
+    "categories": [
+      "swing",
+      "ballad"
+    ],
+    "styles": [
+      "swing",
+      "ballad"
+    ],
+    "default_for": [],
+    "sources": [
+      "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.0,
+        "duration": 1.0,
+        "role": "quartal",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
     "id": "boogie_walking_shells",
     "name": "Boogie walking with chord shells",
     "categories": [

@@ -6,7 +6,7 @@ import { midiNoteChange } from '../src/audio/midiInput'
 import { arrange } from '../src/engine/arrange'
 import { BASS_PATTERNS, defaultBassPatternForStyle, generateBassPattern } from '../src/engine/bassPatterns'
 import { buildTimeline } from '../src/engine/timeline'
-import { ChordJudge, coversChord, isMistakes, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
+import { ChordJudge, coversChord, isMistakes, matchesVoicing, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
 import { ChordSightreading } from '../src/exercises/ChordSightreading'
 import type { Progression } from '../src/exercises/nameProgression'
 import { parseChord } from '../src/music/chords'
@@ -250,6 +250,74 @@ describe('chords checked in any rhythm', () => {
     expect(judge.accept(1.5, new Set(), 60)).toBeNull() // already played
     expect(judge.accept(2, new Set(), 55)).toBeNull() // G alone: not yet the whole chord
     expect(judge.expire(4).map((slot) => slot.chordIndex)).toEqual([1])
+  })
+})
+
+
+describe('left-hand stages', () => {
+  // C7 for two beats, then F for two beats
+  const chart = chartFromMeasures({ title: 'Stages', style: 'swing', key: 0, bpm: 120 }, [['C7', 'F']])
+  const timeline = buildTimeline(chart, 0, 1, { countIn: false, ending: false })
+
+  it('bass only: the chord\'s bass is enough', () => {
+    const judge = new ChordJudge(timeline, { broken: true, stage: 'bass' })
+    expect(judge.accept(0.1, new Set([36]), 36)?.chordIndex).toBe(0)
+    expect(judge.accept(2.1, new Set([45]), 45)).toBeNull() // A is not the bass of F
+  })
+
+  it('each beat: the whole chord and a key near every beat', () => {
+    const judge = new ChordJudge(timeline, { broken: true, stage: 'beats' })
+    expect(judge.accept(0, new Set(), 48)).toBeNull()
+    expect(judge.accept(0.05, new Set(), 52)).toBeNull()
+    expect(judge.accept(0.1, new Set(), 58)).toBeNull() // the whole chord, but beat 1 still to come
+    expect(judge.accept(1.1, new Set(), 58)?.chordIndex).toBe(0)
+    expect(judge.accept(2.1, new Set([53, 57, 60]), 60)).toBeNull() // F once: beat 3 waits
+    expect(judge.expire(4).map((slot) => slot.chordIndex)).toEqual([1])
+  })
+
+  it('a key struck just before a chord counts for it', () => {
+    const judge = new ChordJudge(timeline, { broken: true, stage: 'bass' })
+    expect(judge.accept(1.9, new Set([41]), 41)?.chordIndex).toBe(1)
+  })
+
+  it("the pattern: the band piano's attacks, with the bass among the notes", () => {
+    const judge = new ChordJudge(timeline, { broken: true, stage: 'pattern', onsets: [0, 1.5, 2, 3.5] })
+    expect(judge.accept(0, new Set(), 36)).toBeNull()
+    expect(judge.accept(1.45, new Set(), 64)?.chordIndex).toBe(0)
+    expect(judge.accept(2, new Set(), 41)).toBeNull()
+    expect(judge.expire(4).map((slot) => slot.chordIndex)).toEqual([1]) // no key near 3.5
+  })
+})
+
+describe('voicing drills', () => {
+  const c7 = parseChord('C7')!
+  const held = (...notes: number[]) => new Set(notes)
+
+  it('shells: root at the bottom, 3rd and 7th, nothing else', () => {
+    expect(matchesVoicing(held(48, 52, 58), c7, 'shell')).toBe(true)
+    expect(matchesVoicing(held(48, 58, 64), c7, 'shell')).toBe(true)
+    expect(matchesVoicing(held(48, 52, 55, 58), c7, 'shell')).toBe(false) // the 5th
+    expect(matchesVoicing(held(52, 58, 60), c7, 'shell')).toBe(false) // root not at the bottom
+  })
+
+  it('two hands: a shell under the 9th and 5th', () => {
+    expect(matchesVoicing(held(36, 46, 52, 62, 67), c7, 'twoHand')).toBe(true)
+    expect(matchesVoicing(held(36, 46, 52), c7, 'twoHand')).toBe(false)
+  })
+
+  it('rootless: 3rd, 7th and 9th without the root, the 13th allowed', () => {
+    expect(matchesVoicing(held(52, 57, 58, 62), c7, 'rootless')).toBe(true) // E A Bb D
+    expect(matchesVoicing(held(58, 62, 64, 69), c7, 'rootless')).toBe(true) // Bb D E A
+    expect(matchesVoicing(held(48, 52, 58, 62), c7, 'rootless')).toBe(false) // a root
+    expect(matchesVoicing(held(62, 65, 69, 72), parseChord('D-7')!, 'rootless')).toBe(false) // the root D
+  })
+
+  it('quartal: perfect 4ths from the chord scale', () => {
+    const dm7 = parseChord('D-7')!
+    const dorian = [0, 2, 3, 5, 7, 9, 10]
+    expect(matchesVoicing(held(52, 57, 62, 67), dm7, 'quartal', dorian)).toBe(true) // E A D G
+    expect(matchesVoicing(held(52, 57, 61), dm7, 'quartal', dorian)).toBe(false) // a major 3rd on top
+    expect(matchesVoicing(held(51, 56, 61), dm7, 'quartal', dorian)).toBe(false) // Eb Ab Db: not Dorian
   })
 })
 

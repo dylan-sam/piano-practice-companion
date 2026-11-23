@@ -27,6 +27,9 @@ import {
 import { NARROW_QUERY } from '../ui/useNarrowScreen'
 import { useWindowKeys } from '../ui/useWindowKeys'
 import { KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
+import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonGoal } from '../lessons/useLessonGoal'
+import { LessonDone } from '../lessons/LessonDone'
 
 const STORAGE = 'eartraining:name-progression'
 const BPM_RANGE: [number, number] = [40, 240]
@@ -281,6 +284,8 @@ export function NameProgression() {
 
   const roundOver = answer !== null && round.answered >= ROUND_LENGTH
   const roundPassed = roundOver && round.correct >= PASS_MARK
+  // Opened from a lesson step: a round of questions, right enough, ticks it
+  const reachedGoal = useLessonGoal(useLessonLink(), { right: round.correct, judged: round.answered, complete: roundOver, bpm: 0 })
 
   /** Answer with a progression, or after answering, hear that progression in the gap. */
   const choose = (id: string) => {
@@ -500,6 +505,7 @@ export function NameProgression() {
                     {asked.question.title}
                     {asked.question.artist && ` · ${asked.question.artist}`} · {asked.question.corpus}
                     <div className="feedback-hint">Tap a progression to hear it in the gap.</div>
+                    {reachedGoal && <LessonDone />}
                     {roundOver && (
                       <div className="feedback-round">
                         Round finished: {round.correct}/{ROUND_LENGTH} correct.{' '}

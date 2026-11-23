@@ -1,5 +1,5 @@
 // The Scoring menu of the reading screens: what is checked (melody only by default, chords, both,
-// or improvising with note colours), with no Guide melody switch (the Mixer's Melody slider mutes the melody).
+// or the melody hands together), with no Guide melody switch (the Mixer's Melody slider mutes the melody).
 
 import { expect, test, type Page } from '@playwright/test'
 import { collectErrors } from './helpers'
@@ -22,13 +22,17 @@ for (const path of ['/sightreading/lead-sheets', '/sightreading/exercises', '/si
     await page.getByRole('button', { name: /Scoring/ }).click()
     const check = page.getByLabel('Check')
     await expect(check).toHaveValue('melody')
-    await expect(check.locator('option')).toHaveText(['Melody only', 'Chords only', 'Melody and chords', 'Improvise (note colours)'])
+    await expect(check.locator('option')).toHaveText(['Melody only', 'Chords only', 'Melody and chords', 'Melody, hands together'])
     await expect(page.getByRole('button', { name: /Guide melody/ })).toHaveCount(0)
+    await expect(page.getByLabel('Left hand')).toHaveCount(0) // only when chords are checked
     await check.selectOption('both')
+    await expect(page.getByLabel('Left hand')).toHaveValue('chord')
+    await page.getByLabel('Left hand').selectOption('beats')
     await page.reload()
     await openSheet(page, path)
     await page.getByRole('button', { name: /Scoring/ }).click()
     await expect(page.getByLabel('Check')).toHaveValue('both')
+    await expect(page.getByLabel('Left hand')).toHaveValue('beats')
     expect(errors).toEqual([])
   })
 }

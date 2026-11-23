@@ -13,6 +13,7 @@
     "soundbank": "node scripts/build-soundbank.mjs",
     "leadsheets": "node scripts/build-lead-sheets.mjs",
     "licks": "node scripts/build-licks.mjs",
+    "lesson-songs": "node scripts/build-lesson-songs.mjs",
     "catalog": "python ../build_mobile_catalog.py",
     "native": "pnpm run catalog && pnpm run build && cap sync",
     "sync": "pnpm run build && cap sync",

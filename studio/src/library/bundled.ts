@@ -1,13 +1,16 @@
 // Lead sheets served with the app, read-only:
 // - leadsheets/catalog.json: the public domain lead sheets shipped with the project (OpenEWLD,
 //   Nottingham Music Database), built by `pnpm run leadsheets` (scripts/leadSheetCatalog.ts)
+// - leadsheets/lessons.json: the Lessons tab tunes not in the catalog (two study tunes and What
+//   Is This Thing Called Love?), built by
+//   `pnpm run lesson-songs` (scripts/build-lesson-songs.mjs)
 // - licks/licks.json: the lick and exercise database, built by `pnpm run licks`
 //   (scripts/lickCatalog.ts, docs/LICKS.md); only the screens that use it load it
 import type { Tune } from '../music/songs'
 import { reportError } from '../errorReports'
 import { parseStudioPlaylists } from './playlistExport'
 
-const LEAD_SHEETS = ['leadsheets/catalog.json']
+const LEAD_SHEETS = ['leadsheets/catalog.json', 'leadsheets/lessons.json']
 const LICKS = ['licks/licks.json']
 
 /** The lead sheets of one bundled file (a path under public/), or none when the build does not have it. */

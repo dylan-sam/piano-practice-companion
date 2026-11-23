@@ -9,6 +9,7 @@ const SCREENS = [
   '/play-along/chords', '/play-along/lead-sheets',
   '/ear-training/name-the-progression', '/ear-training/melodic-dictation',
   '/sightreading/chords', '/sightreading/lead-sheets', '/sightreading/exercises', '/sightreading/licks',
+  '/improvisation', '/improvisation/free', '/lessons',
 ]
 
 const SIZES = [

@@ -1,4 +1,4 @@
-// Improvise check mode: how each note played sits on the chord sounding, after the note
+// Free Improvisation: how each note played sits on the chord sounding, after the note
 // coloration of Impro-Visor (R. Keller, Harvey Mudd College): chord tones, colour tones, approach
 // tones and outside tones. Nothing is right or wrong; the colours show where the notes land.
 

@@ -12,6 +12,8 @@ MELLIS = "Index of Left-hand Accompaniment Patterns"
 BASIC_VOICING = "Berklee basic piano voicing techniques"
 BOSSA_COMP = "Rhythm Dictionary bossa piano comp; Yamaha Exploring Latin Rhythms"
 SON_MONTUNO = "Rhythm Dictionary son montuno 2-3; Midwest Clinic rhythm patterns"
+# The left-hand patterns of the Lessons tab, one per song (the order follows jazz-piano teaching)
+LESSONS = "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
 SHUFFLE_POSITIONS = (0, .1875, .25, .4375, .5, .6875, .75, .9375)
 SHUFFLE_DURATIONS = (.1875, .0625) * 4
 SHELL_PATTERN_IDS = frozenset(("boogie_walking_shells",))
@@ -153,6 +155,26 @@ ALL_PATTERN_LIST = (
     _make_scored_pattern("new_orleans_bass", "New Orleans bass", "blues swing", (MELLIS,),
                          ((0, .375, "root_up"), (.375, .015625, "flat_third_up", True),
                           (.375, .375, "third_up"), (.75, .25, "fifth_up"))),
+    # The Lessons tab's patterns: two-feel, Charleston, shells, light stride, two-note shells,
+    # broken tenths and a quartal pad (walking bass, stride and bossa bass are above)
+    _make_scored_pattern("two_feel", "Two-feel: root and 5th", "swing", (LESSONS,),
+                         ((0, .5, "root"), (.5, .5, "fifth_low")), transcribed=False),
+    _make_scored_pattern("charleston", "Charleston chords", "swing blues", (LESSONS, BASIC_VOICING),
+                         ((0, .375, "chord"), (.375, .125, "chord")), transcribed=False),
+    _make_scored_pattern("bass_shells", "Bass shells: root, 3rd, 7th", "swing", (LESSONS,),
+                         ((0, .5, "shell"), (.5, .5, "shell")), transcribed=False),
+    _make_scored_pattern("light_stride", "Light stride: bass and shells", "swing", (LESSONS,),
+                         ((0, .25, "root"), (.25, .25, "upper_shell"),
+                          (.5, .25, "fifth_low"), (.75, .25, "upper_shell")), transcribed=False),
+    _make_scored_pattern("shells_charleston", "Shells in the Charleston rhythm", "swing", (LESSONS, BASIC_VOICING),
+                         ((0, .375, "shell"), (.375, .125, "shell"), (.875, .125, "shell")), transcribed=False),
+    _make_scored_pattern("two_note_shells", "Two-note shells: root and 7th, root and 10th", "swing", (LESSONS,),
+                         ((0, .5, "seventh_shell"), (.5, .5, "tenth_shell")), transcribed=False),
+    _make_scored_pattern("broken_tenths", "Broken chord: root, 5th, 10th", "ballad", (LESSONS,),
+                         tuple((index / 8, .125, role) for index, role in enumerate(
+                             "root fifth tenth fifth root fifth tenth fifth".split())), transcribed=False),
+    _make_scored_pattern("quartal_pad", "Quartal pad (stacked 4ths)", "swing ballad", (LESSONS,),
+                         ((0, 1, "quartal"),), transcribed=False),
 )
 
 
@@ -176,13 +198,14 @@ ALL_PATTERN_LIST += (
 )
 
 CURATED_PATTERN_IDS_BY_STYLE = {
-    "swing": ("walking_bass", "stride"),
+    "swing": ("walking_bass", "stride", "two_feel", "charleston", "bass_shells", "light_stride",
+              "shells_charleston", "two_note_shells", "quartal_pad"),
     "blues": ("boogie_simple", "boogie_walking", "boogie_walking_shells",
               "left_hand_shuffle", "new_orleans_bass"),
     "bossa nova": ("bossa_chord_comp", "bossa_bass", "block_chords"),
     "latin": ("latin_montuno", "tango", "bossa_bass"),
     "straight pop/rock": ("pop_rock", "broken_chords"),
-    "ballad": ("broken_chords", "arpeggio_ascending", "rolled_chords"),
+    "ballad": ("broken_chords", "arpeggio_ascending", "rolled_chords", "broken_tenths", "quartal_pad"),
 }
 CURATED_PATTERN_IDS = frozenset(
     pattern_id for pattern_ids in CURATED_PATTERN_IDS_BY_STYLE.values()

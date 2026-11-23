@@ -4,17 +4,17 @@
 import type { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import type { Bar } from '../engine/timeline'
 import type { Chart } from '../music/chart'
-import { prettyNoteName } from '../music/chords'
 import type { StyleDefinition } from '../styles/types'
 import { LeadSheet } from '../ui/LeadSheet'
 import { Popover } from '../ui/Popover'
 import type { useLoopPicking } from '../ui/useLoopPicking'
 import { accuracy, averageOffsetMs, CHECK_MODES, checksChords, checksMelody, type CheckMode, type NoteResult, type Strictness } from './melodyReading'
-import { checkMode, type ReadingSettings } from './useMelodyJudging'
+import { checkMode, leftHandStage, type ReadingSettings } from './useMelodyJudging'
+import { LEFT_HAND_STAGES, type LeftHandStage } from './sightReading'
 import type { ReadingScore } from './readingText'
-import { TONE_COLORS } from './toneColors'
+import { TONE_COLORS, type ToneCounts } from './toneColors'
 
-/** The controls of how notes are judged: what is checked, timing window, any octave. */
+/** The controls of how notes are judged: what is checked (and the left hand's stage), timing window, any octave. */
 export function ReadingControls({ settings, onChange }: {
   settings: ReadingSettings
   onChange: (change: Partial<ReadingSettings>) => void
@@ -27,6 +27,15 @@ export function ReadingControls({ settings, onChange }: {
           {CHECK_MODES.map((mode) => <option key={mode.id} value={mode.id}>{mode.text}</option>)}
         </select>
       </label>
+      {checksChords(checkMode(settings)) && (
+        <label className="control" title="What each chord wants from your left hand: the stages of learning a song's left hand">
+          <span className="label">Left hand</span>
+          <select className="select" value={leftHandStage(settings)}
+            onChange={(event) => onChange({ leftHand: event.target.value as LeftHandStage })}>
+            {LEFT_HAND_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.text}</option>)}
+          </select>
+        </label>
+      )}
       <label className="control"><span className="label">Timing</span>
         <select className="select" value={settings.strictness}
           onChange={(event) => onChange({ strictness: event.target.value as Strictness })}>
@@ -53,7 +62,8 @@ export function ReadingPopover({ settings, onChange }: {
   onChange: (change: Partial<ReadingSettings>) => void
 }) {
   // A dot on the button when a setting differs from the usual one
-  const active = settings.strictness !== 'normal' || !settings.anyOctave || checkMode(settings) !== 'melody'
+  const active = settings.strictness !== 'normal' || !settings.anyOctave || checkMode(settings) !== 'melody' ||
+    leftHandStage(settings) !== 'chord'
   return (
     <Popover id="reading" className="reading" active={active} title="What is scored (melody, chords or both) and how: timing window, any octave" label={
       <>
@@ -76,8 +86,7 @@ export function ReadingPopover({ settings, onChange }: {
 
 /**
  * The running score: for the melody, right, wrong and missed notes, extra keys, the percentage
- * and the average timing; for the chords, those played and missed; improvising, how many keys
- * of each colour and the last keys played, coloured.
+ * and the average timing; for the chords, those played and missed.
  */
 export function MelodyScoreLine({ reading, bpm }: { reading: ReadingScore; bpm: number }) {
   const { checking, score, total, chordScore, chordTotal } = reading
@@ -100,33 +109,26 @@ export function MelodyScoreLine({ reading, bpm }: { reading: ReadingScore; bpm: 
         <span><strong className="score-missed">{chordScore.missed}</strong> chords missed</span>
         {chordsJudged > 0 && <span><strong>{Math.round((chordScore.correct / chordsJudged) * 100)} %</strong> of {chordsJudged}{chordTotal ? ` / ${chordTotal}` : ''} chords</span>}
       </>}
-      {checking === 'improvise' && <ToneColorsLine tones={reading.tones} recent={reading.recent} />}
     </p>
   )
 }
 
 /**
- * Improvising: how many keys landed on each kind of note (with their share), then the last keys
- * played, each in its colour.
+ * Free Improvisation: how many notes landed on each kind of note, with their share.
  *
- *   12 chord tones 50 %  6 colour tones 25 %  5 approach tones 21 %  1 outside 4 %   E G Bb A ...
+ *   12 chord tones 50 %  6 colour tones 25 %  5 approach tones 21 %  1 outside 4 %
  */
-function ToneColorsLine({ tones, recent }: Pick<ReadingScore, 'tones' | 'recent'>) {
+export function ToneColorsLine({ tones }: { tones: ToneCounts }) {
   const played = TONE_COLORS.reduce((sum, kind) => sum + tones[kind.id], 0)
   return (
-    <>
+    <p className="melody-score" role="status" aria-label="Note colours">
       {TONE_COLORS.map((kind) => (
         <span key={kind.id} title={kind.help}>
           <strong className={`tone-${kind.id}`}>{tones[kind.id]}</strong> {kind.label}
           {played > 0 && <> {Math.round((tones[kind.id] / played) * 100)} %</>}
         </span>
       ))}
-      {recent.length > 0 && (
-        <span className="tone-recent" aria-label="Last keys played">
-          {recent.map((tone) => <strong key={tone.id} className={`tone-${tone.color}`}>{prettyNoteName(tone.pitch % 12)}</strong>)}
-        </span>
-      )}
-    </>
+    </p>
   )
 }
 

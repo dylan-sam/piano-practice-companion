@@ -1,6 +1,7 @@
 import { chordTones, parseChord, type Chord } from '../music/chords'
 import type { Chart, ChartBar } from '../music/chart'
 import { slotAtBeat, type Slot, type Timeline } from '../engine/timeline'
+import { chordSlots } from './lickReading'
 import type { Progression } from './nameProgression'
 import { romanSymbol } from './nameProgression'
 
@@ -91,6 +92,55 @@ export function allowedPitchClasses(chord: Chord): Set<number> {
   return allowed
 }
 
+/**
+ * How a chord must be voiced (Chord Sightreading's voicing drills, in the order jazz piano
+ * teaching brings them):
+ *
+ *   any       the chord in any inversion (matchesPlayedChord)              C7: C E G Bb, E Bb C...
+ *   shell     root at the bottom, 3rd and 7th (or 6th), nothing else          C7: C E Bb, C Bb E
+ *   twoHand   a shell under the 9th and 5th: root lowest, 3rd, 5th, 7th, 9th  C7: C Bb E | D G
+ *   rootless  3rd, 7th and 9th (5th or 13th allowed), no root                 C7: E A Bb D, Bb D E A
+ *   quartal   three or more notes a perfect 4th apart, all from the chord's scale  Dm7: E A D G
+ */
+export type Voicing = 'any' | 'shell' | 'twoHand' | 'rootless' | 'quartal'
+export const VOICINGS: { id: Voicing; text: string }[] = [
+  { id: 'any', text: 'Any voicing' },
+  { id: 'shell', text: 'Shells (root, 3rd, 7th)' },
+  { id: 'twoHand', text: 'Two hands (shell + 9th and 5th)' },
+  { id: 'rootless', text: 'Rootless (3rd, 7th, 9th)' },
+  { id: 'quartal', text: 'Quartal (stacked 4ths)' },
+]
+
+/** The 9th a chord takes: flat or sharp when written, else natural. */
+const ninthOf = (chord: Chord) => (chord.root + (/b9/.test(chord.suffix) ? 1 : /#9/.test(chord.suffix) ? 3 : 2)) % 12
+
+/** Whether held notes voice a chord as a voicing drill asks (see Voicing). */
+export function matchesVoicing(notes: ReadonlySet<number>, chord: Chord, voicing: Voicing, scale: readonly number[] = []): boolean {
+  if (voicing === 'any') return matchesPlayedChord(notes, chord)
+  const sorted = [...notes].sort((a, b) => a - b)
+  const played = new Set(sorted.map((note) => note % 12))
+  const tones = chordTones(chord)
+  const pc = (interval: number | undefined) => (chord.root + (interval ?? 0)) % 12
+  const third = pc(tones[1])
+  const seventh = pc(tones[3] ?? 9) // a triad is voiced with its 6th
+  const fifth = pc(tones[2])
+  const only = (...allowed: number[]) => [...played].every((note) => allowed.includes(note))
+  const has = (...wanted: number[]) => wanted.every((note) => played.has(note))
+  switch (voicing) {
+    case 'shell':
+      return sorted[0] % 12 === chord.bass && has(chord.bass, third, seventh) && only(chord.bass, third, seventh)
+    case 'twoHand':
+      return sorted[0] % 12 === chord.bass && has(chord.bass, third, seventh, ninthOf(chord), fifth) &&
+        only(chord.bass, third, seventh, ninthOf(chord), fifth)
+    case 'rootless':
+      return !played.has(chord.root) && has(third, seventh, ninthOf(chord)) &&
+        only(third, seventh, ninthOf(chord), fifth, pc(9))
+    case 'quartal':
+      return sorted.length >= 3 && sorted.every((note, i) => i === 0 || note - sorted[i - 1] === 5) &&
+        [...played].every((note) => scale.includes((note - chord.root + 12) % 12))
+  }
+}
+
 /** Accept octave doublings and inversions, but reject missing or foreign notes. */
 export function matchesPlayedChord(notes: ReadonlySet<number>, chord: Chord): boolean {
   const required = requiredPitchClasses(chord)
@@ -115,21 +165,74 @@ export function coversChord(notes: Iterable<number>, chord: Chord): boolean {
 }
 
 /**
+ * What the left hand plays for each chord, the stages of learning a song's left hand:
+ *
+ *   bass     the chord's bass note (its root, or the bass of a slash chord), any rhythm
+ *   chord    the whole chord, any voicing, inversion or rhythm (coversChord)
+ *   beats    the whole chord, with a key struck on every beat
+ *   pattern  the band piano's rhythm (its attacks), with the chord's bass among the notes
+ */
+export type LeftHandStage = 'bass' | 'chord' | 'beats' | 'pattern'
+export const LEFT_HAND_STAGES: { id: LeftHandStage; text: string }[] = [
+  { id: 'bass', text: 'Bass note only' },
+  { id: 'chord', text: 'Whole chord, any rhythm' },
+  { id: 'beats', text: 'Whole chord on each beat' },
+  { id: 'pattern', text: "The piano pattern's rhythm" },
+]
+
+/** How a chord judge listens: see ChordJudge. */
+export interface ChordJudgeOptions {
+  broken?: boolean
+  stage?: LeftHandStage // broken judges only; default 'chord'
+  onsets?: readonly number[] // 'pattern': the band piano's attack beats, sorted
+  window?: number // how far a key may be from a beat or attack, in beats (default 1/4)
+  voicing?: Voicing // held judges only: how the chord must be voiced (default any)
+}
+
+/**
  * Judge note-on attempts within each chord's beat window and expire misses. A `broken` judge
- * gathers the notes of a chord over its whole time (coversChord); otherwise the chord must be
- * held as a whole voicing (matchesPlayedChord).
+ * gathers the notes of a chord over its whole time, judged at its stage (LeftHandStage): a stage
+ * with a rhythm also wants a key near each of the chord's beats or attacks. Otherwise the chord
+ * must be held as a whole voicing (matchesPlayedChord).
+ *
+ *   beats, C7 over 2 beats at beat 4:  C E Bb at 4.1, Bb at 5.05  -> played
+ *                                      C E Bb at 4.1              -> missed (no key on beat 5)
  */
 export class ChordJudge {
   private judged = new Set<number>()
   private finalized = 0
   private readonly timeline: Timeline
   private readonly broken: boolean
+  private readonly stage: LeftHandStage
+  private readonly onsets: readonly number[]
+  private readonly window: number
+  private readonly voicing: Voicing
   private gathered = new Map<number, Set<number>>() // broken: the notes played so far in each chord
+  private presses: number[] = [] // broken: the beats keys were struck at, for the rhythm
 
   /** Keep the timed chord slots that this judge will assess. */
-  constructor(timeline: Timeline, options: { broken?: boolean } = {}) {
+  constructor(timeline: Timeline, options: ChordJudgeOptions = {}) {
     this.timeline = timeline
     this.broken = !!options.broken
+    this.stage = options.stage ?? 'chord'
+    this.onsets = options.onsets ?? []
+    this.window = options.window ?? 0.25
+    this.voicing = options.voicing ?? 'any'
+  }
+
+  /** The beats a chord's rhythm wants a key on, at this judge's stage (none without a rhythm). */
+  private beatsOf(slot: Slot): number[] {
+    const end = slot.start + slot.beats - 0.001
+    if (this.stage === 'beats') return Array.from({ length: Math.ceil(slot.beats - 0.001) }, (_, k) => slot.start + k)
+    if (this.stage === 'pattern') return this.onsets.filter((beat) => beat >= slot.start - 0.001 && beat < end)
+    return []
+  }
+
+  /** Whether the notes gathered for a chord and the keys struck make it, at this judge's stage. */
+  private made(slot: Slot, notes: Set<number>): boolean {
+    const bassOnly = this.stage === 'bass' || this.stage === 'pattern'
+    if (bassOnly ? ![...notes].some((note) => note % 12 === slot.chord.bass) : !coversChord(notes, slot.chord)) return false
+    return this.beatsOf(slot).every((beat) => this.presses.some((press) => Math.abs(press - beat) <= this.window))
   }
 
   /** The chord sounding at a beat, if any. */
@@ -145,7 +248,11 @@ export class ChordJudge {
 
   /** Accept the first complete voicing played within a chord's allowed beats (`pitch`: the key just pressed). */
   accept(beat: number, held: ReadonlySet<number>, pitch?: number): Slot | null {
-    const slot = slotAtBeat(this.timeline, beat)
+    // Every key counts for the rhythm, even one struck early for the next chord
+    if (this.broken && pitch !== undefined) this.presses.push(beat)
+    // A key struck just before a chord (within the window) is played for that chord
+    const ahead = this.broken ? slotAtBeat(this.timeline, beat + this.window) : undefined
+    const slot = ahead && ahead.start > beat ? ahead : slotAtBeat(this.timeline, beat)
     if (!slot || slot.chordIndex < 0 || beat >= slot.start + slot.beats) return null
     const index = this.timeline.slots.indexOf(slot)
     if (index < this.finalized || this.judged.has(index)) return null
@@ -154,8 +261,8 @@ export class ChordJudge {
       for (const note of held) notes.add(note)
       if (pitch !== undefined) notes.add(pitch)
       this.gathered.set(index, notes)
-      if (!coversChord(notes, slot.chord)) return null
-    } else if (!matchesPlayedChord(held, slot.chord)) return null
+      if (!this.made(slot, notes)) return null
+    } else if (!matchesVoicing(held, slot.chord, this.voicing, chordSlots(slot.chord))) return null
     this.judged.add(index)
     return slot
   }
@@ -171,6 +278,9 @@ export class ChordJudge {
       this.gathered.delete(index)
       this.finalized++
     }
+    // Keys long past can no longer be near a beat still to judge
+    const done = this.timeline.slots[this.finalized]?.start ?? Infinity
+    this.presses = this.presses.filter((press) => press >= done - 1)
     return missed
   }
 }

@@ -731,6 +731,11 @@ button:disabled {
   stroke: #d95757;
 }
 
+/* Free Improvisation: each note written out, coloured by how it sits on its chord (chord tones keep the ink) */
+.tone-note-color path { fill: #2e9d55; stroke: #2e9d55; }
+.tone-note-approach path { fill: #3b78d8; stroke: #3b78d8; }
+.tone-note-outside path { fill: #d95757; stroke: #d95757; }
+
 /* Chords checked on a lead sheet: played (in any voicing or rhythm) or missed */
 text.lead-chord-correct {
   fill: #2e9d55;
@@ -762,7 +767,11 @@ text.lead-chord-missed {
 .melody-score .tone-color { color: #2e9d55; }
 .melody-score .tone-approach { color: #3b78d8; }
 .melody-score .tone-outside { color: #d95757; }
-.melody-score .tone-recent { display: inline-flex; flex-wrap: wrap; gap: 0.35em; }
+.tone-legend { display: flex; flex-wrap: wrap; gap: 0.3em 1.2em; }
+.tone-legend .tone-chord { color: var(--ink); }
+.tone-legend .tone-color { color: #2e9d55; }
+.tone-legend .tone-approach { color: #3b78d8; }
+.tone-legend .tone-outside { color: #d95757; }
 
 .lead-score-clickable {
   cursor: pointer;
@@ -3477,3 +3486,93 @@ input.fader::-moz-range-thumb {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Lessons: units that open, weeks, and step cards (one column on phones) */
+.lessons-page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+}
+
+.lessons-intro h1 { margin: 8px 0; }
+.lessons-progress { color: var(--ink-2); }
+.lessons-next { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.lesson-unit {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  margin: 12px 0;
+  padding: 0 14px;
+}
+
+.lesson-unit summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.lesson-unit-title { font-weight: 600; }
+.lesson-unit-weeks { color: var(--ink-2); }
+.lesson-week h3 { margin: 16px 0 8px; }
+
+.lesson-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-step {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  scroll-margin-top: 70px;
+}
+
+.lesson-step p { margin: 6px 0; }
+.lesson-step-next { box-shadow: 0 0 0 2px var(--ink-2); }
+.lesson-step-done { opacity: 0.65; }
+.lesson-step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.lesson-step-head h4 { margin: 0; font-size: 1rem; }
+
+.lesson-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.lesson-meta { display: grid; gap: 2px; margin: 6px 0; font-size: 0.9rem; }
+.lesson-meta div { display: flex; gap: 8px; }
+.lesson-meta dt { min-width: 6.5em; color: var(--ink-2); }
+.lesson-meta dd { margin: 0; }
+.lesson-checks { list-style: none; padding: 0; margin: 6px 0; }
+.lesson-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.lessons-reset { margin-top: 24px; }
+
+@media (max-width: 520px) {
+  .lesson-meta div { flex-direction: column; gap: 0; }
+}
+
+/* A lesson step's target reached on a screen */
+.lesson-reached { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #2e9d55; font-weight: 600; }
+
+/* Delete all my data (main menu footer): the button, then a warning to confirm */
+.home-reset { margin-top: 16px; }
+.delete-data-confirm {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid #d95757;
+  border-radius: 8px;
+  background: var(--paper);
+  text-align: left;
+}
+.delete-data-confirm p { margin: 6px 0 10px; }
+.delete-data-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.delete-data-yes { background: #d95757; border-color: #d95757; color: #fff; }

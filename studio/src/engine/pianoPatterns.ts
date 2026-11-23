@@ -127,6 +127,16 @@ function rolePitches(chord: Chord, role: string, nextChord?: Chord): number[] {
       const upper = aboveBass(degree(3, degree(2, 7)), bass + 12)
       return [...new Set(role === 'shell' ? [bass, guide, upper] : [guide, upper])].sort((a, b) => a - b)
     }
+    // Two-note shells: the root with the 7th (or 6th) above it, or with the 3rd an octave up (the 10th)
+    case 'seventh_shell': return [bass, aboveBass(degree(3, degree(2, 7)))]
+    case 'tenth_shell': return [bass, aboveBass(degree(1, 4)) + 12]
+    // Stacked 4ths: from the 3rd over a major 3rd (3rd, 13th, 9th: C -> E A D), else from the
+    // root (root, 11th, 7th: Dm7 -> D G C)
+    case 'quartal': {
+      const low = chord.quality === 'maj' || chord.quality === 'maj7' || chord.quality === 'maj6' || chord.quality === 'dom7'
+        ? aboveBass(degree(1, 4), 48) : aboveBass(0, 48)
+      return [low, low + 5, low + 10]
+    }
     case 'chord': case 'rolled': return blockVoicing(chord, 48)
     case 'chord_high': return blockVoicing(chord, 55)
     case 'triad': return voicingTones(chord, 48).slice(0, 3)

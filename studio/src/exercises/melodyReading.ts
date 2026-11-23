@@ -15,16 +15,26 @@ export type NoteResult = 'correct' | 'wrong' | 'missed'
 
 /**
  * What is checked while reading: the melody, the chords (in any voicing and rhythm), both, or
- * nothing (improvise: each note is coloured by how it sits on the chord, toneColors.ts).
+ * the melody with both hands (each note also an octave below: scales and arpeggios hands together).
  */
-export type CheckMode = 'melody' | 'chords' | 'both' | 'improvise'
+export type CheckMode = 'melody' | 'chords' | 'both' | 'together'
 export const CHECK_MODES: { id: CheckMode; text: string }[] = [
   { id: 'melody', text: 'Melody only' }, { id: 'chords', text: 'Chords only' }, { id: 'both', text: 'Melody and chords' },
-  { id: 'improvise', text: 'Improvise (note colours)' },
+  { id: 'together', text: 'Melody, hands together' },
 ]
 
 /** Whether a check mode judges the melody notes. */
-export const checksMelody = (mode: CheckMode) => mode === 'melody' || mode === 'both'
+export const checksMelody = (mode: CheckMode) => mode !== 'chords'
+
+/**
+ * The notes to play hands together: each written note, and the same note an octave below for
+ * the left hand (with Any octave, any two octaves of it).
+ *
+ *   C5 at beat 4 -> C5 and C4 at beat 4
+ */
+export function handsTogether(notes: readonly MelodyOccurrence[]): MelodyOccurrence[] {
+  return notes.flatMap((note) => [note, { ...note, pitch: note.pitch - 12 }])
+}
 /** Whether a check mode judges the chords. */
 export const checksChords = (mode: CheckMode) => mode === 'chords' || mode === 'both'
 
@@ -71,9 +81,13 @@ export class MelodyJudge {
   /** Give every note its window: `window` beats each side, at most half the gap to its neighbours. */
   constructor(notes: MelodyOccurrence[], window: number, anyOctave: boolean) {
     this.anyOctave = anyOctave
-    this.targets = notes.map((note, i) => {
-      const before = i > 0 ? (note.start - notes[i - 1].start) / 2 : window
-      const after = i < notes.length - 1 ? (notes[i + 1].start - note.start) / 2 : window
+    // The window stops half way to the nearest note starting at another time (notes played
+    // together, hands together, share their window)
+    const starts = [...new Set(notes.map((note) => note.start))].sort((a, b) => a - b)
+    this.targets = notes.map((note) => {
+      const i = starts.indexOf(note.start)
+      const before = i > 0 ? (note.start - starts[i - 1]) / 2 : window
+      const after = i < starts.length - 1 ? (starts[i + 1] - note.start) / 2 : window
       return { ...note, from: note.start - Math.min(window, before), to: note.start + Math.min(window, after), done: false }
     })
   }

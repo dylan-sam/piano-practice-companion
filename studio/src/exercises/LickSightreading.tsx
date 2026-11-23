@@ -28,10 +28,14 @@ import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from '.
 import { isOneChordLick, lickChord, lickShape, withLick, type LickShape } from './lickReading'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ReadingPopover, ReadingSheet } from './ReadingControls'
-import { readingHint, readingTally } from './readingText'
+import { readingCount, readingHint, readingTally } from './readingText'
+import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonOverride } from '../lessons/useLessonOverride'
+import { useLessonGoal } from '../lessons/useLessonGoal'
+import { LessonDone } from '../lessons/LessonDone'
 import { infiniteLine, type InfiniteLine } from './sightReading'
 import { useEndlessLine } from './useEndlessLine'
-import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
+import { DEFAULT_READING, isReadingSettings, leftHandStage, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
 import { useBand } from './useBand'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
@@ -49,6 +53,7 @@ const BPM_RANGE: [number, number] = [40, 300]
 // An infinite chunk: progressions joined from the catalog, short enough to draw on the staff
 const CHUNK_GROUPS = 12
 const CHUNK_LEAD_IN = 1 // bars of rest at the top of each sheet of an infinite line, while the band plays
+const INFINITE_GOAL_NOTES = 32 // an infinite line reaches a lesson's target after this many notes judged
 // The three sources of chords
 const SOURCES: { id: SourceMode; text: string }[] = [
   { id: 'pick', text: 'Pick a song' }, { id: 'random', text: 'Random song' }, { id: 'infinite', text: 'Infinite progressions' },
@@ -99,7 +104,10 @@ export function LickSightreading() {
   const [playing, setPlaying] = useState(false)
   const [beat, setBeat] = useState(0)
   const [timeline, setTimeline] = useState<Timeline | null>(null)
-  const [settings, setSettings] = useStoredSettings<LickSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
+  const [stored, store] = useStoredSettings<LickSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
+  // Opened from a lesson step: its lick playlist (for this visit), an infinite line, its tempo and muted parts
+  const lesson = useLessonLink()
+  const [settings, setSettings] = useLessonOverride(stored, store, lesson && { lickGroups: lesson.playlist ? [lesson.playlist] : undefined })
   const band = useBand<string | null>(defaultPatternForStyle, BPM_RANGE)
   const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses, setChoruses, practice, setPractice } = band
 
@@ -113,6 +121,12 @@ export function LickSightreading() {
     },
   })
   const { mode, tune } = source
+  useEffect(() => {
+    if (lesson?.bpm) setBpm(lesson.bpm)
+    if (lesson?.infinite) source.chooseMode('infinite')
+    // Once, when the screen opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // A Practice loop picked on the sheet: tap its first bar, then its last
   const loopPicking = useLoopPicking((loop) => changeArrangement(styleId, patternId, transpose, choruses, { ...practice, loop }))
 
@@ -152,9 +166,9 @@ export function LickSightreading() {
   const startPrepared = useCallback(async (prepared: Prepared, keepScore: boolean, layout = settings, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player) return
-    if (fromSeconds > 0) resume(prepared.notes, prepared.arrangement.timeline, layout, fromSeconds * BASE_BPM / 60)
+    if (fromSeconds > 0) resume(prepared.notes, prepared.arrangement, layout, fromSeconds * BASE_BPM / 60)
     else {
-      begin(prepared.notes, prepared.arrangement.timeline, layout, keepScore)
+      begin(prepared.notes, prepared.arrangement, layout, keepScore)
       setBeat(0)
     }
     endless.started(prepared.arrangement.timeline.totalBeats, prepared.countIn ?? true)
@@ -218,7 +232,11 @@ export function LickSightreading() {
     setPlaying(false)
     if (endless.missed()) void switchToNext()
   }, () => STYLES.map(warmUpMidi))
-  const mixer = useMixer(playerRef, readiness)
+  const mixer = useMixer(playerRef, readiness, lesson?.mute)
+  // The lesson's target: a whole song judged, or enough of an infinite line, right enough and fast enough
+  const count = readingCount(reading)
+  const complete = mode === 'infinite' ? count.judged >= INFINITE_GOAL_NOTES : count.total > 0 && count.judged >= count.total
+  const reachedGoal = useLessonGoal(lesson, { right: count.right, judged: count.judged, complete, bpm: liveBpm })
 
   useEffect(() => { playerRef.current?.setRate(liveBpm / BASE_BPM) }, [liveBpm])
 
@@ -412,9 +430,10 @@ export function LickSightreading() {
               {lickChord(lick.chart) ? '. It is written again over every chord: chord tones stay chord tones, and the numbers in its name are degrees of the chord it is played over (b: a half step under, #: a half step over).' : ''}
             </p>}
           </div>
+          {reachedGoal && <LessonDone />}
           {chart && <ReadingSheet chart={chart} style={style} transpose={shownTranspose} position={position} beat={beat}
             playing={playing} loopPicking={loopPicking} loop={practice.loop} feedback={feedback} chordFeedback={chordFeedback} reading={reading}
-            bpm={liveBpm} hint={readingHint(reading.checking, 'the lick over each chord')} />}
+            bpm={liveBpm} hint={readingHint(reading.checking, 'the lick over each chord', leftHandStage(settings))} />}
           {!chart && mode === 'pick' && <p className="sight-hint">Choose a chord chart (search the ChoCo catalog, or your own imported iReal Pro charts) and a lick: the lick is written over every chord of the chart.</p>}
           {!licks.length && <p className="sight-hint">Loading the licks...</p>}
           <HeldNotes held={keyboard.held} keyPc={heldKey} />

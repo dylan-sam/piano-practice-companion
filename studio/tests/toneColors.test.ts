@@ -31,23 +31,13 @@ describe('note colours while improvising', () => {
   })
 })
 
-describe('the improvise score line', () => {
-  test('shows the count and share of each colour, then the last keys in their colours', async () => {
+describe('the Free Improvisation score line', () => {
+  test('shows the count and share of each colour', async () => {
     const { createElement } = await import('react')
     const { renderToStaticMarkup } = await import('react-dom/server')
-    const { MelodyScoreLine } = await import('../src/exercises/ReadingControls')
-    const { EMPTY_SCORE } = await import('../src/exercises/melodyReading')
-    const html = renderToStaticMarkup(createElement(MelodyScoreLine, {
-      bpm: 120,
-      reading: {
-        checking: 'improvise', score: EMPTY_SCORE, total: 0, chordScore: { correct: 0, missed: 0 }, chordTotal: 0,
-        tones: { chord: 2, color: 1, approach: 1, outside: 0 },
-        recent: [{ id: 1, pitch: 66, color: 'approach' }, { id: 2, pitch: 67, color: 'chord' }],
-      },
-    }))
+    const { ToneColorsLine } = await import('../src/exercises/ReadingControls')
+    const html = renderToStaticMarkup(createElement(ToneColorsLine, { tones: { chord: 2, color: 1, approach: 1, outside: 0 } }))
     expect(html).toContain('<strong class="tone-chord">2</strong> chord tones 50 %')
     expect(html).toContain('<strong class="tone-outside">0</strong> outside 0 %')
-    expect(html).toMatch(/tone-approach">G♭<\/strong><strong class="tone-chord">G</)
-    expect(html).not.toContain('wrong note')
   })
 })

@@ -1,5 +1,6 @@
 import { ROUTES } from './router'
 import { AppLink, StandIcon } from './ui/AppLink'
+import { DeleteAllData } from './ui/DeleteAllData'
 
 interface MenuItem {
   title: string
@@ -7,19 +8,24 @@ interface MenuItem {
   path: string
 }
 
-/** A menu of the app: the main menu, or the menu of one of its three areas. */
+/** A menu of the app: the main menu, or the menu of one of its areas. */
 interface MenuPage {
   title: string
   description: string
   items: MenuItem[]
 }
 
-// The main menu leads to three areas; each area's menu leads to its screens (routes in Root)
+// The main menu leads to the areas; each area's menu leads to its screens (routes in Root)
 const MENUS: Record<string, MenuPage> = {
   [ROUTES.home]: {
     title: 'Ear Training',
     description: 'Hear chord progressions, then play them with a band.',
     items: [
+      {
+        title: 'Lessons',
+        description: 'A 30-week jazz piano program, 20 to 30 minutes a day: both hands and improvising from the first week, one song and one left-hand pattern at a time. Each step opens the exercise it needs, already set up. Nothing is locked.',
+        path: ROUTES.lessons,
+      },
       {
         title: 'Play along',
         description: 'Choose a ChoCo chord chart or a lead sheet, pick a style, key and tempo, and play along with the band on your instrument! You can import your own charts! The key and tempo can be changed automatically at each repetition to practice in every key!',
@@ -34,6 +40,11 @@ const MENUS: Record<string, MenuPage> = {
         title: 'Sightreading',
         description: 'Plug in a MIDI keyboard and sightread chords, melodies, arpeggios or licks with the band. You can import your own charts! The key and tempo can be changed automatically at each repetition to practice in every key!',
         path: ROUTES.sightreading,
+      },
+      {
+        title: 'Improvisation',
+        description: 'Plug in a MIDI keyboard and improvise with the band over a song or an endless line of progressions. Every note you play is written out and coloured by how it sounds on the chord.',
+        path: ROUTES.improvisation,
       },
     ],
   },
@@ -69,6 +80,17 @@ const MENUS: Record<string, MenuPage> = {
       },
     ],
   },
+  [ROUTES.improvisation]: {
+    title: 'Improvisation',
+    description: 'Improvise with the band and see how your notes sit on the chords.',
+    items: [
+      {
+        title: 'Free Improvisation',
+        description: 'Pick a ChoCo chord chart, a random song or an endless line of progressions and improvise freely! Each key you play is written out on the chart and coloured: chord tones, colour tones, approach tones and outside notes. The page starts again at each chorus.',
+        path: ROUTES.freeImprovisation,
+      },
+    ],
+  },
   [ROUTES.sightreading]: {
     title: 'Sightreading',
     description: 'Plug in a MIDI keyboard and read with the band. Every chord or note is checked.',
@@ -97,7 +119,7 @@ const MENUS: Record<string, MenuPage> = {
   },
 }
 
-/** A menu page: the main menu (with the data and code credits) or an area's menu (with a way back). */
+/** A menu page: the main menu (with the data and code credits, and Delete all my data) or an area's menu (with a way back). */
 export function Menu({ path }: { path: string }) {
   const page = MENUS[path] ?? MENUS[ROUTES.home]
   const main = page === MENUS[ROUTES.home]
@@ -130,6 +152,7 @@ export function Menu({ path }: { path: string }) {
         Chord data from <a href="https://github.com/smashub/choco">ChoCo</a> (CC BY 4.0).
         Studio is based on <a href="https://github.com/canbmaj7/openstand">OpenStand</a> (AGPL-3.0).{' '}
         <a href={`${import.meta.env.BASE_URL}source.zip`}>Source</a>
+        <div className="home-reset"><DeleteAllData /></div>
       </footer>}
     </div>
   )
