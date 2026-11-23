@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
-import { useMixer } from '../audio/useMixer'
+import { MELODY_PARTS, useMixer } from '../audio/useMixer'
 import { useHeardBeat, usePlayer } from '../audio/usePlayer'
 import { BASE_BPM, type Arrangement } from '../engine/arrange'
 import type { MelodyOccurrence } from '../engine/melody'
@@ -28,9 +28,10 @@ import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from '.
 import { isOneChordLick, lickChord, lickShape, withLick, type LickShape } from './lickReading'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ReadingPopover, ReadingSheet } from './ReadingControls'
+import { readingHint, readingTally } from './readingText'
 import { infiniteLine, type InfiniteLine } from './sightReading'
 import { useEndlessLine } from './useEndlessLine'
-import { DEFAULT_READING, isReadingSettings, readingParts, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
+import { DEFAULT_READING, isReadingSettings, useMelodyJudging, type ReadingSettings } from './useMelodyJudging'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
 import { useBand } from './useBand'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
@@ -76,13 +77,13 @@ interface Prepared {
 }
 
 /**
- * Arrange a chart with its lick: the band plays the chords (and the lick when it guides). A chunk
+ * Arrange a chart with its lick: the band plays the chords and the lick (at the Mixer's Melody volume). A chunk
  * of an infinite line (`chunk`) never ends like a song, since the next one follows at the top; only
  * the first chunk has a count-in.
  */
 function prepare(chart: ChartData, styleId: string, patternId: string | null, transpose: number, choruses: number,
-  practice: PracticeSettings, settings: LickSettings, chunk?: { countIn: boolean }): Prepared {
-  return { chart, ...arrangeMelody(chart, styleId, patternId, transpose, choruses, practice, settings.guide, chunk) }
+  practice: PracticeSettings, chunk?: { countIn: boolean }): Prepared {
+  return { chart, ...arrangeMelody(chart, styleId, patternId, transpose, choruses, practice, chunk) }
 }
 
 /** Play one lick over every chord of a song or of an endless line of progressions, on a MIDI keyboard. */
@@ -102,7 +103,7 @@ export function LickSightreading() {
   const band = useBand<string | null>(defaultPatternForStyle, BPM_RANGE)
   const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses, setChoruses, practice, setPractice } = band
 
-  const { keyboard, feedback, score, total, settleThrough, begin, resume, clear } = useMelodyJudging(playerRef)
+  const { keyboard, feedback, chordFeedback, settleThrough, begin, resume, clear, ...reading } = useMelodyJudging(playerRef)
   const source = useSongSource({
     playing, onError: setError, onLeave: clearStand,
     // A song comes with its style, tempo and key
@@ -151,9 +152,9 @@ export function LickSightreading() {
   const startPrepared = useCallback(async (prepared: Prepared, keepScore: boolean, layout = settings, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player) return
-    if (fromSeconds > 0) resume(prepared.notes, layout, fromSeconds * BASE_BPM / 60)
+    if (fromSeconds > 0) resume(prepared.notes, prepared.arrangement.timeline, layout, fromSeconds * BASE_BPM / 60)
     else {
-      begin(prepared.notes, layout, keepScore)
+      begin(prepared.notes, prepared.arrangement.timeline, layout, keepScore)
       setBeat(0)
     }
     endless.started(prepared.arrangement.timeline.totalBeats, prepared.countIn ?? true)
@@ -169,7 +170,7 @@ export function LickSightreading() {
   const startPlayback = useCallback(async (nextChart: ChartData, nextStyle = styleId, nextPattern = patternId,
     nextTranspose = transpose, nextChoruses = choruses, nextPractice = practice, nextSettings = settings, fromSeconds = 0) => {
     try {
-      await startPrepared(prepare(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings), false,
+      await startPrepared(prepare(nextChart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice), false,
         nextSettings, fromSeconds)
     } catch (cause) {
       setError(String(cause))
@@ -182,7 +183,7 @@ export function LickSightreading() {
     nextStyle = styleId, nextPattern = patternId): Prepared | null => {
     if (!bank) return null
     const next = infiniteLine(bank.progressions, {}, false, Math.random, after?.steps.at(-1), CHUNK_GROUPS, 1)
-    const prepared = prepare(withShape(next.chart, layout, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, layout, { countIn })
+    const prepared = prepare(withShape(next.chart, layout, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, { countIn })
     return { ...prepared, line: next, countIn }
   }, [bank, styleId, patternId, withShape])
 
@@ -280,7 +281,7 @@ export function LickSightreading() {
 
   /**
    * Change what the band plays, how notes are judged or the lick. What leaves the sheet as it is
-   * (style, piano pattern, guide melody, any octave, timing) goes on from where the band is (the
+   * (style, piano pattern, what is checked, any octave, timing) goes on from where the band is (the
    * lick's eighths swing as the new style does); a change of the sheet (lick, rest, key,
    * choruses, loop) starts the song again.
    */
@@ -295,10 +296,10 @@ export function LickSightreading() {
       settleThrough(player.heardPosition * BASE_BPM / 60)
       const from = player.position
       if (mode === 'infinite') {
-        // The chunk on the stand is arranged again (new style, guide melody); the next one is prepared again
+        // The chunk on the stand is arranged again (new style); the next one is prepared again
         endless.prepare(null)
         const countIn = endless.countIn.current
-        const current = prepare(withShape(chords, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, nextSettings, { countIn })
+        const current = prepare(withShape(chords, settings, CHUNK_LEAD_IN), nextStyle, nextPattern, 0, 1, NO_PRACTICE, { countIn })
         void startPrepared({ ...current, line: lineRef.current ?? undefined, countIn }, true, nextSettings, from).then(() => {
           if (lineRef.current) prepareAfter(lineRef.current, nextSettings, nextStyle, nextPattern)
         })
@@ -366,10 +367,9 @@ export function LickSightreading() {
 
   const keyPc = chart ? (chart.key + transpose + 12) % 12 : 0
   const heldKey = chart ? (chart.key + shownTranspose + 12) % 12 : 0
-  const judged = score.correct + score.wrong + score.missed
   const positionLabel = !chart ? 'Choose a song or start an infinite line' :
     playing && timeline && beat < timeline.countIn ? 'Count-in' :
-      position ? `Bar\u00a0${position.measure + 1}\u00a0of\u00a0${chart.bars.length}${judged ? `  ${score.correct}/${judged}\u00a0right` : ''}` : chart.title
+      position ? `Bar\u00a0${position.measure + 1}\u00a0of\u00a0${chart.bars.length}${readingTally(reading)}` : chart.title
   const patterns = patternsForStyle(styleId).length ? patternsForStyle(styleId) : PIANO_PATTERNS
 
   return (
@@ -413,8 +413,8 @@ export function LickSightreading() {
             </p>}
           </div>
           {chart && <ReadingSheet chart={chart} style={style} transpose={shownTranspose} position={position} beat={beat}
-            playing={playing} loopPicking={loopPicking} loop={practice.loop} feedback={feedback} score={score} total={total}
-            bpm={liveBpm} hint="Play the lick on your keyboard over each chord as the band plays. Green: right; orange: wrong note; red: missed." />}
+            playing={playing} loopPicking={loopPicking} loop={practice.loop} feedback={feedback} chordFeedback={chordFeedback} reading={reading}
+            bpm={liveBpm} hint={readingHint(reading.checking, 'the lick over each chord')} />}
           {!chart && mode === 'pick' && <p className="sight-hint">Choose a chord chart (search the ChoCo catalog, or your own imported iReal Pro charts) and a lick: the lick is written over every chord of the chart.</p>}
           {!licks.length && <p className="sight-hint">Loading the licks...</p>}
           <HeldNotes held={keyboard.held} keyPc={heldKey} />
@@ -436,7 +436,7 @@ export function LickSightreading() {
         {mode !== 'infinite' && <Practice chart={chart} settings={practice}
           onChange={changePractice}
           onPickLoop={loopPicking.start} />}
-        <Mixer {...mixer(style.comp.program)} parts={readingParts(settings.guide)} />
+        <Mixer {...mixer(style.comp.program)} parts={MELODY_PARTS} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}
         onImport={(from, text) => source.importFrom(from, text)} />

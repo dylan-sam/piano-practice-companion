@@ -731,6 +731,15 @@ button:disabled {
   stroke: #d95757;
 }
 
+/* Chords checked on a lead sheet: played (in any voicing or rhythm) or missed */
+text.lead-chord-correct {
+  fill: #2e9d55;
+}
+
+text.lead-chord-missed {
+  fill: #d95757;
+}
+
 /* The score of a melody played through */
 .melody-score {
   display: flex;

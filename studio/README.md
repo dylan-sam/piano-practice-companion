@@ -203,7 +203,7 @@ Loading a song makes SpessaSynth reset its synthesizer, which cuts the notes
 still ringing and the reverb. `src/audio/player.ts` therefore keeps a second
 synthesizer (made in the background after the warm-up):
 
-- a change while the band plays (style, pattern, choruses, guide melody, the
+- a change while the band plays (style, pattern, choruses, the
   band on or off...) loads the new arrangement on the second synthesizer, which
   takes over at the band's position while the first lets its notes fade
   (`play(midi, fromSeconds)`);

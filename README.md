@@ -69,10 +69,8 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   wrote or edited, the ones shared with you via link, the imported ones, or all
   3),
   and share a chart as a link that opens in this app or in iReal Pro. The
-  **Songs** list shows each playlist under a bar with its name, its songs in
-  number order. Like the **Progressions** filter, **Playlists** has check boxes:
-  only the checked playlists are listed, **ChoCo chord charts** (the catalog
-  search) among them; none checked lists them all.
+  **Songs** list shows each playlist under a bar with its name; the playlist
+  you choose comes first.
 - **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
   and the band plays it without its melody.
 
@@ -174,9 +172,12 @@ the percentage and your average timing (early or late, in milliseconds).
   MusicXML files or a Studio export here: they are in the Lead Sheet Player
   too.
 - **Scoring** (a button of the bottom bar, next to Practice and Mixer):
+  - **Check**: **Melody only** (default), **Chords only** or **Melody and
+    chords**, for playing the chords with the left hand under the melody.
+    Chords count in any voicing, inversion or rhythm (broken, comped, walking).
   - **Timing**: Easy, Normal or Strict.
   - **Any octave**: count a note played in another octave than written.
-  - **Guide melody**: the band also plays the melody, to follow along.
+- The band plays the melody too; turn it down or mute it in the **Mixer**.
 
 ### Exercises Sightreading
 
@@ -190,8 +191,7 @@ change at each repetition with the Practice button.
 ![Lick Sightreading](docs/images/lick-sightreading.png)
 
 Choose a **lick** (one of the 133 one-chord licks of the
-[database](#licks-and-exercises), listed by idea (arpeggios, scale lines, turns, approach
-notes, colours, blues) from easy to hard, or a random one) and where the chords come
+[database](#licks-and-exercises), or a random one) and where the chords come
 from: a chord chart (**Pick a song**: the ChoCo catalog or your own imported
 iReal Pro charts, with **Import** here too), **Random song** or **Infinite
 progressions** (as in Chord Sightreading). The lick is written and transposed over every chord. Play
@@ -701,6 +701,11 @@ authors. Google Play has no such restriction. This is not legal advice.
 - **Exercises**: the triad, interval and rhythm drills follow K. B. Kelly and
   E. Rasmussen, *A Guide to Exploring Jazz Improvisation - Book 1* (Maricopa
   Open Digital Press, 2023, CC BY 4.0).
+- **Ideas** (no code taken): the Check menu of the reading screens (melody,
+  chords or both hands) follows the hand choice of
+  [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); the
+  chord-tone colours planned for improvising follow the note coloration of
+  [Impro-Visor](https://github.com/Impro-Visor/Impro-Visor) (GPL-2.0-or-later).
 - **Fonts**: Petaluma (Steinberg), IBM Plex (IBM).
 
 This project was built with the help of GPT-6 Sol and Opus 5.5.

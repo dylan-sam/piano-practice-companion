@@ -28,6 +28,8 @@ interface LeadSheetProps {
   autoScroll?: boolean
   // Results of a melody played on a keyboard, by written note (melodyReading.ts noteKey: "bar:at")
   noteFeedback?: Record<string, 'correct' | 'wrong' | 'missed'>
+  // Results of the chords played, by written bar and chord in the bar ("bar:index", as Chart.tsx)
+  chordFeedback?: Record<string, 'correct' | 'missed'>
   writing?: NoteWriting // how some notes are written (exercises)
   noteClasses?: Record<number, string> // a class for the drawing of some melody notes, by index
   staffInput?: StaffInput | null // notes that can be written on the staff
@@ -161,7 +163,7 @@ function sectionMarks(root: HTMLElement, chart: ChartData, notes: DrawnNote[], b
 
 /** Render a chart that has a melody as an engraved lead sheet that follows playback. */
 export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll, noteFeedback,
-  writing, noteClasses, staffInput, zoom = 1 }: LeadSheetProps) {
+  chordFeedback, writing, noteClasses, staffInput, zoom = 1 }: LeadSheetProps) {
   const display = useDisplay()
   const phone = useTwoBarRows()
   const keyPc = (chart.key + transpose + 12) % 12
@@ -249,6 +251,28 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
       for (const element of marked) element.classList.remove('lead-note-correct', 'lead-note-wrong', 'lead-note-missed')
     }
   }, [notes, noteFeedback])
+
+  // Colour the chords played and missed: abcjs draws a bar's chord symbols in the bar's order
+  useEffect(() => {
+    const score = scoreRef.current
+    if (!chordFeedback || !score || !notes.length) return
+    const byBar = new Map<number, Element[]>()
+    for (const element of score.querySelectorAll('.abcjs-chord')) {
+      const bar = drawnBars[classNumber(element, 'abcjs-mm')]
+      if (bar !== undefined) byBar.set(bar, [...(byBar.get(bar) ?? []), element])
+    }
+    const marked: Element[] = []
+    for (const [key, result] of Object.entries(chordFeedback)) {
+      const [bar, index] = key.split(':').map(Number)
+      const element = byBar.get(bar)?.at(index)
+      if (!element) continue
+      element.classList.add(`lead-chord-${result}`)
+      marked.push(element)
+    }
+    return () => {
+      for (const element of marked) element.classList.remove('lead-chord-correct', 'lead-chord-missed')
+    }
+  }, [notes, chordFeedback, drawnBars])
 
   // Classes an exercise gives some notes (hidden, selected, placed, right or wrong)
   useEffect(() => {

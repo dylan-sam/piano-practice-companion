@@ -176,7 +176,7 @@ export class Player {
   // Loads the MIDI and starts playing from the given time (seconds of MIDI time)
   async play(midi: Uint8Array, fromSeconds = 0): Promise<void> {
     const seq = this.requireSeq()
-    // Going on from where the band is (a new style, guide melody...): no reset can be heard
+    // Going on from where the band is (a new style, a new piano pattern...): no reset can be heard
     if (fromSeconds > 0 && this.isPlaying && this.bank) return this.takeOver(midi)
     this.playRequested = true
     // A song replacing a playing one (the next chunk of an endless exercise, a new arrangement

@@ -81,3 +81,15 @@ describe('swung band grooves', () => {
     expect([0, 0.5, 1, 1.25, 1.5, 1.75].map(placed)).toEqual([0, 0.66, 1, 1.25, 1.5, 1.75])
   })
 })
+
+describe('melody note due', () => {
+  test('a key is due only while a matching note is open', () => {
+    const judge = new MelodyJudge([note(4, 60)], 0.25, false)
+    expect(judge.isDue(4.1, 60)).toBe(true)
+    expect(judge.isDue(4.1, 64)).toBe(false)
+    expect(judge.isDue(5, 60)).toBe(false)
+    judge.press(4, 60)
+    expect(judge.isDue(4.1, 60)).toBe(false) // already played
+  })
+})
+

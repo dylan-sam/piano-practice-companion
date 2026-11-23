@@ -344,8 +344,7 @@ auto-scroller On/Off).
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
-| Mixer | bass, piano, drums, and melody when the guide melody is on |
-| Guide melody | Off (default): the band plays the chords only. On: it also plays the melody |
+| Mixer | bass, piano, drums and melody: the band plays the melody too, so turn the Melody slider down or mute it to read on your own |
 
 The notes you play sound through an acoustic piano. Swing and Blues play
 eighth-note "ands" late, and the notes are expected where the band swings them.
@@ -357,7 +356,25 @@ every style (moving only its "and" would make them uneven).
 The reading settings are in the **Scoring** button of the bottom bar, next to
 Practice and Mixer (on phones, under Settings), so the sheet keeps the page.
 
-Every written note gets a window around its start (`TIMING_WINDOWS` in
+**Check** says what is judged:
+
+| Check | What you play | What is judged |
+|---|---|---|
+| Melody only (default) | the melody | the melody's notes, as below |
+| Chords only | the chord symbols | each chord, in any voicing, inversion or rhythm |
+| Melody and chords | the melody with the right hand, the chords with the left | both, each with its own score |
+
+A chord counts once every required note of it has been played during the time
+it sounds, held together or one after the other (a broken chord, a comping
+rhythm, a walking bass): the rules of [Chord Sightreading](#scoring) (the 5th of
+a four-note chord may be left out; for a slash chord the bass must be the
+lowest note), except that other notes are left out rather than refused, so a
+melody or passing notes played with it don't spoil it. The chord symbol turns
+**green** when the chord is played, **red** when its time runs out first.
+With Melody and chords, a key that is not the melody note due but belongs to
+the chord sounding is the left hand's: it is not an extra key.
+
+For the melody, every written note gets a window around its start (`TIMING_WINDOWS` in
 `studio/src/exercises/melodyReading.ts`):
 
 | Timing | Window, each side |
@@ -385,11 +402,13 @@ Every written note gets a window around its start (`TIMING_WINDOWS` in
 The line under the settings shows, for the play-through so far: notes right,
 wrong notes, missed notes, extra keys, the percentage of judged notes played
 right, and the average timing of the right notes in milliseconds (early or
-late). It starts again with each play, and whenever the sheet changes (key,
+late); when chords are checked, the chords played and missed and their
+percentage. The bar readout adds what was right out of what was judged. It starts again with each play, and whenever the sheet changes (key,
 choruses, a Practice loop). What leaves the sheet as it is goes on from where
 the band is and keeps the score: a new style or piano pattern (the notes still
 to come are judged where the new style swings them), Timing and Any octave
-(the notes still to come are judged the new way) and Guide melody.
+(the notes still to come are judged the new way) and Check (what is still to
+come is judged as now checked).
 Practice > Keys and the speed-up go on from where the band is and keep the
 score: the notes still to come are judged in their new keys.
 
@@ -400,7 +419,7 @@ MIDI keyboards work as for Chord Sightreading ([MIDI keyboards](#midi-keyboards)
 Choose where the chords come from and a lick: the lick is written over every
 chord, as a lead sheet, and you play it on a MIDI keyboard with the band. Notes
 are judged and scored as in [Lead Sheet Sightreading](#how-notes-are-judged), with
-the same Timing, Any octave and Guide melody settings (the Scoring button). The
+the same Check, Timing and Any octave settings (the Scoring button). The
 lick picker sits above the sheet, with the lick's source and chord on the line
 below it.
 
@@ -409,8 +428,8 @@ below it.
 | Control | Choices |
 |---|---|
 | Chords | **Pick a song** (chord charts: search the ChoCo catalog, or your own saved chord charts; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Chord Sightreading too; lead sheets are not offered), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break (the band never plays an ending between them); the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
-| Licks | check boxes, like the Progressions filter: the groups of one-chord licks of the [lick database](LICKS.md#one-chord-licks-by-idea) (133) to offer: Arpeggios, Scale lines, Neighbours and turns, Approach notes, Colours, Blues; none checked offers them all. Kept on this device |
-| Lick | one lick of the checked groups, listed by group from easy to hard, its level as dots (●, ●●, ●●●) and its name saying what it does in degrees of the chord it is played over ("Arpeggio down 1-7-5-3"; b and #: a half step under or over); the line under it gives its tune; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
+| Licks | check boxes, like the Progressions filter: the playlists of one-chord licks of the [lick database](LICKS.md) (133) to offer, vocabulary and licks from standards over a major, minor, dominant or diminished chord; none checked offers them all. Kept on this device |
+| Lick | one lick of the checked playlists, listed by playlist; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
 | Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Lead Sheet Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 
@@ -433,7 +452,7 @@ The lick is read as a **shape** relative to its own chord
    | dominant 7th | 0 2 4 5 7 9 10 (Mixolydian; #11 and b13 when written) |
    | dominant with b9 | 0 1 4 5 7 8 10 (Phrygian dominant) |
    | altered dominant (alt, #5, #9) | 0 1 4 6 8 8 10 (b9, #11, #5 = b13) |
-   | half-diminished | 0 2 3 5 6 8 10 (Locrian natural 2: a natural 9th) |
+   | half-diminished | 0 1 3 5 6 8 10 (Locrian) |
    | diminished 7th | 0 2 3 5 6 8 9 (whole-half) |
    | augmented | 0 2 4 6 8 9 11 |
    | sus | 0 2 5 5 7 9 10 |

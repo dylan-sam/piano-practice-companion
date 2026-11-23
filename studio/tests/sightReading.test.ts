@@ -6,7 +6,7 @@ import { midiNoteChange } from '../src/audio/midiInput'
 import { arrange } from '../src/engine/arrange'
 import { BASS_PATTERNS, defaultBassPatternForStyle, generateBassPattern } from '../src/engine/bassPatterns'
 import { buildTimeline } from '../src/engine/timeline'
-import { ChordJudge, isMistakes, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
+import { ChordJudge, coversChord, isMistakes, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
 import { ChordSightreading } from '../src/exercises/ChordSightreading'
 import type { Progression } from '../src/exercises/nameProgression'
 import { parseChord } from '../src/music/chords'
@@ -226,3 +226,30 @@ describe('7th-chord versions and optional fifths', () => {
     expect(matchesPlayedChord(new Set([60, 64]), parse('C'))).toBe(false)
   })
 })
+
+describe('chords checked in any rhythm', () => {
+  it('covers a chord from its notes, leaving other notes and the 5th out', () => {
+    const c7 = parseChord('C7')!
+    expect(coversChord([48, 64, 70], c7)).toBe(true) // root, 3rd, 7th: the 5th may be left out
+    expect(coversChord([48, 62, 64, 70, 61], c7)).toBe(true) // melody and passing notes ignored
+    expect(coversChord([48, 67, 70], c7)).toBe(false) // no 3rd
+  })
+
+  it('wants the bass lowest for a slash chord', () => {
+    const slash = parseChord('C/E')!
+    expect(coversChord([52, 55, 60], slash)).toBe(true)
+    expect(coversChord([48, 52, 55], slash)).toBe(false)
+  })
+
+  it('gathers a broken chord over its slot and forgets it when the slot ends', () => {
+    const chart = chartFromMeasures({ title: 'Broken', style: 'swing', key: 0, bpm: 120 }, [['C', 'G']])
+    const judge = new ChordJudge(buildTimeline(chart, 0, 1, { countIn: false, ending: false }), { broken: true })
+    expect(judge.accept(0, new Set([48]), 48)).toBeNull()
+    expect(judge.accept(0.5, new Set(), 52)).toBeNull()
+    expect(judge.accept(1, new Set(), 55)?.chordIndex).toBe(0)
+    expect(judge.accept(1.5, new Set(), 60)).toBeNull() // already played
+    expect(judge.accept(2, new Set(), 55)).toBeNull() // G alone: not yet the whole chord
+    expect(judge.expire(4).map((slot) => slot.chordIndex)).toEqual([1])
+  })
+})
+

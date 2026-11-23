@@ -7,11 +7,17 @@
 
 import { arrange, type Arrangement } from '../engine/arrange'
 import { melodyOccurrences, type MelodyOccurrence } from '../engine/melody'
-import { withoutMelody, type Chart } from '../music/chart'
+import type { Chart } from '../music/chart'
 import type { PracticeSettings } from '../music/practice'
 import { getStyle } from '../styles'
 
 export type NoteResult = 'correct' | 'wrong' | 'missed'
+
+/** What is checked while reading: the melody, the chords (in any voicing and rhythm), or both. */
+export type CheckMode = 'melody' | 'chords' | 'both'
+export const CHECK_MODES: { id: CheckMode; text: string }[] = [
+  { id: 'melody', text: 'Melody only' }, { id: 'chords', text: 'Chords only' }, { id: 'both', text: 'Melody and chords' },
+]
 
 /** How strict the timing is: the most a note may be early or late, in beats. */
 export const TIMING_WINDOWS = { easy: 0.4, normal: 0.25, strict: 0.12 } as const
@@ -68,14 +74,25 @@ export class MelodyJudge {
     return this.anyOctave ? (target.pitch - pitch) % 12 === 0 : target.pitch === pitch
   }
 
-  /** Judge a key pressed at a beat. */
-  press(beat: number, pitch: number): Press {
+  /** The notes not yet played whose window holds a beat. */
+  private openAt(beat: number): Target[] {
     const open: Target[] = []
     for (let i = this.finalized; i < this.targets.length; i++) {
       const target = this.targets[i]
       if (target.from > beat) break
       if (!target.done && beat <= target.to) open.push(target)
     }
+    return open
+  }
+
+  /** Whether a key pressed at a beat is a melody note due then (the press is not judged). */
+  isDue(beat: number, pitch: number): boolean {
+    return this.openAt(beat).some((target) => this.matches(target, pitch))
+  }
+
+  /** Judge a key pressed at a beat. */
+  press(beat: number, pitch: number): Press {
+    const open = this.openAt(beat)
     const byDistance = (a: Target, b: Target) => Math.abs(a.start - beat) - Math.abs(b.start - beat)
     const hit = open.filter((t) => this.matches(t, pitch)).sort(byDistance)[0]
     if (hit) {
@@ -138,15 +155,15 @@ export interface MelodyArrangement {
 }
 
 /**
- * Arrange a lead sheet (or a chart with a lick) to read its melody: the band plays the chords,
- * and the melody too when it guides (`guide`); the notes are where the band places them (with
+ * Arrange a lead sheet (or a chart with a lick) to read its melody: the band plays the chords and
+ * the melody (its volume is the Mixer's Melody); the notes are where the band places them (with
  * the style's swing, in each chorus's key). A chunk of an endless line (`chunk`) does not end
  * like a song, and only the first one has a count-in.
  */
 export function arrangeMelody(chart: Chart, styleId: string, patternId: string | null, transpose: number, choruses: number,
-  practice: PracticeSettings, guide: boolean, chunk?: { countIn: boolean }): MelodyArrangement {
+  practice: PracticeSettings, chunk?: { countIn: boolean }): MelodyArrangement {
   const style = getStyle(styleId)
   const options = { loop: practice.loop, keyStep: practice.keyStep, ...(chunk ? { ending: false, countIn: chunk.countIn } : {}) }
-  const arrangement = arrange(guide ? chart : withoutMelody(chart), style, transpose, choruses, options, patternId)
+  const arrangement = arrange(chart, style, transpose, choruses, options, patternId)
   return { arrangement, notes: melodyOccurrences(chart, arrangement.timeline, style.swing, transpose, practice.keyStep) }
 }

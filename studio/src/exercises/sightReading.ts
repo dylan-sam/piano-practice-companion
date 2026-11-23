@@ -101,21 +101,61 @@ export function matchesPlayedChord(notes: ReadonlySet<number>, chord: Chord): bo
   return chord.bass === chord.root || Math.min(...notes) % 12 === chord.bass
 }
 
-/** Judge note-on attempts within each chord's beat window and expire misses. */
+/**
+ * Whether the notes played during a chord cover it, in any rhythm: every required pitch class is
+ * among them (the bass lowest, for a slash chord). Other notes are left out, so a broken chord, a
+ * walking bass or a melody played with it still counts.
+ */
+export function coversChord(notes: Iterable<number>, chord: Chord): boolean {
+  const allowed = allowedPitchClasses(chord)
+  const tones = [...notes].filter((note) => allowed.has(note % 12))
+  const played = new Set(tones.map((note) => note % 12))
+  if ([...requiredPitchClasses(chord)].some((pc) => !played.has(pc))) return false
+  return chord.bass === chord.root || Math.min(...tones) % 12 === chord.bass
+}
+
+/**
+ * Judge note-on attempts within each chord's beat window and expire misses. A `broken` judge
+ * gathers the notes of a chord over its whole time (coversChord); otherwise the chord must be
+ * held as a whole voicing (matchesPlayedChord).
+ */
 export class ChordJudge {
   private judged = new Set<number>()
   private finalized = 0
   private readonly timeline: Timeline
+  private readonly broken: boolean
+  private gathered = new Map<number, Set<number>>() // broken: the notes played so far in each chord
 
   /** Keep the timed chord slots that this judge will assess. */
-  constructor(timeline: Timeline) { this.timeline = timeline }
+  constructor(timeline: Timeline, options: { broken?: boolean } = {}) {
+    this.timeline = timeline
+    this.broken = !!options.broken
+  }
 
-  /** Accept the first complete voicing played within a chord's allowed beats. */
-  accept(beat: number, held: ReadonlySet<number>): Slot | null {
+  /** The chord sounding at a beat, if any. */
+  chordAt(beat: number): Chord | null {
+    const slot = slotAtBeat(this.timeline, beat)
+    return slot && slot.chordIndex >= 0 && beat < slot.start + slot.beats ? slot.chord : null
+  }
+
+  /** The number of chords to play. */
+  get total(): number {
+    return this.timeline.slots.filter((slot) => slot.chordIndex >= 0).length
+  }
+
+  /** Accept the first complete voicing played within a chord's allowed beats (`pitch`: the key just pressed). */
+  accept(beat: number, held: ReadonlySet<number>, pitch?: number): Slot | null {
     const slot = slotAtBeat(this.timeline, beat)
     if (!slot || slot.chordIndex < 0 || beat >= slot.start + slot.beats) return null
     const index = this.timeline.slots.indexOf(slot)
-    if (index < this.finalized || this.judged.has(index) || !matchesPlayedChord(held, slot.chord)) return null
+    if (index < this.finalized || this.judged.has(index)) return null
+    if (this.broken) {
+      const notes = this.gathered.get(index) ?? new Set<number>()
+      for (const note of held) notes.add(note)
+      if (pitch !== undefined) notes.add(pitch)
+      this.gathered.set(index, notes)
+      if (!coversChord(notes, slot.chord)) return null
+    } else if (!matchesPlayedChord(held, slot.chord)) return null
     this.judged.add(index)
     return slot
   }
@@ -128,6 +168,7 @@ export class ChordJudge {
       const slot = this.timeline.slots[index]
       if (slot.start + slot.beats > beat + 0.001) break
       if (slot.chordIndex >= 0 && !this.judged.has(index)) missed.push(slot)
+      this.gathered.delete(index)
       this.finalized++
     }
     return missed
