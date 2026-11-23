@@ -1,6 +1,7 @@
 // Judging what is played on a MIDI keyboard while reading, shared by Lead Sheet, Exercises and
 // Lick Sightreading: the melody note by note, the chords in any voicing and rhythm (ChordJudge,
-// broken), or both at once; their feedback on the sheet, and the reading settings. Their controls
+// broken), or both at once; their feedback on the sheet, and the reading settings. Improvising,
+// nothing is judged: each key is coloured by how it sits on the chord sounding (toneColors.ts). Their controls
 // and the score line are in ReadingControls.tsx.
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
@@ -8,10 +9,11 @@ import type { Player } from '../audio/player'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { BASE_BPM } from '../engine/arrange'
 import type { MelodyOccurrence } from '../engine/melody'
-import type { Slot, Timeline } from '../engine/timeline'
+import { slotAtBeat, type Slot, type Timeline } from '../engine/timeline'
 import { allowedPitchClasses, ChordJudge } from './sightReading'
+import { NO_TONES, resolvesApproach, toneColor, type ToneColor, type ToneCounts } from './toneColors'
 import {
-  CHECK_MODES, EMPTY_SCORE, MelodyJudge, noteKey, TIMING_WINDOWS, type CheckMode, type MelodyScore, type NoteResult, type Strictness,
+  CHECK_MODES, checksChords, checksMelody, EMPTY_SCORE, MelodyJudge, noteKey, TIMING_WINDOWS, type CheckMode, type MelodyScore, type NoteResult, type Strictness,
 } from './melodyReading'
 
 /** How notes are judged, kept on this device. */
@@ -41,10 +43,14 @@ function makeJudges(notes: MelodyOccurrence[], timeline: Timeline, settings: Rea
   const mode = checkMode(settings)
   return {
     mode,
-    melody: mode === 'chords' ? null : new MelodyJudge(notes, TIMING_WINDOWS[settings.strictness], settings.anyOctave),
-    chords: mode === 'melody' ? null : new ChordJudge(timeline, { broken: true }),
+    melody: checksMelody(mode) ? new MelodyJudge(notes, TIMING_WINDOWS[settings.strictness], settings.anyOctave) : null,
+    chords: checksChords(mode) ? new ChordJudge(timeline, { broken: true }) : null,
   }
 }
+
+/** A key played while improvising, with where it sat on its chord. */
+export interface PlayedTone { id: number; pitch: number; color: ToneColor }
+const RECENT_TONES = 16 // the keys shown while improvising
 
 /** The key of a chord on the sheet: its written bar and its place in the bar (as Chart.tsx keys them). */
 const chordKey = (slot: Slot) => `${slot.measure}:${slot.chordIndex}`
@@ -66,6 +72,42 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
   const [total, setTotal] = useState(0)
   const [chordTotal, setChordTotal] = useState(0)
   const [checking, setChecking] = useState<CheckMode>('melody')
+  const checkingRef = useRef<CheckMode>('melody')
+  const timelineRef = useRef<Timeline | null>(null)
+  const tonesRef = useRef<ToneCounts>(NO_TONES)
+  const lastToneRef = useRef<PlayedTone | null>(null)
+  const [tones, setTones] = useState<ToneCounts>(NO_TONES)
+  const [recent, setRecent] = useState<PlayedTone[]>([])
+
+  /** Improvising: colour a key by how it sits on the chord sounding at a beat (none in the count-in). */
+  const colorTone = useCallback((beat: number, pitch: number) => {
+    const slot = timelineRef.current && slotAtBeat(timelineRef.current, beat)
+    if (!slot || slot.chordIndex < 0 || beat >= slot.start + slot.beats) return
+    const color = toneColor(pitch, slot.chord)
+    const counts = { ...tonesRef.current, [color]: tonesRef.current[color] + 1 }
+    // The key before, outside, led here by a half step: it was an approach tone
+    const last = lastToneRef.current
+    const approached = last?.color === 'outside' && resolvesApproach(last.pitch, pitch, color)
+    if (approached) {
+      counts.outside--
+      counts.approach++
+    }
+    tonesRef.current = counts
+    setTones(counts)
+    const tone: PlayedTone = { id: (last?.id ?? 0) + 1, pitch, color }
+    lastToneRef.current = tone
+    setRecent((current) => [
+      ...current.slice(1 - RECENT_TONES).map((t) => (approached && t.id === last.id ? { ...t, color: 'approach' as const } : t)),
+      tone,
+    ])
+  }, [])
+
+  /** Start using these judges, for this timeline. */
+  const startMode = useCallback((mode: CheckMode, timeline: Timeline) => {
+    checkingRef.current = mode
+    timelineRef.current = timeline
+    setChecking(mode)
+  }, [])
 
   /** Add chords to the chord score, and show them on the sheet. */
   const markChords = useCallback((slots: Slot[], result: 'correct' | 'missed') => {
@@ -101,6 +143,7 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     player?.liveNoteOn(note, velocity)
     if (!player?.isPlaying || !scoringRef.current) return
     const beat = player.heardPosition * BASE_BPM / 60
+    if (checkingRef.current === 'improvise') return colorTone(beat, note)
     const chords = chordJudgeRef.current
     if (chords) {
       const slot = chords.accept(beat, held, note)
@@ -117,7 +160,7 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
       setFeedback((current) => ({ ...current, [key]: press.result as NoteResult }))
     }
     setScore({ ...judge.score })
-  }, [playerRef, markChords])
+  }, [playerRef, markChords, colorTone])
   /** Release the live piano note when a key lifts. */
   const onNoteOff = useCallback((note: number) => { playerRef.current?.liveNoteOff(note) }, [playerRef])
   const keyboard = useMidiKeyboard(onNoteOn, onNoteOff)
@@ -130,9 +173,15 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
   const begin = useCallback((notes: MelodyOccurrence[], timeline: Timeline, settings: ReadingSettings, keepScore = false) => {
     const previous = judgeRef.current
     const { mode, melody, chords } = makeJudges(notes, timeline, settings)
-    setChecking(mode)
+    startMode(mode, timeline)
     if (keepScore && previous && melody) Object.assign(melody.score, previous.score)
-    if (!keepScore) chordScoreRef.current = NO_CHORDS
+    if (!keepScore) {
+      chordScoreRef.current = NO_CHORDS
+      tonesRef.current = NO_TONES
+      lastToneRef.current = null
+      setTones(NO_TONES)
+      setRecent([])
+    }
     judgeRef.current = melody
     chordJudgeRef.current = chords
     setFeedback({})
@@ -141,7 +190,7 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     setChordScore(chordScoreRef.current)
     setTotal((current) => (keepScore ? current : 0) + (melody ? notes.length : 0))
     setChordTotal((current) => (keepScore ? current : 0) + (chords?.total ?? 0))
-  }, [])
+  }, [startMode])
 
   /**
    * Go on judging from a beat with the notes of a new arrangement of the same song (new keys, or
@@ -151,7 +200,7 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
   const resume = useCallback((notes: MelodyOccurrence[], timeline: Timeline, settings: ReadingSettings, fromBeat: number) => {
     const previous = judgeRef.current
     const { mode, melody, chords } = makeJudges(notes.filter((note) => note.start > fromBeat), timeline, settings)
-    setChecking(mode)
+    startMode(mode, timeline)
     if (previous && melody) Object.assign(melody.score, previous.score)
     chords?.expire(fromBeat) // the chords before are judged already
     judgeRef.current = melody
@@ -160,13 +209,18 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     setTotal(melody ? (previous?.judged ?? 0) + melody.total : 0)
     const doneChords = chordScoreRef.current.correct + chordScoreRef.current.missed
     setChordTotal(chords ? doneChords + chords.total - timeline.slots.filter((s) => s.chordIndex >= 0 && s.start + s.beats <= fromBeat).length : 0)
-  }, [])
+  }, [startMode])
 
   /** Forget the judges and the scores (another song is on the stand). */
   const clear = useCallback(() => {
     judgeRef.current = null
     chordJudgeRef.current = null
     chordScoreRef.current = NO_CHORDS
+    timelineRef.current = null
+    tonesRef.current = NO_TONES
+    lastToneRef.current = null
+    setTones(NO_TONES)
+    setRecent([])
     setFeedback({})
     setChordFeedback({})
     setScore(EMPTY_SCORE)
@@ -175,5 +229,5 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     setChordTotal(0)
   }, [])
 
-  return { keyboard, feedback, chordFeedback, score, chordScore, total, chordTotal, checking, settleThrough, begin, resume, clear }
+  return { keyboard, feedback, chordFeedback, score, chordScore, total, chordTotal, checking, tones, recent, settleThrough, begin, resume, clear }
 }

@@ -13,11 +13,20 @@ import { getStyle } from '../styles'
 
 export type NoteResult = 'correct' | 'wrong' | 'missed'
 
-/** What is checked while reading: the melody, the chords (in any voicing and rhythm), or both. */
-export type CheckMode = 'melody' | 'chords' | 'both'
+/**
+ * What is checked while reading: the melody, the chords (in any voicing and rhythm), both, or
+ * nothing (improvise: each note is coloured by how it sits on the chord, toneColors.ts).
+ */
+export type CheckMode = 'melody' | 'chords' | 'both' | 'improvise'
 export const CHECK_MODES: { id: CheckMode; text: string }[] = [
   { id: 'melody', text: 'Melody only' }, { id: 'chords', text: 'Chords only' }, { id: 'both', text: 'Melody and chords' },
+  { id: 'improvise', text: 'Improvise (note colours)' },
 ]
+
+/** Whether a check mode judges the melody notes. */
+export const checksMelody = (mode: CheckMode) => mode === 'melody' || mode === 'both'
+/** Whether a check mode judges the chords. */
+export const checksChords = (mode: CheckMode) => mode === 'chords' || mode === 'both'
 
 /** How strict the timing is: the most a note may be early or late, in beats. */
 export const TIMING_WINDOWS = { easy: 0.4, normal: 0.25, strict: 0.12 } as const

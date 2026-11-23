@@ -175,6 +175,9 @@ the percentage and your average timing (early or late, in milliseconds).
   - **Check**: **Melody only** (default), **Chords only** or **Melody and
     chords**, for playing the chords with the left hand under the melody.
     Chords count in any voicing, inversion or rhythm (broken, comped, walking).
+    **Improvise (note colours)**: nothing is judged; each key shows how it sits
+    on the chord sounding: chord tone (black), colour tone (green), approach
+    tone (blue), outside (red).
   - **Timing**: Easy, Normal or Strict.
   - **Any octave**: count a note played in another octave than written.
 - The band plays the melody too; turn it down or mute it in the **Mixer**.
@@ -703,8 +706,8 @@ authors. Google Play has no such restriction. This is not legal advice.
   Open Digital Press, 2023, CC BY 4.0).
 - **Ideas** (no code taken): the Check menu of the reading screens (melody,
   chords or both hands) follows the hand choice of
-  [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); the
-  chord-tone colours planned for improvising follow the note coloration of
+  [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); its
+  Improvise mode follows the note coloration of
   [Impro-Visor](https://github.com/Impro-Visor/Impro-Visor) (GPL-2.0-or-later).
 - **Fonts**: Petaluma (Steinberg), IBM Plex (IBM).
 

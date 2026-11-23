@@ -758,6 +758,11 @@ text.lead-chord-missed {
 .melody-score .score-correct { color: #2e9d55; }
 .melody-score .score-wrong { color: #d9822b; }
 .melody-score .score-missed { color: #d95757; }
+.melody-score .tone-chord { color: var(--ink); }
+.melody-score .tone-color { color: #2e9d55; }
+.melody-score .tone-approach { color: #3b78d8; }
+.melody-score .tone-outside { color: #d95757; }
+.melody-score .tone-recent { display: inline-flex; flex-wrap: wrap; gap: 0.35em; }
 
 .lead-score-clickable {
   cursor: pointer;

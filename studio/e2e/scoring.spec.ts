@@ -1,5 +1,5 @@
-// The Scoring menu of the reading screens: what is checked (melody only by default, chords, or
-// both), with no Guide melody switch (the Mixer's Melody slider mutes the melody).
+// The Scoring menu of the reading screens: what is checked (melody only by default, chords, both,
+// or improvising with note colours), with no Guide melody switch (the Mixer's Melody slider mutes the melody).
 
 import { expect, test, type Page } from '@playwright/test'
 import { collectErrors } from './helpers'
@@ -22,7 +22,7 @@ for (const path of ['/sightreading/lead-sheets', '/sightreading/exercises', '/si
     await page.getByRole('button', { name: /Scoring/ }).click()
     const check = page.getByLabel('Check')
     await expect(check).toHaveValue('melody')
-    await expect(check.locator('option')).toHaveText(['Melody only', 'Chords only', 'Melody and chords'])
+    await expect(check.locator('option')).toHaveText(['Melody only', 'Chords only', 'Melody and chords', 'Improvise (note colours)'])
     await expect(page.getByRole('button', { name: /Guide melody/ })).toHaveCount(0)
     await check.selectOption('both')
     await page.reload()

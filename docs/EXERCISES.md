@@ -363,6 +363,7 @@ Practice and Mixer (on phones, under Settings), so the sheet keeps the page.
 | Melody only (default) | the melody | the melody's notes, as below |
 | Chords only | the chord symbols | each chord, in any voicing, inversion or rhythm |
 | Melody and chords | the melody with the right hand, the chords with the left | both, each with its own score |
+| Improvise (note colours) | anything, over the chords | nothing: each key is coloured by how it sits on the chord (below) |
 
 A chord counts once every required note of it has been played during the time
 it sounds, held together or one after the other (a broken chord, a comping
@@ -373,6 +374,21 @@ melody or passing notes played with it don't spoil it. The chord symbol turns
 **green** when the chord is played, **red** when its time runs out first.
 With Melody and chords, a key that is not the melody note due but belongs to
 the chord sounding is the left hand's: it is not an extra key.
+
+**Improvise** follows the note coloration of Impro-Visor: nothing is right or
+wrong, and the score line shows how many keys landed on each kind of note (with
+their share) and the last 16 keys, each in its colour
+(`studio/src/exercises/toneColors.ts`):
+
+| Colour | Kind | Over C7 |
+|---|---|---|
+| black | chord tone | C E G B♭ |
+| green | colour tone: another note of the chord's scale (the scales of Lick Sightreading), except the 11th over a major 3rd, which clashes with it | D A |
+| blue | approach tone: an outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | F♯ then G |
+| red | outside: none of these | F♯ then F |
+
+Keys in the count-in are not coloured. The melody still plays: mute it in the
+Mixer to improvise over the band alone.
 
 For the melody, every written note gets a window around its start (`TIMING_WINDOWS` in
 `studio/src/exercises/melodyReading.ts`):
