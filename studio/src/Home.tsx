@@ -22,11 +22,6 @@ const MENUS: Record<string, MenuPage> = {
     description: 'Hear chord progressions, then play them with a band.',
     items: [
       {
-        title: 'Lessons',
-        description: 'A 30-week jazz piano program, 20 to 30 minutes a day: both hands and improvising from the first week, one song and one left-hand pattern at a time. Each step opens the exercise it needs, already set up. Nothing is locked.',
-        path: ROUTES.lessons,
-      },
-      {
         title: 'Play along',
         description: 'Choose a ChoCo chord chart or a lead sheet, pick a style, key and tempo, and play along with the band on your instrument! You can import your own charts! The key and tempo can be changed automatically at each repetition to practice in every key!',
         path: ROUTES.playAlong,
@@ -45,6 +40,11 @@ const MENUS: Record<string, MenuPage> = {
         title: 'Improvisation',
         description: 'Plug in a MIDI keyboard and improvise with the band over a song or an endless line of progressions. Every note you play is written out and coloured by how it sounds on the chord.',
         path: ROUTES.improvisation,
+      },
+      {
+        title: 'Lessons',
+        description: 'A 30-week jazz piano program, 20 to 30 minutes a day: both hands and improvising from the first week, one song and one left-hand pattern at a time. Each step opens the exercise it needs, already set up. Nothing is locked.',
+        path: ROUTES.lessons,
       },
     ],
   },

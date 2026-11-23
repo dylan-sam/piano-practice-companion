@@ -3,15 +3,56 @@
 // opens the screen that practises it, set up for the step. Progress is kept on this device and
 // only suggests the next step: any step can be opened at any time.
 
+import { useState } from 'react'
 import { navigate } from '../router'
 import { Wordmark } from '../ui/AppLink'
 import { lessonUrl } from './lessonLink'
-import { ALL_STEPS, PROGRAM, type LessonStep, type StepKind } from './program'
+import { ALL_STEPS, PROGRAM, type LessonStep, type LessonUnit, type StepKind } from './program'
 import { nextStep, useLessonProgress, type LessonProgress } from './useLessonProgress'
 
 // The name of each part of a session, on its steps
 const KIND_LABELS: Record<StepKind, string> = {
   hands: 'Hands together', listen: 'Listen', song: 'The song', improvise: 'Improvise', ear: 'Ear', check: 'Self-check',
+}
+
+/** What is open on the page: the units opened and the week shown in each, kept for this visit (back from a step). */
+interface LessonsView { open: string[]; weeks: Record<string, number> }
+const VIEW_KEY = 'eartraining:lessons:view'
+const isView = (value: unknown): value is LessonsView => {
+  const v = value as Partial<LessonsView> | null
+  return !!v && Array.isArray(v.open) && !!v.weeks && typeof v.weeks === 'object'
+}
+
+/** The units opened and the week shown in each, kept in the session (so a step's screen comes back to them). */
+function useLessonsView() {
+  const [view, setView] = useState<LessonsView>(() => {
+    try {
+      const saved: unknown = JSON.parse(sessionStorage.getItem(VIEW_KEY) ?? 'null')
+      return isView(saved) ? saved : { open: [], weeks: {} }
+    } catch {
+      return { open: [], weeks: {} }
+    }
+  })
+  /** Change the view and keep it for the session. */
+  const update = (next: LessonsView) => {
+    setView(next)
+    try { sessionStorage.setItem(VIEW_KEY, JSON.stringify(next)) } catch { /* kept for this page only */ }
+  }
+  /** Open or close a unit. */
+  const toggleUnit = (id: string, open: boolean) =>
+    update({ ...view, open: open ? [...new Set([...view.open, id])] : view.open.filter((unit) => unit !== id) })
+  /** Show a week of a unit. */
+  const showWeek = (unit: string, week: number) => update({ ...view, weeks: { ...view.weeks, [unit]: week } })
+  /** Open a unit at a week (the suggested step). */
+  const reveal = (unit: string, week: number) =>
+    update({ open: [...new Set([...view.open, unit])], weeks: { ...view.weeks, [unit]: week } })
+  return { view, toggleUnit, showWeek, reveal }
+}
+
+/** The unit and week a step is in. */
+function placeOf(step: LessonStep): { unit: LessonUnit; week: number } | null {
+  for (const unit of PROGRAM) for (const week of unit.weekList) if (week.steps.includes(step)) return { unit, week: week.week }
+  return null
 }
 
 /** One step: what, why, how long, done when; Start, Mark done, and the boxes of a self-check. */
@@ -54,8 +95,17 @@ function StepCard({ item, progress, onDone, onTick, next }: {
 /** The Lessons screen. */
 export function Lessons() {
   const { progress, toggleDone, toggleTick, reset } = useLessonProgress()
+  const { view, toggleUnit, showWeek, reveal } = useLessonsView()
   const next = nextStep(ALL_STEPS, progress)
   const doneCount = ALL_STEPS.filter((item) => progress.done.includes(item.id)).length
+
+  /** Open the suggested step's unit and week, and bring the step into view. */
+  const showNext = () => {
+    const place = next && placeOf(next)
+    if (!place || !next) return
+    reveal(place.unit.id, place.week)
+    window.setTimeout(() => document.getElementById(next.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
+  }
 
   return (
     <div className="app lessons">
@@ -73,39 +123,54 @@ export function Lessons() {
             the song, improvising, and ear training.
           </p>
           <p>
-            Nothing is locked: open any step at any time. Targets are a tempo and a key, never "mastered"; take the time you
-            need, and go back to earlier units at faster tempos. Your progress is kept on this device.
+            Nothing is locked: open any step at any time. Each step ends with a concrete target, such as "90% right at
+            80 BPM", rather than "until you know it"; take the time you need, and come back to earlier units at faster
+            tempos. Steps the app can check are ticked by themselves when you reach their target. Your progress is kept
+            on this device.
           </p>
           <p className="lessons-progress">{doneCount} of {ALL_STEPS.length} steps done.</p>
           {next && <p className="lessons-next">
-            Next: <a href={`#${next.id}`}>{next.title}</a>
-            {next.link && <> <button className="button button-primary" onClick={() => navigate(lessonUrl(next.link!))}>Start</button></>}
+            Next: <button className="link-button" onClick={showNext}>{next.title}</button>
+            {next.link && <button className="button button-primary" onClick={() => navigate(lessonUrl(next.link!))}>Start</button>}
           </p>}
         </section>
 
         {PROGRAM.map((unit) => {
           const steps = unit.weekList.flatMap((week) => week.steps)
           const unitDone = steps.filter((item) => progress.done.includes(item.id)).length
-          const holdsNext = !!next && steps.includes(next)
+          const shown = unit.weekList.find((week) => week.week === view.weeks[unit.id]) ?? unit.weekList[0]
           return (
-            <details key={unit.id} className="lesson-unit" open={holdsNext}>
+            <details key={unit.id} className="lesson-unit" open={view.open.includes(unit.id)}
+              onToggle={(event) => {
+                const open = (event.currentTarget as HTMLDetailsElement).open
+                if (open !== view.open.includes(unit.id)) toggleUnit(unit.id, open)
+              }}>
               <summary>
                 <span className="lesson-unit-title">{unit.id === 'review' ? unit.title : `Unit ${unit.id.slice(1)}. ${unit.title}`}</span>
                 <span className="lesson-unit-weeks">{unit.weeks} · {unitDone} of {steps.length} done</span>
               </summary>
               <p><strong>Goal:</strong> {unit.goal}</p>
               <p className="sight-hint">Source: {unit.source}</p>
-              {unit.weekList.map((week) => (
-                <section key={week.week} className="lesson-week" aria-label={`Week ${week.week}`}>
-                  <h3>Week {week.week}</h3>
-                  <ol className="lesson-steps">
-                    {week.steps.map((item) => (
-                      <StepCard key={item.id} item={item} progress={progress} onDone={toggleDone} onTick={toggleTick}
-                        next={item === next} />
-                    ))}
-                  </ol>
-                </section>
-              ))}
+              {unit.weekList.length > 1 && <div className="lesson-week-tabs" role="tablist" aria-label={`Weeks of ${unit.title}`}>
+                {unit.weekList.map((week) => {
+                  const weekDone = week.steps.every((item) => progress.done.includes(item.id))
+                  return (
+                    <button key={week.week} role="tab" aria-selected={week === shown} className="chip"
+                      id={`tab-week-${week.week}`} aria-controls={`week-${week.week}`} onClick={() => showWeek(unit.id, week.week)}>
+                      Week {week.week}{weekDone ? ' \u2713' : ''}
+                    </button>
+                  )
+                })}
+              </div>}
+              <section className="lesson-week" role="tabpanel" id={`week-${shown.week}`} aria-label={`Week ${shown.week}`}>
+                <h3>Week {shown.week}</h3>
+                <ol className="lesson-steps">
+                  {shown.steps.map((item) => (
+                    <StepCard key={item.id} item={item} progress={progress} onDone={toggleDone} onTick={toggleTick}
+                      next={item === next} />
+                  ))}
+                </ol>
+              </section>
             </details>
           )
         })}

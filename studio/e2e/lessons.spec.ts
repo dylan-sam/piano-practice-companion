@@ -8,6 +8,14 @@ test('a lesson step opens Lead Sheet Sightreading with its song and left-hand st
   const errors = collectErrors(page)
   await page.goto('/lessons')
   await expect(page.getByRole('heading', { name: 'Jazz piano in 30 weeks' })).toBeVisible()
+  // Units start closed; a unit shows one week at a time
+  await expect(page.locator('details.lesson-unit[open]')).toHaveCount(0)
+  await page.getByText('Unit 1. Time, chords and the first song').click()
+  await expect(page.getByRole('tab', { name: 'Week 1' })).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('tab', { name: 'Week 2' }).click()
+  await expect(page.locator('#w2-avalon2')).toBeVisible()
+  await expect(page.locator('#w1-avalon1')).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Week 1' }).click()
   const step = page.locator('#w1-avalon1')
   await step.getByRole('button', { name: 'Mark done' }).click()
   await expect(step.getByRole('button', { name: 'Done' })).toBeVisible()
@@ -16,6 +24,12 @@ test('a lesson step opens Lead Sheet Sightreading with its song and left-hand st
 
   await page.locator('#w1-avalon1').getByRole('button', { name: 'Start' }).click()
   await expect(page).toHaveURL(/\/sightreading\/lead-sheets\?song=Avalon/)
+  // Back once: the Lessons tab, as it was left
+  await expect(page.locator('.readout')).toContainText('Avalon', { timeout: 60_000 })
+  await page.goBack()
+  await expect(page).toHaveURL(/\/lessons$/)
+  await expect(page.locator('#w1-avalon1')).toBeVisible()
+  await page.goForward()
   await expect(page.locator('.lead-sheet, .readout').first()).toBeVisible({ timeout: 60_000 })
   await expect(page.locator('.readout')).toContainText('Avalon')
   await page.getByRole('button', { name: /Scoring/ }).click()
@@ -52,6 +66,7 @@ test('Free Improvisation writes out and colours the keys played', async ({ page 
 
 test('Delete all my data asks once more, then forgets everything', async ({ page }) => {
   await page.goto('/lessons')
+  await page.getByText('Unit 1. Time, chords and the first song').click()
   await page.locator('#w1-hands1').getByRole('button', { name: 'Mark done' }).click()
   await page.evaluate(() => localStorage.setItem('other-site', 'kept'))
   await page.goto('/')

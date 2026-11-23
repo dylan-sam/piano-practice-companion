@@ -28,15 +28,15 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The main menu has the **Lessons** tab and four areas, each opening a menu of its screens:
+The main menu has four areas, each opening a menu of its screens, and the **Lessons** tab last:
 
 | Area | Screens |
 |---|---|
-| **Lessons** | a 30-week jazz piano program whose steps open the screens below, set up for each step ([docs/LESSONS.md](docs/LESSONS.md)) |
 | **Play along** | [Chord Player](#chord-player), [Lead Sheet Player](#lead-sheet-player) |
 | **Ear Training** | [Name the progression](#name-the-progression), [Melodic Dictation](#melodic-dictation) |
 | **Sightreading** (with a MIDI keyboard) | [Chord Sightreading](#chord-sightreading), [Lead Sheet Sightreading](#lead-sheet-sightreading), [Exercises Sightreading](#exercises-sightreading), [Lick Sightreading](#lick-sightreading) |
 | **Improvisation** (with a MIDI keyboard) | [Free Improvisation](#free-improvisation) |
+| **Lessons** | a 30-week jazz piano program whose steps open the screens above, set up for each step ([docs/LESSONS.md](docs/LESSONS.md)) |
 
 The back button (and the title at the top left of a screen) goes up one level:
 from a screen to its area's menu, then to the main menu.

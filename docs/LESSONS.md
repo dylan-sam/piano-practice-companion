@@ -30,8 +30,11 @@ and **ear training** (2 to 4).
 | 6 | 27 to 29 | Modal playing | Modal Study |
 | Review | 30 | Each unit's last song in a new key, faster; a recording of a blues and a standard | |
 
-Nothing is locked: any step can be opened at any time, and targets are a tempo
-and a key ("90% right at 80 BPM"), never "mastered".
+Nothing is locked: any step can be opened at any time. Each step ends with a
+concrete target ("90% right at 80 BPM") rather than "until you know it". On the
+page, units start closed; an open unit shows one week at a time, with a tab for
+each week. The units opened and the weeks shown are kept for the visit, so going
+back from a step's screen finds the page as it was.
 
 ## How a song is learnt
 

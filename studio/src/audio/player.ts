@@ -71,14 +71,16 @@ export class Player {
     const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
     if (session) session.type = 'playback'
     // Phones open the audio output on the first touch; doing it then, rather than on play, saves that wait
-    const unlock = () => {
-      if (this.ctx.state === 'running') {
-        for (const type of UNLOCK_EVENTS) window.removeEventListener(type, unlock, true)
-        return
-      }
-      void this.ctx.resume()
+    for (const type of UNLOCK_EVENTS) window.addEventListener(type, this.unlock, true)
+  }
+
+  /** Open the audio output on a touch or click, once (and never after the player is disposed). */
+  private readonly unlock = () => {
+    if (this.ctx.state === 'running' || this.ctx.state === 'closed') {
+      for (const type of UNLOCK_EVENTS) window.removeEventListener(type, this.unlock, true)
+      return
     }
-    for (const type of UNLOCK_EVENTS) window.addEventListener(type, unlock, true)
+    void this.ctx.resume()
   }
 
   /**
@@ -328,6 +330,7 @@ export class Player {
 
   async dispose(): Promise<void> {
     this.stop()
+    for (const type of UNLOCK_EVENTS) window.removeEventListener(type, this.unlock, true)
     await this.ctx.close()
   }
 

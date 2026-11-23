@@ -3489,9 +3489,10 @@ input.fader::-moz-range-thumb {
 
 /* Lessons: units that open, weeks, and step cards (one column on phones) */
 .lessons-page {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 16px 16px 48px;
+  /* The app's frame does not scroll: the page scrolls under the top bar */
+  overflow-y: auto;
+  min-height: 0;
+  padding: 16px max(16px, calc((100% - 920px) / 2)) 48px;
 }
 
 .lessons-intro h1 { margin: 8px 0; }
@@ -3518,6 +3519,9 @@ input.fader::-moz-range-thumb {
 .lesson-unit-title { font-weight: 600; }
 .lesson-unit-weeks { color: var(--ink-2); }
 .lesson-week h3 { margin: 16px 0 8px; }
+.lesson-week-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.lesson-week-tabs [aria-selected='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
 
 .lesson-steps {
   list-style: none;
