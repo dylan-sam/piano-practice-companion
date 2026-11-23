@@ -409,8 +409,8 @@ below it.
 | Control | Choices |
 |---|---|
 | Chords | **Pick a song** (chord charts: search the ChoCo catalog, or your own saved chord charts; **Import** iReal Pro charts or a Studio export, saved for the Chord Player and Chord Sightreading too; lead sheets are not offered), **Random song** (a catalog song, if you like one containing a chosen progression), **Infinite progressions** (an endless line of catalog progressions in 7th-chord versions, as in [Chord Sightreading](#infinite-progressions), in chunks of 12 progressions that follow one another without a break (the band never plays an ending between them); the score goes on across chunks. Each new sheet starts at the top with a bar of rest while the band plays, so there is time to look back up before the lick starts again) |
-| Licks | the playlists of one-chord licks of the [lick database](LICKS.md) (133): vocabulary, and licks from standards over a major, minor, dominant or diminished chord |
-| Lick | one lick of that playlist; **Random lick** picks any one-chord lick (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
+| Licks | check boxes, like the Progressions filter: the playlists of one-chord licks of the [lick database](LICKS.md) (133) to offer, vocabulary and licks from standards over a major, minor, dominant or diminished chord; none checked offers them all. Kept on this device |
+| Lick | one lick of the checked playlists, listed by playlist; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
 | Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Lead Sheet Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 

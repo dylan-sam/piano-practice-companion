@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CheckFilter } from './CheckFilter'
 import { keyPrefersFlats, noteName } from '../music/chords'
 import type { Tune } from '../music/songs'
 import { getStyle } from '../styles'
@@ -18,7 +19,6 @@ interface LibraryProps {
   onRemovePlaylist?: (playlist: string) => void
 }
 
-const ALL = ''
 const CHOCO = '\u0001choco' // the ChoCo catalog, listed with the playlists (no playlist can have this name)
 const CHOCO_NAME = 'ChoCo chord charts'
 const LIMIT = 250 // long playlists are filtered by search rather than scrolled
@@ -35,42 +35,45 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
   const [scoreGroups, setScoreGroups] = useState<ScoreGroup[]>([])
   const [scoreError, setScoreError] = useState('')
   const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({})
-  const [playlist, setPlaylist] = useState(ALL)
+  const [chosenPlaylists, setChosenPlaylists] = useState<string[]>([]) // none: every playlist
   const [confirming, setConfirming] = useState(false)
   const [catalog, setCatalog] = useState<CatalogProgression[]>([])
   const [chosen, setChosen] = useState<string[]>([]) // progressions a song must contain
   const [matchAll, setMatchAll] = useState(true)
-  const [filterOpen, setFilterOpen] = useState(false)
   const showActions = !!(onImport || onNew)
   const searchCatalog = !!onLoadChoco
 
-  const playlists = useMemo(() => playlistNames(tunes, true), [tunes])
-  // The Playlist menu: the saved playlists and, where the catalog is searched, the ChoCo charts
+  // The Playlists filter: the saved playlists with their song counts and, where the catalog is
+  // searched, the ChoCo charts
   const choices = useMemo(() => {
-    const named = playlists.map((name) => ({ value: name, label: name }))
+    const counts = new Map<string, number>()
+    for (const tune of orderSavedTunes(tunes)) counts.set(tune.playlist ?? 'My tunes', (counts.get(tune.playlist ?? 'My tunes') ?? 0) + 1)
+    const named = playlistNames(tunes, true).map((name) => ({ id: name, label: name, count: counts.get(name) }))
     if (!searchCatalog) return named
-    return [...named, { value: CHOCO, label: CHOCO_NAME }]
-      .sort((a, b) => (a.value === 'My tunes' ? -1 : b.value === 'My tunes' ? 1 : a.label.localeCompare(b.label)))
-  }, [playlists, searchCatalog])
+    return [...named, { id: CHOCO, label: CHOCO_NAME }]
+      .sort((a, b) => (a.id === 'My tunes' ? -1 : b.id === 'My tunes' ? 1 : a.label.localeCompare(b.label)))
+  }, [tunes, searchCatalog])
   // Playlists that can be removed: saved in this browser (not bundled with the build)
   const removable = useMemo(() => new Set(playlistNames(tunes)), [tunes])
-  const activePlaylist = choices.some((c) => c.value === playlist) ? playlist : ALL
-  // A chosen playlist is listed alone: its saved songs, or the ChoCo search and progression filter
-  const inPlaylist = activePlaylist !== ALL && activePlaylist !== CHOCO
-  const showCatalog = searchCatalog && !inPlaylist
-  const showSaved = activePlaylist !== CHOCO
+  // Only the checked playlists are listed (all of them when none is checked)
+  const picked = useMemo(() => chosenPlaylists.filter((id) => choices.some((c) => c.id === id)), [chosenPlaylists, choices])
+  const pickedSaved = useMemo(() => picked.filter((id) => id !== CHOCO), [picked])
+  const showCatalog = searchCatalog && (!picked.length || picked.includes(CHOCO))
+  const showSaved = !picked.length || pickedSaved.length > 0
   const filtering = showCatalog && chosen.length > 0
   const shownGroups = showCatalog ? scoreGroups : []
 
-  // The saved tunes: the chosen playlist's only, all of them, or none for the ChoCo charts
+  // The saved tunes of the checked playlists
   const matches = useMemo(() => {
     const q = fold(query.trim())
     if (!showSaved) return []
-    return orderSavedTunes(tunes, activePlaylist)
+    return orderSavedTunes(tunes, pickedSaved)
       .filter((t) => !q || fold(`${t.chart.title} ${t.chart.composer ?? ''}`).includes(q))
-  }, [tunes, query, activePlaylist, showSaved])
+  }, [tunes, query, pickedSaved, showSaved])
 
-  const canRemove = activePlaylist !== ALL && activePlaylist !== 'Examples' && removable.has(activePlaylist)
+  // One saved playlist checked: it can be removed
+  const removing = picked.length === 1 && pickedSaved.length === 1 ? pickedSaved[0] : ''
+  const canRemove = !!removing && removing !== 'Examples' && removable.has(removing)
 
   // Open one version of a score
   const openVersion = async (id: string) => {
@@ -109,9 +112,6 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
     return () => controller.abort()
   }, [searchCatalog])
 
-  /** Add or remove one progression from the filter. */
-  const toggleProgression = (id: string) =>
-    setChosen((current) => (current.includes(id) ? current.filter((p) => p !== id) : [...current, id]))
   const chosenLabels = catalog.filter((p) => chosen.includes(p.id)).map((p) => p.label.replaceAll(' \u2013 ', '\u2013'))
 
   return (
@@ -133,84 +133,53 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       <input
         className="library-search"
         type="search"
-        placeholder={inPlaylist ? 'Search this playlist' : !showSaved ? 'Search ChoCo title or artist' : searchCatalog ? 'Search ChoCo title, artist or saved song' : 'Search title or performer'}
+        placeholder={!showCatalog ? 'Search title or performer' : !showSaved ? 'Search ChoCo title or artist' : 'Search ChoCo title, artist or saved song'}
         aria-label="Search songs"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {showCatalog && catalog.length > 0 && (
-        <div className="progression-filter">
-          <div className="progression-filter-bar">
-            <button className="library-import" aria-expanded={filterOpen} onClick={() => setFilterOpen(!filterOpen)}>
-              Progressions{filtering ? ` (${chosen.length})` : ''} {filterOpen ? '\u25b4' : '\u25be'}
-            </button>
-            {filtering && (
-              <button className="library-import" onClick={() => setChosen([])}>
-                Clear
-              </button>
-            )}
-          </div>
-          {filterOpen && (
-            <div className="progression-filter-panel">
-              <div className="progression-match" role="group" aria-label="Songs must contain">
-                <button aria-pressed={matchAll} onClick={() => setMatchAll(true)}>All of them</button>
-                <button aria-pressed={!matchAll} onClick={() => setMatchAll(false)}>Any of them</button>
-              </div>
-              <ul className="progression-options">
-                {catalog.map((p) => (
-                  <li key={p.id}>
-                    <label>
-                      <input type="checkbox" checked={chosen.includes(p.id)} onChange={() => toggleProgression(p.id)} />
-                      <span className="progression-label">{p.label}</span>
-                      <span className="progression-count">{p.unique_song_count}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {filtering && (
-            <p className="library-more">
-              Songs with {chosenLabels.join(matchAll ? ' and ' : ' or ')}. Search by title within them.
-            </p>
-          )}
-        </div>
-      )}
-
       {choices.length > 1 && (
-        <div className="library-filter">
-          <select
-            className="select"
-            aria-label="Playlist"
-            value={activePlaylist}
-            onChange={(e) => {
-              setPlaylist(e.target.value)
-              setConfirming(false)
-            }}
-          >
-            <option value={ALL}>All playlists</option>
-            {choices.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          {showActions && canRemove && onRemovePlaylist && (
+        <CheckFilter
+          name="Playlists"
+          options={choices}
+          chosen={picked}
+          onChange={(next) => { setChosenPlaylists(next); setConfirming(false) }}
+          actions={showActions && canRemove && onRemovePlaylist && (
             <button
               className={confirming ? 'library-remove library-remove-confirm' : 'library-remove'}
               onClick={() => {
                 if (!confirming) return setConfirming(true)
-                onRemovePlaylist(activePlaylist)
-                setPlaylist(ALL)
+                onRemovePlaylist(removing)
+                setChosenPlaylists([])
                 setConfirming(false)
               }}
               onBlur={() => setConfirming(false)}
             >
-              {confirming ? 'Remove?' : 'Remove'}
+              {confirming ? `Remove ${removing}?` : `Remove ${removing}`}
             </button>
           )}
-        </div>
+        />
+      )}
+
+      {showCatalog && catalog.length > 0 && (
+        <CheckFilter
+          name="Progressions"
+          options={catalog.map((p) => ({ id: p.id, label: p.label, count: p.unique_song_count }))}
+          chosen={chosen}
+          onChange={setChosen}
+          before={
+            <div className="check-filter-match" role="group" aria-label="Songs must contain">
+              <button aria-pressed={matchAll} onClick={() => setMatchAll(true)}>All of them</button>
+              <button aria-pressed={!matchAll} onClick={() => setMatchAll(false)}>Any of them</button>
+            </div>
+          }
+          summary={
+            <p className="library-more">
+              Songs with {chosenLabels.join(matchAll ? ' and ' : ' or ')}. Search by title within them.
+            </p>
+          }
+        />
       )}
 
       {matches.length > 0 && !filtering && (
@@ -218,7 +187,7 @@ export function Library({ tunes, selectedId, onSelect, onLoadChoco, onImport, on
       )}
       <ul className="library-list">
         {(filtering ? [] : matches.slice(0, LIMIT)).map((tune, i, shown) => {
-          // Each playlist starts under a bar with its name (the chosen one comes first)
+          // Each playlist starts under a bar with its name
           const name = tune.playlist ?? 'My tunes'
           const starts = i === 0 || (shown[i - 1].playlist ?? 'My tunes') !== name
           return (

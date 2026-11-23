@@ -69,9 +69,10 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   wrote or edited, the ones shared with you via link, the imported ones, or all
   3),
   and share a chart as a link that opens in this app or in iReal Pro. The
-  **Songs** list shows each playlist under a bar with its name; the playlist
-  you choose is shown alone, its songs in number order. **ChoCo chord charts**
-  is a choice of the same menu: the catalog search alone.
+  **Songs** list shows each playlist under a bar with its name, its songs in
+  number order. Like the **Progressions** filter, **Playlists** has check boxes:
+  only the checked playlists are listed, **ChoCo chord charts** (the catalog
+  search) among them; none checked lists them all.
 - **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
   and the band plays it without its melody.
 

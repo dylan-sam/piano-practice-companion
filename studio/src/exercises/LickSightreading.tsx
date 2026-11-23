@@ -22,6 +22,7 @@ import { ImportDialog } from '../ui/ImportDialog'
 import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
 import { Transport } from '../ui/Transport'
+import { CheckFilter } from '../ui/CheckFilter'
 import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from './ExerciseControls'
 import { isOneChordLick, lickChord, lickShape, withLick, type LickShape } from './lickReading'
@@ -39,6 +40,7 @@ import { arrangeMelody } from './melodyReading'
 interface LickSettings extends ReadingSettings {
   lickId: string
   rest: boolean // a rest as long as the lick between two licks
+  lickGroups?: string[] // the lick playlists offered (none: all of them)
 }
 const SETTINGS_KEY = 'eartraining:lick-reading'
 const DEFAULT_SETTINGS: LickSettings = { ...DEFAULT_READING, lickId: '', rest: false }
@@ -53,12 +55,13 @@ const SOURCES: { id: SourceMode; text: string }[] = [
 
 /** A lick playlist's name, short enough for the menu: "Licks from standards: V-I" is "Standards: V-I". */
 const shortGroup = (name: string) =>
-  name.replace(/^Licks: /, '').replace(/^Licks from standards: /, 'Standards: ').replace(/^Licks from folk tunes: /, 'Folk: ')
+  name.replace(/^Licks: vocabulary$/, 'Vocabulary').replace(/^Licks: /, '').replace(/^Licks from standards: /, 'Standards: ').replace(/^Licks from folk tunes: /, 'Folk: ')
 
 /** Whether stored settings are usable. */
 function isSettings(value: unknown): value is LickSettings {
   const v = value as Partial<LickSettings> | null
-  return isReadingSettings(value) && typeof v?.lickId === 'string' && typeof v?.rest === 'boolean'
+  return isReadingSettings(value) && typeof v?.lickId === 'string' && typeof v?.rest === 'boolean' &&
+    (v.lickGroups === undefined || (Array.isArray(v.lickGroups) && v.lickGroups.every((g) => typeof g === 'string')))
 }
 
 /** A chart arranged for the band, with the lick's notes as the judge expects them. */
@@ -110,8 +113,12 @@ export function LickSightreading() {
   // A Practice loop picked on the sheet: tap its first bar, then its last
   const loopPicking = useLoopPicking((loop) => changeArrangement(styleId, patternId, transpose, choruses, { ...practice, loop }))
 
-  // The lick of some settings: the one chosen, else the first one-chord lick
-  const lickFor = useCallback((chosen: LickSettings) => licks.find((item) => item.id === chosen.lickId) ?? licks[0] ?? null, [licks])
+  // The licks of the checked lick playlists (all of them when none is checked)
+  const licksIn = useCallback((groups: string[] = []) =>
+    groups.length ? licks.filter((item) => groups.includes(item.playlist ?? '')) : licks, [licks])
+  // The lick of some settings: the one chosen, else the first one offered
+  const lickFor = useCallback((chosen: LickSettings) =>
+    licks.find((item) => item.id === chosen.lickId) ?? licksIn(chosen.lickGroups)[0] ?? licks[0] ?? null, [licks, licksIn])
   const lick = lickFor(settings)
   const chords = mode === 'infinite' ? line?.chart ?? null : tune?.chart ?? null // the chart the lick goes over
   /**
@@ -323,9 +330,9 @@ export function LickSightreading() {
     changeArrangement(styleId, patternId, transpose, choruses, practice, setSettings(change))
   }
 
-  /** Choose another lick at random, from all the one-chord licks. */
+  /** Choose another lick at random, from the licks offered. */
   const randomLick = () => {
-    const others = licks.filter((item) => item.id !== lick?.id)
+    const others = offered.filter((item) => item.id !== lick?.id)
     if (others.length) changeSettings({ lickId: others[Math.floor(Math.random() * others.length)].id })
   }
 
@@ -335,10 +342,23 @@ export function LickSightreading() {
     if (tune) changeArrangement(styleId, patternId, transposeFor(choice, tune.chart))
   }
 
-  // Licks grouped by playlist, for the two lick menus
-  const groups = useMemo(() => [...new Set(licks.map((item) => item.playlist ?? ''))], [licks])
-  const group = lick?.playlist ?? groups[0] ?? ''
-  const inGroup = licks.filter((item) => (item.playlist ?? '') === group)
+  // The Licks filter: the lick playlists, with how many licks each has
+  const groups = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const item of licks) counts.set(item.playlist ?? '', (counts.get(item.playlist ?? '') ?? 0) + 1)
+    return [...counts].map(([id, count]) => ({ id, label: shortGroup(id), count }))
+  }, [licks])
+  const checkedGroups = (settings.lickGroups ?? []).filter((g) => groups.some((o) => o.id === g))
+  const offered = licksIn(checkedGroups)
+  /**
+   * Offer the licks of other playlists: the lick stays when it is still offered (the band goes
+   * on), else the first lick offered takes its place.
+   */
+  const chooseGroups = (next: string[]) => {
+    const still = licksIn(next)
+    if (!lick || still.some((item) => item.id === lick.id) || !still.length) setSettings({ lickGroups: next })
+    else changeSettings({ lickGroups: next, lickId: still[0].id })
+  }
   const lickInfo = lick?.chart.lick
   const lickSymbol = lick ? lick.chart.bars.flatMap((bar) => bar.chords).find((c) => c.symbol)?.symbol : null
 
@@ -368,20 +388,18 @@ export function LickSightreading() {
               disabled={!bank || !lick || readiness.kind !== 'ready'}>New infinite line</button>
           </div>}
           <div className="sight-picker lick-picker">
-            <label className="control"><span className="label">Licks</span>
-              <select className="select" value={group} aria-label="Lick group" onChange={(event) => {
-                const first = licks.find((item) => (item.playlist ?? '') === event.target.value)
-                if (first) changeSettings({ lickId: first.id })
-              }}>
-                {groups.map((name) => <option key={name} value={name}>{shortGroup(name)}</option>)}
-              </select>
-            </label>
+            <CheckFilter name="Licks" options={groups} chosen={checkedGroups} onChange={chooseGroups} />
             <label className="control"><span className="label">Lick</span>
               <select className="select" value={lick?.id ?? ''} aria-label="Lick" onChange={(event) => changeSettings({ lickId: event.target.value })}>
-                {inGroup.map((item) => <option key={item.id} value={item.id} title={item.chart.composer}>{item.chart.title}</option>)}
+                {groups.filter((g) => !checkedGroups.length || checkedGroups.includes(g.id)).map((g) => (
+                  <optgroup key={g.id} label={g.label}>
+                    {offered.filter((item) => (item.playlist ?? '') === g.id).map((item) =>
+                      <option key={item.id} value={item.id} title={item.chart.composer}>{item.chart.title}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </label>
-            <button className="chip" onClick={randomLick} disabled={licks.length < 2}>Random lick</button>
+            <button className="chip" onClick={randomLick} disabled={offered.length < 2}>Random lick</button>
             <button className="chip" aria-pressed={settings.rest} onClick={() => changeSettings({ rest: !settings.rest })}
               title="Leave a rest as long as the lick after each lick">
               Rest between licks: {settings.rest ? 'On' : 'Off'}

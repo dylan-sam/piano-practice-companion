@@ -276,17 +276,6 @@ button:disabled {
   outline-offset: 0;
 }
 
-.library-filter {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.library-filter .select {
-  flex: 1;
-  min-width: 0;
-}
-
 .library-more {
   padding: 8px 10px;
   margin: 0;
@@ -2593,6 +2582,10 @@ input.fader::-moz-range-thumb {
   height: 32px;
 }
 
+.lick-picker > .check-filter {
+  flex-basis: 100%;
+}
+
 .lick-picker .lick-source {
   flex-basis: 100%;
   margin: 0;
@@ -2865,23 +2858,23 @@ input.fader::-moz-range-thumb {
   cursor: default;
 }
 
-/* ---------- Progression filter (library) ---------- */
-.progression-filter {
+/* ---------- Check filters: Progressions, Playlists, Licks (CheckFilter.tsx) ---------- */
+.check-filter {
   display: grid;
   gap: 8px;
 }
 
-.progression-filter-bar {
+.check-filter-bar {
   display: flex;
   gap: 6px;
 }
 
-.progression-filter-bar .library-import[aria-expanded='true'] {
+.check-filter-bar .library-import[aria-expanded='true'] {
   border-color: var(--ink-2);
   color: var(--ink);
 }
 
-.progression-filter-panel {
+.check-filter-panel {
   display: grid;
   gap: 8px;
   padding: 8px;
@@ -2890,7 +2883,7 @@ input.fader::-moz-range-thumb {
   background: var(--paper);
 }
 
-.progression-match {
+.check-filter-match {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--line);
@@ -2898,7 +2891,7 @@ input.fader::-moz-range-thumb {
   overflow: hidden;
 }
 
-.progression-match button {
+.check-filter-match button {
   height: 26px;
   border: 0;
   background: none;
@@ -2907,12 +2900,12 @@ input.fader::-moz-range-thumb {
   cursor: pointer;
 }
 
-.progression-match button[aria-pressed='true'] {
+.check-filter-match button[aria-pressed='true'] {
   background: var(--ink);
   color: var(--on-ink);
 }
 
-.progression-options {
+.check-filter-options {
   display: grid;
   gap: 2px;
   max-height: 260px;
@@ -2922,7 +2915,7 @@ input.fader::-moz-range-thumb {
   list-style: none;
 }
 
-.progression-options label {
+.check-filter-options label {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2930,11 +2923,11 @@ input.fader::-moz-range-thumb {
   cursor: pointer;
 }
 
-.progression-label {
+.check-filter-label {
   font-weight: 500;
 }
 
-.progression-count {
+.check-filter-count {
   margin-left: auto;
   color: var(--muted);
   font: 500 11px var(--mono);
