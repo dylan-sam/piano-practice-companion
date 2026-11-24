@@ -35,7 +35,7 @@ import { keysWithPassages, scaleMapFor } from '../lessons/scaleMaps'
 import { arrangeMelody } from './melodyReading'
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ToneColorsLine } from './ReadingControls'
-import { infiniteLine, type InfiniteLine } from './sightReading'
+import { infiniteLine, lineKeys, type InfiniteLine } from './sightReading'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
 import { TONE_COLORS } from './toneColors'
 import { useBand } from './useBand'
@@ -266,9 +266,9 @@ export function FreeImprovisation() {
   // The scale ideas under the sheet: the chord sounding (written or carried over), and a lesson
   // song's map, whose key passages also set the key's scales of the colours
   const scaleMap = mode === 'infinite' ? undefined : scaleMapFor(tune?.chart.title)
-  // An infinite line has no key (each progression brings its own): no key's scales there
-  const keysOfBars = useMemo(() => (chords && mode !== 'infinite' ? keysWithPassages(barKeyCentres(chords), scaleMap) : []),
-    [chords, scaleMap, mode])
+  // An infinite line takes the key of each progression in turn
+  const keysOfBars = useMemo(() => !chords ? [] : mode === 'infinite' && line && bank ? lineKeys(line, bank.progressions) :
+    keysWithPassages(barKeyCentres(chords), scaleMap), [chords, scaleMap, mode, line, bank])
   const playingSlot = playing && timeline ? chordSlotAt(timeline, beat) : undefined
   const written = useMemo(() => (timeline ? writeLine(keys, timeline, chorus, transpose, style.swing, now, keysOfBars) : null),
     [keys, timeline, chorus, transpose, style.swing, now, keysOfBars])
@@ -311,8 +311,7 @@ export function FreeImprovisation() {
             chord={playingSlot?.chord ?? null} next={playingSlot && timeline ? chordAfter(timeline, playingSlot) : null} />
           <p className="sight-hint">{HINT}</p>
           <p className="sight-hint tone-legend">
-            {TONE_COLORS.map((kind) => <span key={kind.id}><strong className={`tone-${kind.id}`}>{kind.label}</strong>:{' '}
-              {keysOfBars.length ? kind.help : kind.keyless ?? kind.help}</span>)}
+            {TONE_COLORS.map((kind) => <span key={kind.id}><strong className={`tone-${kind.id}`}>{kind.label}</strong>: {kind.help}</span>)}
           </p>
         </>}
         {lessonSong.missing && <p className="sight-hint">The lesson's song, {lessonSong.missing}, is not in the app yet: choose another one, or import it.</p>}

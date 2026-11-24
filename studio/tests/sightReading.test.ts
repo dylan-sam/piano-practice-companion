@@ -6,7 +6,7 @@ import { midiNoteChange } from '../src/audio/midiInput'
 import { arrange } from '../src/engine/arrange'
 import { BASS_PATTERNS, defaultBassPatternForStyle, generateBassPattern } from '../src/engine/bassPatterns'
 import { buildTimeline } from '../src/engine/timeline'
-import { ChordJudge, coversChord, isMistakes, matchesVoicing, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
+import { ChordJudge, coversChord, isMistakes, matchesVoicing, matchesPlayedChord, mistakeKey, nextInfiniteSteps, infiniteLine, lineKeys, progressionChords, requiredPitchClasses } from '../src/exercises/sightReading'
 import { ChordSightreading } from '../src/exercises/ChordSightreading'
 import type { Progression } from '../src/exercises/nameProgression'
 import { parseChord } from '../src/music/chords'
@@ -200,6 +200,14 @@ describe('infinite progression transitions', () => {
     expect(() => arrange(line.chart, getStyle('swing'), 0, 1, { ending: false }, null, { comp: false })).not.toThrow()
     const continued = infiniteLine(bank.progressions, {}, true, random, line.steps.at(-1), 6)
     expect(continued.steps.length).toBeGreaterThan(6)
+  })
+
+  it('gives each bar the key of the progression at its downbeat', () => {
+    const minor = { id: 'm', label: 'i iv', chords: ['I:min', 'IV:min'], unique_song_count: 1, questions: [] }
+    const line = infiniteLine([minor], {}, false, () => 0.3, undefined, 3)
+    const keys = lineKeys(line, [minor])
+    expect(keys).toHaveLength(line.chart.bars.length)
+    keys.forEach((key, bar) => expect(key).toEqual({ tonic: line.steps[bar * 2].key, minor: true }))
   })
 })
 

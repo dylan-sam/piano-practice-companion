@@ -4,6 +4,7 @@ import { slotAtBeat, type Slot, type Timeline } from '../engine/timeline'
 import { chordSlots } from './lickReading'
 import type { Progression } from './nameProgression'
 import { romanSymbol } from './nameProgression'
+import type { KeyCentre } from '../music/roman'
 
 export type Mistakes = Record<string, number>
 // Progressions joined into one infinite chunk (several minutes of music)
@@ -370,6 +371,19 @@ export function nextInfiniteSteps(
   return { key, transition, steps: [...prefix, ...played].map((symbol) => ({
     symbol, key, progressionId: picked.id, transition,
   })) }
+}
+
+/**
+ * The key of each bar of an infinite line: the key of the progression playing at its downbeat
+ * (two chords to a bar), minor when the progression's I is minor.
+ */
+export function lineKeys(line: InfiniteLine, progressions: readonly Progression[]): KeyCentre[] {
+  const byId = new Map(progressions.map((progression) => [progression.id, progression]))
+  return line.chart.bars.map((_, bar) => {
+    const step = line.steps[bar * 2]
+    const progression = step && byId.get(step.progressionId)
+    return { tonic: step?.key ?? line.chart.key, minor: !!progression && progressionMode(progression) === 'minor' }
+  })
 }
 
 /** Build a long, repeatable listening chunk from short ChoCo catalog patterns. */

@@ -10,11 +10,9 @@ import type { KeyCentre } from '../music/roman'
 export type ToneColor = 'chord' | 'color' | 'approach' | 'outside'
 
 /** The four kinds of notes, in the order they are shown, with their names and what they are. */
-// `keyless`: the help where no key is known (an infinite line), when it differs
-export const TONE_COLORS: { id: ToneColor; label: string; help: string; keyless?: string }[] = [
+export const TONE_COLORS: { id: ToneColor; label: string; help: string }[] = [
   { id: 'chord', label: 'chord tones', help: 'a note of the chord' },
-  { id: 'color', label: 'colour tones', help: "a note of the chord's scale (9th, 13th, #11...) or of the key's major pentatonic, minor pentatonic or blues scale",
-    keyless: "a note of the chord's scale (9th, 13th, #11...)" },
+  { id: 'color', label: 'colour tones', help: "a note of the chord's scale (9th, 13th, #11...) or of the key's major pentatonic, minor pentatonic or blues scale" },
   { id: 'approach', label: 'approach tones', help: 'a half step into the next note, a chord or colour tone' },
   { id: 'outside', label: 'outside', help: 'none of these (a short one turns blue when the next key resolves it a half step away; a long one on a strong beat stays red)' },
 ]

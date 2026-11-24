@@ -571,9 +571,9 @@ from the chord after it:
 The key of each bar is the chart's, changed where the chart marks a key change
 (`barKeyCentres`). A lesson song's scale map also lists the passages where the
 song moves to another key without the chart marking it (Tea for Two going up a
-major 3rd, the D Dorian of the Modal Study), so the key's scales follow the song. An
-infinite line has no key (each progression brings its own), so there only the
-chord's scale makes a colour tone, and the colour scheme says so.
+major 3rd, the D Dorian of the Modal Study), so the key's scales follow the song. On an
+infinite line, each bar takes the key of the progression playing at its
+downbeat (`lineKeys`).
 
 Under the sheet, **Scales** follows the music, for any song: **Now** names the
 scale of the chord sounding with its notes, also over a bar left blank (the
