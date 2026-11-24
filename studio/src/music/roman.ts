@@ -32,18 +32,29 @@ export function keyChange(comment: string | undefined): number | null {
   return (base + (match[2] === 'b' ? -1 : match[2] === '#' ? 1 : 0) + 12) % 12
 }
 
+/** A key in force: its tonic (a pitch class) and whether it is minor. */
+export interface KeyCentre { tonic: number; minor: boolean }
+
 /**
- * The key of each written bar of a chart, as a pitch class: the chart's key, changed by a bar's
- * key changes (catalog charts: `keys`, or an older "Key: ..." comment) from where they happen.
- * A bar takes the key in force at its downbeat.
+ * The key of each written bar of a chart: the chart's key, changed by a bar's key changes
+ * (catalog charts: `keys`, or an older "Key: F:minor" comment) from where they happen. A bar
+ * takes the key in force at its downbeat; an unknown mode counts as major.
  */
-export function barKeys(chart: { key: number; bars: { keys?: { beats: number; key: number }[]; comment?: string }[] }): number[] {
-  let key = chart.key
+export function barKeyCentres(chart: {
+  key: number; minor?: boolean
+  bars: { keys?: { beats: number; key: number; minor?: boolean | null }[]; comment?: string }[]
+}): KeyCentre[] {
+  let centre: KeyCentre = { tonic: chart.key, minor: !!chart.minor }
   return chart.bars.map((bar) => {
-    const changes = bar.keys ?? (keyChange(bar.comment) !== null ? [{ beats: 0, key: keyChange(bar.comment)! }] : [])
-    const atDownbeat = key
-    for (const change of changes) key = change.key
-    return changes.some((change) => change.beats < 1e-6) ? changes.filter((change) => change.beats < 1e-6).at(-1)!.key : atDownbeat
+    const fromComment = keyChange(bar.comment)
+    const changes = bar.keys ?? (fromComment !== null ? [{ beats: 0, key: fromComment, minor: /:minor/i.test(bar.comment ?? '') }] : [])
+    const atDownbeat = centre
+    for (const change of changes) centre = { tonic: change.key, minor: !!change.minor }
+    const onDownbeat = changes.filter((change) => change.beats < 1e-6).at(-1)
+    return onDownbeat ? { tonic: onDownbeat.key, minor: !!onDownbeat.minor } : atDownbeat
   })
 }
+
+/** The key whose sharps or flats spell the notes of a key centre (a minor key: its relative major). */
+export const spellingKey = (centre: KeyCentre): number => (centre.tonic + (centre.minor ? 3 : 0)) % 12
 

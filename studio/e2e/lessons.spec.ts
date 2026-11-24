@@ -65,9 +65,14 @@ test('Free Improvisation writes out and colours the keys played', async ({ page 
   // The scales under the sheet: the chord sounding, and Avalon's ideas for the part playing (or all of them)
   const scales = page.getByRole('region', { name: 'Scales' })
   await expect(scales).toContainText('Now:')
-  await expect(scales).toContainText('In the key: F major pentatonic')
+  await expect(scales).toContainText('Scale ideas for this song')
+  await expect(scales).not.toContainText('In the key')
   await scales.getByRole('button', { name: 'Show all' }).click()
-  await expect(scales).toContainText('B (bars 17 to 24)')
+  await expect(scales).toContainText('B (bars 18 to 25)')
+  // In view, the panel sits right on top of the bottom bar, with no gap
+  const panelBottom = await scales.evaluate((el) => el.getBoundingClientRect().bottom)
+  const barTop = await page.locator('.transport').evaluate((el) => el.getBoundingClientRect().top)
+  expect(Math.abs(barTop - panelBottom)).toBeLessThan(2)
 })
 
 test('Delete all my data asks once more, then forgets everything', async ({ page }) => {

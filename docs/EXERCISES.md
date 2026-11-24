@@ -519,6 +519,11 @@ The lick is read as a **shape** relative to its own chord
 Over its own chord a lick comes back unchanged (the tests check every
 one-chord lick of the database).
 
+A V going to the next chord takes that chord's scale, as in Free Improvisation:
+over a V (a major triad or a 7th, nothing altered) going up a 4th to a minor
+chord, the lick's 9th and 13th are flat (G7 to Cm: A♭ and E♭); going to a major
+chord, its 7th is flat, even over a triad (G to C: F).
+
 ## Free Improvisation
 
 The band plays a chord chart (**Pick a song**: the shipped lead sheets, whose
@@ -543,7 +548,7 @@ its share) (`studio/src/exercises/toneColors.ts`):
 | Colour | Kind | Over C7, in the key of F |
 |---|---|---|
 | black | chord tone | C E G B♭ |
-| green | colour tone: another note of the chord's scale, except the 11th over a major 3rd (it clashes with it), or a note of the key's major pentatonic, minor pentatonic or blues scale | D A, and F A♭ B... |
+| green | colour tone: another note of the chord's scale, except the 11th over a major 3rd (it clashes with it), or a note of the key's major pentatonic, minor pentatonic or blues scale (a minor key: its minor pentatonic and blues scale) | D A, and F A♭ B... |
 | blue | approach tone: a short outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | D♭ then C |
 | red | outside: none of these; a note of a beat or more on a strong beat (1 or 3 in 4/4) stays red even when it resolves | D♭ held on beat 1 |
 
@@ -563,11 +568,20 @@ from the chord after it:
 | sus | Mixolydian |
 | augmented | Lydian augmented |
 
-Under the sheet, **Scales** follows the music: **Now** names the scale of the
-chord sounding with its notes, then the key's three scales. For a lesson song it
-adds the song's scale ideas for the part being played (**Show all** lists every
-part), from its scale map (`studio/src/lessons/scaleMaps.ts`,
-[LESSONS.md](LESSONS.md#scales)).
+The key of each bar is the chart's, changed where the chart marks a key change
+(`barKeyCentres`). A lesson song's scale map also lists the passages where the
+song moves to another key without the chart marking it (Tea for Two going up a
+major 3rd, the D Dorian of the Modal Study), so the key's scales follow the song. An
+infinite line has no key (each progression brings its own), so there only the
+chord's scale makes a colour tone, and the colour scheme says so.
+
+Under the sheet, **Scales** follows the music, for any song: **Now** names the
+scale of the chord sounding with its notes, also over a bar left blank (the
+chord carries on). For a lesson song it adds the song's **scale ideas** for the
+part being played (**Show all** lists every part), from its scale map
+(`studio/src/lessons/scaleMaps.ts`, [LESSONS.md](LESSONS.md#scales)). It stays in
+view right on top of the bottom bar while the sheet scrolls; Display > **Scale
+ideas under the sheet** leaves it after the end of the sheet instead.
 
 Keys in the count-in are not written. Opened from a lesson, the band's piano
 starts muted so your left hand is heard.

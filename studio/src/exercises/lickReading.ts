@@ -9,16 +9,38 @@
 // octave closest to the note before, so the line stays smooth.
 
 import { barMeters, type Chart } from '../music/chart'
-import { parseChord, type Chord } from '../music/chords'
+import { chordTones, parseChord, type Chord } from '../music/chords'
 import type { MelodyNote } from '../music/melody'
+
+// Written alterations choose the scale of a dominant chord themselves
+const ALTERED = ['b9', '#9', 'alt', '#5', 'b5', '#11', 'b13']
+
+/**
+ * Whether a chord is a V going to the chord after it: a major triad or a dominant 7th with no
+ * alteration written, whose root moves up a 4th; and whether it goes to a minor or a major chord.
+ *
+ *   G7 -> Cm: 'minor'      G -> C: 'major'      G -> D: null      G7b9 -> C: null (as written)
+ */
+export function resolvesAsV(chord: Chord, next?: Chord | null): 'minor' | 'major' | null {
+  if ((chord.quality !== 'maj' && chord.quality !== 'dom7') || ALTERED.some((t) => chord.tensions.includes(t))) return null
+  if (!next || (next.root - chord.root + 12) % 12 !== 5) return null
+  const third = chordTones(next)[1]
+  return third === 3 ? 'minor' : third === 4 ? 'major' : null
+}
 
 /**
  * The seven slots of a chord, in semitones above its root: root, 9th, 3rd, 11th, 5th, 13th and
  * 7th, as the chord's scale alters them. Slots 0, 2, 4 and 6 are always the chord tones, so a
  * lick's chord tones land on chord tones. A 6th chord keeps the major 7th in the 7th slot (its 6th
- * is the 13th slot), as in the bebop major scale.
+ * is the 13th slot), as in the bebop major scale. The chord after it (`next`) turns a V into a
+ * V of its chord (resolvesAsV):
+ *
+ *   G7 -> Cm   Mixolydian b9 b13: G Ab B C D Eb F       G -> C   Mixolydian: G A B C D E F
  */
-export function chordSlots(chord: Chord): number[] {
+export function chordSlots(chord: Chord, next?: Chord | null): number[] {
+  const asV = resolvesAsV(chord, next)
+  if (asV === 'minor') return [0, 1, 4, 5, 7, 8, 10]
+  if (asV === 'major') return [0, 2, 4, 5, 7, 9, 10]
   const t = chord.tensions
   switch (chord.quality) {
     case 'maj7': case 'maj6': case 'maj': case 'power': case 'root':
@@ -104,8 +126,8 @@ export function lickShape(chart: Chart): LickShape | null {
 }
 
 /** The pitch of a shape note over a chord whose root is written at `root`. */
-export function shapePitch(note: ShapeNote, chord: Chord, root: number): number {
-  const slots = chordSlots(chord)
+export function shapePitch(note: ShapeNote, chord: Chord, root: number, next?: Chord | null): number {
+  const slots = chordSlots(chord, next)
   const octave = Math.floor(note.degree / 7)
   return root + 12 * octave + slots[note.degree - 7 * octave] + note.alter
 }
@@ -157,6 +179,8 @@ export function withLick(chart: Chart, shape: LickShape, layout: LickLayout): Ch
   const total = time
   const spans = chordSpans(chart, barStarts, meters)
   const spanAt = (t: number) => spans.find((s) => s.start <= t + 1e-6 && t < s.end - 1e-6)
+  // The chord after a span: a V going to it takes its scale (chordSlots)
+  const nextChord = (span: ChordSpan) => spans[spans.indexOf(span) + 1]?.chord ?? null
   const firstBar = Math.min(chart.bars.length - 1, Math.max(0, chart.bars.findIndex((bar) => !bar.partial)) + (layout.leadIn ?? 0))
   const notes: MelodyNote[] = []
   let start = barStarts[firstBar] ?? 0
@@ -172,9 +196,9 @@ export function withLick(chart: Chart, shape: LickShape, layout: LickLayout): Ch
       if (span !== current) {
         // A new chord: its root in the octave that keeps the line closest to the note before
         current = span
-        root = chooseRoot(note, span.chord, previous)
+        root = chooseRoot(note, span.chord, previous, nextChord(span))
       }
-      let pitch = shapePitch(note, span.chord, root)
+      let pitch = shapePitch(note, span.chord, root, nextChord(span))
       while (pitch < LOW) pitch += 12
       while (pitch > HIGH) pitch -= 12
       previous = pitch
@@ -192,12 +216,12 @@ export function withLick(chart: Chart, shape: LickShape, layout: LickLayout): Ch
 }
 
 /** The written pitch of a chord's root for a note: near middle C, or closest in line with the note before. */
-function chooseRoot(note: ShapeNote, chord: Chord, previous: number | null): number {
+function chooseRoot(note: ShapeNote, chord: Chord, previous: number | null, next?: Chord | null): number {
   const home = nearMiddleC(chord.root)
   if (previous === null) return home
   const roots = [home - 12, home, home + 12]
   return roots.reduce((best, root) =>
-    (Math.abs(shapePitch(note, chord, root) - previous) < Math.abs(shapePitch(note, chord, best) - previous) ? root : best), home)
+    (Math.abs(shapePitch(note, chord, root, next) - previous) < Math.abs(shapePitch(note, chord, best, next) - previous) ? root : best), home)
 }
 
 const round = (value: number) => Math.round(value * 1e6) / 1e6

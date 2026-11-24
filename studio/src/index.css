@@ -118,7 +118,8 @@ button:disabled {
 .stage {
   min-width: 0;
   overflow: auto;
-  padding: 32px 40px 48px;
+  --stage-pad-bottom: 48px; /* the sticky scale panel sits over it, down to the bottom bar */
+  padding: 32px 40px var(--stage-pad-bottom);
 }
 
 /* ---------- Top bar ---------- */
@@ -1563,7 +1564,8 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    padding: 24px;
+    --stage-pad-bottom: 24px;
+    padding: 24px 24px var(--stage-pad-bottom);
   }
 
   .sheet {
@@ -1638,7 +1640,8 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    padding: 12px;
+    --stage-pad-bottom: 12px;
+    padding: 12px 12px var(--stage-pad-bottom);
   }
 
   .sheet {
@@ -3211,7 +3214,8 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    padding: 10px 14px;
+    --stage-pad-bottom: 10px;
+    padding: 10px 14px var(--stage-pad-bottom);
   }
 
   .sheet {
@@ -3583,9 +3587,10 @@ input.fader::-moz-range-thumb {
 
 /* Scale ideas: the card of an improvising step, the panel under the sheet of Free Improvisation */
 .scale-card { margin: 6px 0; }
-.scale-card summary { cursor: pointer; font-weight: 600; }
 .scale-panel { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 .scale-panel p { margin: 4px 0; }
+/* Always in view: stuck to the bottom of the scrolling page, short enough to leave room for the sheet */
+.scale-panel-fixed { position: sticky; bottom: calc(-1 * var(--stage-pad-bottom, 0px)); margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; z-index: 2; max-height: 35vh; overflow-y: auto; box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.08); }
 .scale-panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; margin-top: 8px; }
 .scale-section { margin: 6px 0; padding: 4px 8px; border-left: 3px solid transparent; }
 .scale-section ul { margin: 4px 0; padding-left: 18px; }

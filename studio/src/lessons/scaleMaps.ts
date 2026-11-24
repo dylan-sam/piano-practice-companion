@@ -10,12 +10,19 @@
 // the tonic's own letter (F# in F, where "{1}" would be Gb).
 
 import { keyPrefersFlats, noteName, type Chord } from '../music/chords'
+import type { KeyCentre } from '../music/roman'
 
 /** One idea for a part of a song: a scale, where to play it, and why it works. */
 export interface ScaleIdea { scale: string; over: string; why: string }
 
 /** A part of a song (written bars, counted from 0 as the chart stores them) and its ideas. */
 export interface ScaleSection { label: string; bars: [number, number]; ideas: ScaleIdea[] }
+
+/**
+ * A passage of a song in another key than the chart says (the charts mark no key change): its
+ * written bars and its tonic in semitones above the map's tonic, and whether it is minor.
+ */
+export interface KeyPassage { bars: [number, number]; tonic: number; minor?: boolean }
 
 /** The scale map of a lesson song. */
 export interface ScaleMap {
@@ -24,6 +31,7 @@ export interface ScaleMap {
   unit: string // the unit whose idea it brings
   idea: string // the unit's new idea, in a few lines
   sections: ScaleSection[]
+  keys?: KeyPassage[] // where the song moves to another key, for the key's scales of the colours
 }
 
 // The unit's new ideas
@@ -47,15 +55,15 @@ export const SCALE_MAPS: ScaleMap[] = [
   {
     song: 'Avalon', tonic: 5, unit: 'Unit 1', idea: PENTATONIC,
     sections: [
-      { label: 'A (bars 1 to 16)', bars: [0, 16], ideas: [
+      { label: 'A (bars 1 to 17)', bars: [0, 16], ideas: [
         { scale: '{0} major pentatonic', over: 'the whole part', why: 'The key of the song: its five notes fit {7}7, {0} and {2}-7.' },
         { scale: '{7}7 chord tones ({7} {11} {2} {5})', over: 'the {7}7 bars', why: 'The V7 leads home: its 3rd ({11}) wants to rise to {0}.' },
       ] },
-      { label: 'B (bars 17 to 24)', bars: [17, 24], ideas: [
+      { label: 'B (bars 18 to 25)', bars: [17, 24], ideas: [
         { scale: '{9}7 chord tones ({9} {1.0} {4} {7})', over: 'the {9}7 bars', why: "The pentatonic's {0} clashes with the chord's 3rd ({1.0}): play the chord's notes instead." },
         { scale: '{0} major pentatonic', over: 'the {2}- bars', why: '{2} minor is the ii of {0}: the pentatonic fits it again.' },
       ] },
-      { label: 'C (bars 25 to 32)', bars: [25, 32], ideas: [
+      { label: 'C (bars 26 to 33)', bars: [25, 32], ideas: [
         { scale: '{0} major pentatonic', over: 'the whole part', why: 'The key again; over {9}7, stay on its chord tones as before.' },
       ] },
     ],
@@ -106,6 +114,7 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: 'Honeysuckle Rose', tonic: 5, unit: 'Unit 3', idea: II_V_I,
+    keys: [{ bars: [10, 13], tonic: 5 }], // the bridge visits the IV
     sections: [
       { label: 'A (bars 1 to 10)', bars: [0, 9], ideas: [
         { scale: '{0} major scale', over: '{2}-7 {7}7 (the ii-V, again and again)', why: '{2} Dorian and {7} Mixolydian have the notes of {0} major, where the A resolves: think {0} major for the whole A.' },
@@ -141,6 +150,8 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: 'I Got Rhythm', tonic: 10, unit: 'Unit 4', idea: V_TO_MINOR,
+    keys: [{ bars: [0, 15], tonic: 9, minor: true }, // the verse, in the relative minor
+      { bars: [44, 46], tonic: 9 }, { bars: [47, 48], tonic: 2 }, { bars: [49, 51], tonic: 7 }], // the bridge's chain of V7s
     sections: [
       { label: 'Verse (bars 1 to 28)', bars: [0, 27], ideas: [
         { scale: '{9} Dorian, or {9} minor pentatonic', over: 'the {9}- bars', why: 'The verse is in {9} minor.' },
@@ -160,23 +171,26 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: 'What Is This Thing Called Love', tonic: 0, unit: 'Unit 4', idea: V_TO_MINOR,
+    keys: [{ bars: [1, 4], tonic: 5, minor: true }, { bars: [9, 12], tonic: 5, minor: true }, // each A starts in the IV's minor
+      { bars: [17, 20], tonic: 10 }, { bars: [25, 28], tonic: 5, minor: true }], // the bridge's ii-V-I a step down
     sections: [
-      { label: 'A (bars 1 to 16)', bars: [0, 16], ideas: [
+      { label: 'A (bars 2 to 17)', bars: [0, 16], ideas: [
         { scale: '{5} harmonic minor (= {0} Mixolydian b9 b13)', over: '{7}ø7 {0}7b9 {5}-6', why: 'A minor ii-V-i in {5} minor: the {0}7b9 goes to a minor chord.' },
         { scale: '{7} Mixolydian b9 b13', over: '{2}ø7 {7}7#5', why: 'The same dark V, which then resolves to major...' },
         { scale: '{0} major pentatonic', over: '{0}^7', why: '...the surprise of the song: major where minor was expected.' },
       ] },
-      { label: 'Bridge (bars 17 to 24)', bars: [17, 24], ideas: [
+      { label: 'Bridge (bars 18 to 25)', bars: [17, 24], ideas: [
         { scale: '{10} major scale', over: '{0}-7 {5}7 {10}^7', why: 'A ii-V-I in {10}: one major scale for the three chords.' },
         { scale: '{8} Mixolydian', over: '{8}7', why: "A dominant chord a step down: its own scale." },
       ] },
-      { label: 'A (bars 25 to 32)', bars: [25, 32], ideas: [
+      { label: 'A (bars 26 to 33)', bars: [25, 32], ideas: [
         { scale: '{5} harmonic minor, then {0} major pentatonic', over: 'as in the first A', why: 'The same moves.' },
       ] },
     ],
   },
   {
     song: 'Embraceable You', tonic: 7, unit: 'Unit 5', idea: PER_CHORD,
+    keys: [{ bars: [9, 13], tonic: 7 }, { bars: [22, 24], tonic: 5 }], // the key of the V, then of the IV
     sections: [
       { label: 'First half (bars 1 to 16)', bars: [0, 15], ideas: [
         { scale: '{0} major pentatonic', over: 'the {0} bars', why: 'The pentatonic of the chord.' },
@@ -193,6 +207,7 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: "'S Wonderful", tonic: 3, unit: 'Unit 5', idea: PER_CHORD,
+    keys: [{ bars: [16, 19], tonic: 4 }], // the bridge, a major 3rd up
     sections: [
       { label: 'A (bars 1 to 16)', bars: [0, 15], ideas: [
         { scale: '{0} major pentatonic', over: 'the {0} bars', why: 'The pentatonic of the chord, in the bossa rhythm.' },
@@ -210,6 +225,7 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: 'Tea for two', tonic: 5, unit: 'Unit 5', idea: PER_CHORD,
+    keys: [{ bars: [8, 14], tonic: 4 }, { bars: [22, 26], tonic: 2, minor: true }], // a major 3rd up, then the ii's minor
     sections: [
       { label: 'Bars 1 to 8', bars: [0, 7], ideas: [
         { scale: '{0} major pentatonic', over: '{2}- {7}7 {0}', why: 'ii-V-I in {0}: its pentatonic fits all three.' },
@@ -225,6 +241,7 @@ export const SCALE_MAPS: ScaleMap[] = [
   },
   {
     song: 'Modal Study', tonic: 2, unit: 'Unit 6', idea: MODES,
+    keys: [{ bars: [0, 15], tonic: 0, minor: true }, { bars: [16, 23], tonic: 1, minor: true }, { bars: [24, 31], tonic: 0, minor: true }],
     sections: [
       { label: 'A sections', bars: [0, 15], ideas: [
         { scale: '{0} Dorian', over: '{0}-7', why: 'The mode of a minor 7th chord.' },
@@ -266,6 +283,17 @@ function spelled(tonic: string, step: number, letters: number): string {
   const tonicPc = (NATURAL[LETTERS.indexOf(tonic[0])] + (tonic[1] === 'b' ? -1 : tonic[1] === '#' ? 1 : 0) + 12) % 12
   const shift = ((((tonicPc + step - NATURAL[LETTERS.indexOf(letter)]) % 12) + 18) % 12) - 6
   return letter + (shift < 0 ? 'b'.repeat(-shift) : '#'.repeat(shift))
+}
+
+/**
+ * The key of each written bar for the colours: the chart's own (barKeyCentres), except where a
+ * lesson song's map says the song moves to another key.
+ */
+export function keysWithPassages(chartKeys: readonly KeyCentre[], map: ScaleMap | undefined): KeyCentre[] {
+  return chartKeys.map((key, bar) => {
+    const passage = map?.keys?.find((p) => bar >= p.bars[0] && bar <= p.bars[1])
+    return passage ? { tonic: (map!.tonic + passage.tonic) % 12, minor: !!passage.minor } : key
+  })
 }
 
 /** The section of a map that holds a written bar, if any. */

@@ -4,9 +4,10 @@ import { setDisplay, useDisplay, useDisplayChanged } from './display'
 /**
  * The chart display options: Roman numerals, how minor is written, % for a repeated bar and the
  * sheet auto-scroller. `roman` is false where numerals would give an answer away (Name the
- * progression); `autoScroll` is shown where a whole sheet is read (player and sightreader).
+ * progression); `autoScroll` is shown where a whole sheet is read (player and sightreader);
+ * `scalePanel` where scale ideas are shown under the sheet (Free Improvisation).
  */
-export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: boolean; autoScroll?: boolean }) {
+export function DisplayOptions({ roman = true, autoScroll = false, scalePanel = false }: { roman?: boolean; autoScroll?: boolean; scalePanel?: boolean }) {
   const display = useDisplay()
   return (
     <>
@@ -31,6 +32,13 @@ export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: b
           <span className="share-desc">While playing, scroll a long sheet so the highlighted bar stays near the middle of the screen.</span>
         </button>
       )}
+      {scalePanel && (
+        <button className="share-option" aria-pressed={display.scalePanel === 'fixed'}
+          onClick={() => setDisplay({ scalePanel: display.scalePanel === 'fixed' ? 'under' : 'fixed' })}>
+          <span className="share-name">Scale ideas {display.scalePanel === 'fixed' ? 'always in view' : 'under the sheet'}</span>
+          <span className="share-desc">Keep the scale of the chord playing and the song's scale ideas at the bottom of the screen while the sheet scrolls, or leave them after the end of the sheet.</span>
+        </button>
+      )}
     </>
   )
 }
@@ -39,13 +47,13 @@ export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: b
  * The Display button of a sheet-reading screen's top bar (player, sightreader), with the display
  * options; `autoScroll` is false where no sheet is read (the sightreader's infinite line).
  */
-export function DisplayMenu({ roman = true, autoScroll = true }: { roman?: boolean; autoScroll?: boolean }) {
-  const changed = useDisplayChanged(roman, autoScroll)
+export function DisplayMenu({ roman = true, autoScroll = true, scalePanel = false }: { roman?: boolean; autoScroll?: boolean; scalePanel?: boolean }) {
+  const changed = useDisplayChanged(roman, autoScroll, scalePanel)
   return (
     <Popover id="chart-display" className="share" label="Display" title="Choose how chord charts are drawn" active={changed}>
       {() => (
         <div className="share-panel">
-          <DisplayOptions roman={roman} autoScroll={autoScroll} />
+          <DisplayOptions roman={roman} autoScroll={autoScroll} scalePanel={scalePanel} />
         </div>
       )}
     </Popover>

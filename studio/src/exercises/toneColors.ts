@@ -4,14 +4,17 @@
 
 import { chordTones, type Chord } from '../music/chords'
 import { chordSlots } from './lickReading'
+import type { KeyCentre } from '../music/roman'
 
 /** Where a note sits on a chord. */
 export type ToneColor = 'chord' | 'color' | 'approach' | 'outside'
 
 /** The four kinds of notes, in the order they are shown, with their names and what they are. */
-export const TONE_COLORS: { id: ToneColor; label: string; help: string }[] = [
+// `keyless`: the help where no key is known (an infinite line), when it differs
+export const TONE_COLORS: { id: ToneColor; label: string; help: string; keyless?: string }[] = [
   { id: 'chord', label: 'chord tones', help: 'a note of the chord' },
-  { id: 'color', label: 'colour tones', help: "a note of the chord's scale (9th, 13th, #11...) or of the key's major pentatonic, minor pentatonic or blues scale" },
+  { id: 'color', label: 'colour tones', help: "a note of the chord's scale (9th, 13th, #11...) or of the key's major pentatonic, minor pentatonic or blues scale",
+    keyless: "a note of the chord's scale (9th, 13th, #11...)" },
   { id: 'approach', label: 'approach tones', help: 'a half step into the next note, a chord or colour tone' },
   { id: 'outside', label: 'outside', help: 'none of these (a short one turns blue when the next key resolves it a half step away; a long one on a strong beat stays red)' },
 ]
@@ -31,20 +34,21 @@ export function chordPitchClasses(chord: Chord): Set<number> {
   return pcs
 }
 
-// Scales of a chord in context (chordScale)
-const MIXOLYDIAN = [0, 2, 4, 5, 7, 9, 10]
-const PHRYGIAN_DOMINANT = [0, 1, 4, 5, 7, 8, 10] // Mixolydian with the b9 and b13: a V going to a minor chord
-const DIMINISHED = [0, 2, 3, 5, 6, 8, 9, 11] // whole step, half step: the full diminished scale
-// Scales of the key, whose notes sound well over most chords of a song (from its tonic)
-export const KEY_SCALES: { name: string; steps: number[] }[] = [
-  { name: 'major pentatonic', steps: [0, 2, 4, 7, 9] },
-  { name: 'minor pentatonic', steps: [0, 3, 5, 7, 10] },
-  { name: 'blues scale', steps: [0, 3, 5, 6, 7, 10] },
+// The full diminished scale: whole step, half step (the lick slots keep seven notes)
+const DIMINISHED = [0, 2, 3, 5, 6, 8, 9, 11]
+// Scales of the key, whose notes sound well over most chords of a song (from its tonic): a major
+// key takes all three (the minor ones for the blues sound), a minor key its minor pentatonic and
+// blues scale
+export const KEY_SCALES: { name: string; steps: number[]; major: boolean; minor: boolean }[] = [
+  { name: 'major pentatonic', steps: [0, 2, 4, 7, 9], major: true, minor: false },
+  { name: 'minor pentatonic', steps: [0, 3, 5, 7, 10], major: true, minor: true },
+  { name: 'blues scale', steps: [0, 3, 5, 6, 7, 10], major: true, minor: true },
 ]
-const ALTERED = ['b9', '#9', 'alt', '#5', 'b5', '#11', 'b13'] // written alterations choose the scale themselves
 
-/** Whether a chord has a major 3rd (major or dominant), or a minor one. */
-const hasThird = (chord: Chord, interval: 3 | 4) => chordTones(chord)[1] === interval
+/** Whether a pitch class is in one of the scales of a key (KEY_SCALES). */
+export function inKeyScales(pc: number, key: KeyCentre): boolean {
+  return KEY_SCALES.some((scale) => (key.minor ? scale.minor : scale.major) && scale.steps.includes((pc - key.tonic + 12) % 12))
+}
 
 /**
  * The scale of a chord, in semitones above its root: the chord's own scale (chordSlots, the
@@ -54,19 +58,16 @@ const hasThird = (chord: Chord, interval: 3 | 4) => chordTones(chord)[1] === int
  *   a V going to a major chord, even a triad (G -> C)   Mixolydian: G A B C D E F
  *   a diminished chord                              the full diminished scale (8 notes)
  *
- * A V is a major triad or a dominant 7th whose root moves up a 4th, with no alteration written.
+ * A V is a major triad or a dominant 7th whose root moves up a 4th, with no alteration written
+ * (resolvesAsV, shared with the licks of Lick Sightreading).
  */
 export function chordScale(chord: Chord, next?: Chord | null): number[] {
   if (chord.quality === 'dim7' || chord.quality === 'dim') return DIMINISHED
-  const isV = (chord.quality === 'maj' || chord.quality === 'dom7') && !ALTERED.some((t) => chord.tensions.includes(t)) &&
-    !!next && (next.root - chord.root + 12) % 12 === 5
-  if (isV && hasThird(next, 3)) return PHRYGIAN_DOMINANT
-  if (isV && hasThird(next, 4)) return MIXOLYDIAN
-  return [...new Set(chordSlots(chord))]
+  return [...new Set(chordSlots(chord, next))]
 }
 
-/** What a note is judged against besides its chord: the chord after it, and the key (pitch class of its tonic). */
-export interface ToneContext { next?: Chord | null; keyPc?: number }
+/** What a note is judged against besides its chord: the chord after it, and the key in force. */
+export interface ToneContext { next?: Chord | null; key?: KeyCentre }
 
 /**
  * Where a note sits on a chord, as it is played (an approach is only known from the next note,
@@ -74,8 +75,9 @@ export interface ToneContext { next?: Chord | null; keyPc?: number }
  *
  *   chord     a chord tone                                       C7: C E G Bb
  *   color     another note of the chord's scale (chordScale), except the 11th over a major 3rd
- *             (it clashes with it), or a note of the key's major pentatonic, minor pentatonic or
- *             blues scale                                         C7 in F: D A, and F Ab Eb...
+ *             (it clashes with it), or a note of the key's scales (KEY_SCALES: major pentatonic,
+ *             minor pentatonic, blues scale; a minor key leaves out the major pentatonic)
+ *                                                                C7 in F: D A, and F Ab Eb...
  *   outside   none of these, for now
  */
 export function toneColor(pitch: number, chord: Chord, context: ToneContext = {}): ToneColor {
@@ -85,8 +87,7 @@ export function toneColor(pitch: number, chord: Chord, context: ToneContext = {}
   const interval = (pc - chord.root + 12) % 12
   const avoided = interval === 5 && tones.has((chord.root + 4) % 12)
   if (!avoided && chordScale(chord, context.next).includes(interval)) return 'color'
-  const { keyPc } = context
-  if (keyPc !== undefined && KEY_SCALES.some((scale) => scale.steps.includes((pc - keyPc + 12) % 12))) return 'color'
+  if (context.key && inKeyScales(pc, context.key)) return 'color'
   return 'outside'
 }
 

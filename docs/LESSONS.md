@@ -79,9 +79,12 @@ Each unit brings one new scale idea and keeps the earlier ones:
 
 Each lesson song has a **scale map** (`studio/src/lessons/scaleMaps.ts`): its
 parts (bars), and for each part the scales to try, over which chords, and why,
-in a few words. The map is shown on the song's improvising steps (**Scales for
-this song**, named in the key the step plays) and under the sheet of Free
-Improvisation, following the part being played. The idea order follows Kelly and
+in a few words. The map is shown on the song's improvising steps (the **Scale
+ideas for this song** button, named in the key the step plays) and under the
+sheet of Free Improvisation, following the part being played. Where the song
+moves to another key that its chart does not mark, the map lists the passage
+(`keys`), so the green notes of Free Improvisation take the scales of that key.
+A part's bar numbers are those of the sheet, where a pickup counts as bar 1. The idea order follows Kelly and
 Rasmussen (major, Dorian and Mixolydian first, chord tones as the best notes,
 the blues scale with the blues).
 

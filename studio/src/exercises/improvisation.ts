@@ -5,6 +5,7 @@
 
 import { barAtBeat, slotAtBeat, type Bar, type Slot, type Timeline } from '../engine/timeline'
 import type { MelodyNote } from '../music/melody'
+import type { KeyCentre } from '../music/roman'
 import { NO_TONES, resolvesApproach, toneColor, type ToneColor, type ToneCounts } from './toneColors'
 
 /** A key played over the band: its sounding pitch, and when it went down and up (beats of the timeline). */
@@ -50,6 +51,15 @@ function placed(timeline: Timeline, beat: number, swing: number): { beat: number
   return moved && moved.measure >= 0 ? { beat: at, bar: moved } : null
 }
 
+/**
+ * The chord sounding at a beat of the song, written in its bar or carried over from an earlier
+ * bar (a bar left blank keeps its chord); none during the count-in, a N.C. or the ending.
+ */
+export function chordSlotAt(timeline: Timeline, beat: number): Slot | undefined {
+  const slot = slotAtBeat(timeline, beat)
+  return slot && slot.measure >= 0 && beat < slot.start + slot.beats ? slot : undefined
+}
+
 /** The chord after a slot (a chord written again is the same chord), for the scale of a V. */
 export function chordAfter(timeline: Timeline, slot: Slot) {
   const index = timeline.slots.indexOf(slot)
@@ -67,12 +77,12 @@ const longOnStrongBeat = (at: number, beats: number, barBeats: number) =>
  * on top); each note lasts until its key goes up (`now` for a key still held) or the next note
  * starts, and at least a sixteenth (an eighth when swung). A bar played twice in the chorus
  * (repeats) shows its last pass. Each note is coloured on the chord sounding where it starts,
- * the chord after it and the key of its bar (`keys`: the written key of each bar, barKeys); a
+ * the chord after it and the key of its bar (`keys`: the written key of each bar, barKeyCentres); a
  * short outside note followed by a half step onto a chord or colour tone is an approach tone,
  * a long one on a strong beat stays outside.
  */
 export function writeLine(keys: readonly PlayedKey[], timeline: Timeline, chorus: number, transpose: number, swing: number,
-  now: number, barKey: readonly number[] = []): WrittenLine {
+  now: number, barKey: readonly KeyCentre[] = []): WrittenLine {
   // The keys of this chorus on the grid, the highest of keys struck together
   const starts = new Map<number, { key: PlayedKey; bar: Bar; barIndex: number }>()
   for (const key of keys) {
@@ -97,9 +107,10 @@ export function writeLine(keys: readonly PlayedKey[], timeline: Timeline, chorus
     const beats = Math.max(Math.min(shortest(swing), chorusEnd - start), end - start)
     notes.push({ bar: bar.measure, at: start - bar.start, beats, pitch: key.pitch - transpose })
     long.push(longOnStrongBeat(start - bar.start, beats, bar.beats))
-    const slot = slotAtBeat(timeline, start)
-    const keyPc = barKey[bar.measure] === undefined ? undefined : (barKey[bar.measure] + transpose + 12) % 12
-    colors.push(slot && slot.chordIndex >= 0 ? toneColor(key.pitch, slot.chord, { next: chordAfter(timeline, slot), keyPc }) : 'outside')
+    const slot = chordSlotAt(timeline, start)
+    const written = barKey[bar.measure]
+    const inForce = written && { tonic: (written.tonic + transpose + 12) % 12, minor: written.minor }
+    colors.push(slot ? toneColor(key.pitch, slot.chord, { next: chordAfter(timeline, slot), key: inForce }) : 'outside')
   })
   // A short outside note resolved a half step onto a chord or colour tone was an approach
   for (let i = 0; i + 1 < colors.length; i++) {

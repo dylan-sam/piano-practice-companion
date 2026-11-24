@@ -32,6 +32,11 @@ describe('chord slots', () => {
     expect(chordSlots(parseChord('C7b9')!)).toEqual([0, 1, 4, 5, 7, 8, 10])
     expect(chordSlots(parseChord('Ch7')!)).toEqual([0, 2, 3, 5, 6, 8, 10])
   })
+  it('turn a V into the V of the chord it goes to', () => {
+    expect(chordSlots(parseChord('G7')!, parseChord('C-7'))).toEqual([0, 1, 4, 5, 7, 8, 10]) // Ab and Eb
+    expect(chordSlots(parseChord('G')!, parseChord('C'))).toEqual([0, 2, 4, 5, 7, 9, 10]) // F, not F#
+    expect(chordSlots(parseChord('G')!, parseChord('A'))).toEqual(chordSlots(parseChord('G')!))
+  })
 })
 
 describe('lick shapes', () => {
@@ -56,6 +61,13 @@ describe('a lick over a chart', () => {
     // D-7: D E F G; G7 from beat 3: the 9th A, the 7th F, the root G; C^7: the major Lick C D E F D B C
     expect(pitches(chart)).toEqual([62, 64, 65, 67, 69, 65, 67, 60, 62, 64, 65, 62, 59, 60])
     expect(chart.melody!.notes.slice(7).every((n) => n.bar === 1)).toBe(true)
+  })
+  it('takes the b9 over a V going to a minor chord', () => {
+    // The Lick over G7 going to C-7: its 9th (A over G7) becomes Ab
+    const chart = withLick(chordChart('G7:4 C-7:4'), lickShape(theLick)!, { rest: false })
+    const overG7 = chart.melody!.notes.filter((n) => n.bar === 0).map((n) => n.pitch % 12)
+    expect(overG7).toContain(8)
+    expect(overG7).not.toContain(9)
   })
   it('leaves a rest as long as the lick between licks when asked', () => {
     const chart = withLick(chordChart('C-7:4 F7:4 Bb^7:4'), lickShape(theLick)!, { rest: true })

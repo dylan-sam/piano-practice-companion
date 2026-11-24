@@ -6,14 +6,18 @@ import { loadJson, saveJson } from '../library/storage'
 import { parseChord } from '../music/chords'
 import { romanRoot } from '../music/roman'
 
+/** Where Free Improvisation shows its scale ideas: in view at the bottom while the sheet scrolls, or after the sheet. */
+export type ScalePanelPlace = 'fixed' | 'under'
+
 export interface DisplaySettings {
   roman: boolean // chords as Roman numerals of the key in force (II-7 V7 I^7)
   minor: '-' | 'm' // how minor is written: C- or Cm
   repeatSign: boolean // a bar with the same chords as the bar before is drawn as a % sign
   autoScroll: boolean // a playing sheet scrolls to keep the highlighted bar mid-screen (player and sightreader)
+  scalePanel: ScalePanelPlace // Free Improvisation: where the scale ideas show
 }
 
-export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false, autoScroll: true }
+export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false, autoScroll: true, scalePanel: 'fixed' }
 const STORAGE_KEY = 'openstand.display'
 
 /** Check a stored value before using it as display settings (settings saved before auto-scroll existed lack it). */
@@ -21,10 +25,13 @@ function isDisplay(value: unknown): value is Partial<DisplaySettings> {
   const v = value as Partial<DisplaySettings> | null
   return !!v && typeof v.roman === 'boolean' && (v.minor === '-' || v.minor === 'm') && typeof v.repeatSign === 'boolean'
     && (v.autoScroll === undefined || typeof v.autoScroll === 'boolean')
+    && (v.scalePanel === undefined || typeof v.scalePanel === 'string')
 }
 
-// Missing settings take their default
-let current: DisplaySettings = { ...DEFAULT_DISPLAY, ...loadJson<Partial<DisplaySettings>>(STORAGE_KEY, DEFAULT_DISPLAY, isDisplay) }
+// Missing settings take their default (and so does a place of the scale ideas this version does not know)
+const stored = loadJson<Partial<DisplaySettings>>(STORAGE_KEY, DEFAULT_DISPLAY, isDisplay)
+let current: DisplaySettings = { ...DEFAULT_DISPLAY, ...stored,
+  scalePanel: stored.scalePanel === 'under' ? 'under' : DEFAULT_DISPLAY.scalePanel }
 const listeners = new Set<() => void>()
 
 /** Change some display settings, save them and redraw every chart. */
@@ -46,9 +53,10 @@ export function useDisplay(): DisplaySettings {
 }
 
 /** Whether any display option shown on this screen differs from the default (lights the Display button). */
-export function useDisplayChanged(roman = true, autoScroll = false): boolean {
+export function useDisplayChanged(roman = true, autoScroll = false, scalePanel = false): boolean {
   const display = useDisplay()
-  return (roman && display.roman) || display.minor === 'm' || display.repeatSign || (autoScroll && !display.autoScroll)
+  return (roman && display.roman) || display.minor === 'm' || display.repeatSign || (autoScroll && !display.autoScroll) ||
+    (scalePanel && display.scalePanel === 'under')
 }
 
 /**

@@ -55,8 +55,14 @@ describe('chord scales in context', () => {
 
   test("the key's pentatonics and blues scale are colour tones too", () => {
     expect(toneColor(63, chord('C7'))).toBe('outside') // Eb over C7, no key
-    expect(toneColor(63, chord('C7'), { keyPc: 0 })).toBe('color') // in C minor pentatonic and C blues
-    expect(toneColor(68, chord('C7'), { keyPc: 0 })).toBe('outside') // Ab: in none of them
-    expect(toneColor(68, chord('G7'), { next: chord('C-'), keyPc: 0 })).toBe('color') // Ab: the b9 of G7 going to Cm
+    expect(toneColor(63, chord('C7'), { key: { tonic: 0, minor: false } })).toBe('color') // in C minor pentatonic and C blues
+    expect(toneColor(68, chord('C7'), { key: { tonic: 0, minor: false } })).toBe('outside') // Ab: in none of them
+    expect(toneColor(68, chord('G7'), { next: chord('C-'), key: { tonic: 0, minor: false } })).toBe('color') // Ab: the b9 of G7 going to Cm
+  })
+
+  test('a minor key leaves out its major pentatonic', () => {
+    // F# over G7 going to C: in D major pentatonic only
+    expect(toneColor(66, chord('G7'), { next: chord('C'), key: { tonic: 2, minor: false } })).toBe('color')
+    expect(toneColor(66, chord('G7'), { next: chord('C'), key: { tonic: 2, minor: true } })).toBe('outside')
   })
 })

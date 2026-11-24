@@ -52,6 +52,14 @@ describe('long outside notes', () => {
 
   test("the key of the bar makes the key's scales colour tones", () => {
     expect(writeLine([key(63, 0)], timeline, 0, 0, 0.5, 1).colors).toEqual(['outside'])
-    expect(writeLine([key(63, 0)], timeline, 0, 0, 0.5, 1, [0, 0]).colors).toEqual(['color'])
+    const inC = { tonic: 0, minor: false }
+    expect(writeLine([key(63, 0)], timeline, 0, 0, 0.5, 1, [inC, inC]).colors).toEqual(['color'])
+  })
+
+  test('a bar left blank keeps colouring on the chord carried over', () => {
+    // C7, then a blank bar: E is still the 3rd of C7 there
+    const carried = buildTimeline(chartFromMeasures({ title: 'Carried', style: 'swing', key: 0, bpm: 120 }, [['C7'], []]), 0, 1,
+      { countIn: false, ending: false })
+    expect(writeLine([key(64, 4)], carried, 0, 0, 0.5, 5).colors).toEqual(['chord'])
   })
 })
