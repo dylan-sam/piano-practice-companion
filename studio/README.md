@@ -55,12 +55,16 @@ pattern replaces the style's own piano comping.
 
 | Style | Default piano | Other piano patterns |
 |---|---|---|
-| Swing | Swing chord comping | stride bass, walking bass |
-| Blues | simple boogie | boogie walking bass, left-hand shuffle, New Orleans bass, boogie walking with chord shells |
-| Bossa Nova | Bossa chord comp 1 | blocked chords, bossa bass, Bossa chord comp 2 |
+| Swing | Swing chord comping | walking bass, stride bass, light stride, ragtime bass, root and open 5th, Type A shells, Charleston: chords, shells, Type A shells, rootless voicings; fourth chords from the 9th |
+| Blues | simple boogie | boogie walking bass, boogie walking with chord shells, left-hand shuffle, New Orleans bass, ragtime bass, Type A shells, Charleston: rootless voicings |
+| Bossa Nova | Bossa chord comp 1 | bossa bass, Bossa chord comp 2, blocked chords, rootless voicings held, fourth chords from the 9th |
 | Latin | Latin montuno (2-3 clave) | Latin chord comping, tango bass, bossa bass |
-| Straight Pop/Rock | pop and rock bass | Straight Pop/Rock chord comping, broken chords |
-| Ballad | ascending arpeggio | Ballad chord comping, broken chords, rolled chords |
+| Straight Pop/Rock | pop and rock bass | Straight Pop/Rock chord comping, root and open 5th, broken chords |
+| Ballad | ascending arpeggio | Ballad chord comping, root and open 5th, broken chords, broken chord with tenths, rolled chords, Type A shells, rootless voicings held, quartal pad, fourth chords from the 9th |
+
+- Every menu lists its patterns in one order (`MENU_ORDER` in
+  `left_hand_patterns.py`): bass lines, then broken and held chords, shells, the
+  Charleston rhythm's patterns together, and the jazz voicings last.
 
 - The defaults are the same in the player and in Name the progression
   (`defaultPatternForStyle` in `src/engine/pianoPatterns.ts`).

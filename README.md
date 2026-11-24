@@ -57,7 +57,7 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   contain chosen progressions (a ii-V-I, a I-V-vi-IV...). A song found in
   several collections offers its versions in a menu, the best one first.
 - **Arrange it**: six styles (Swing, Bossa Nova, Latin, Ballad, Blues,
-  Straight Pop/Rock), 16 piano patterns, any key, tempo and number of choruses.
+  Straight Pop/Rock), 28 piano patterns, any key, tempo and number of choruses.
 - **Pattern Creator**: create your own groove on a step grid (drums, bass, comping),
   keep it, share it as a link and use it as a style in your practice.
 - **Practice**: loop a range of bars or a section, go round the keys (up a

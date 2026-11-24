@@ -14,6 +14,9 @@ BOSSA_COMP = "Rhythm Dictionary bossa piano comp; Yamaha Exploring Latin Rhythms
 SON_MONTUNO = "Rhythm Dictionary son montuno 2-3; Midwest Clinic rhythm patterns"
 # The left-hand patterns of the Lessons tab, one per song (the order follows jazz-piano teaching)
 LESSONS = "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride, quartal voicings)"
+SISKIND = "Jeremy Siskind, Playing Solo Jazz Piano (2022): bass notes, Type A shells"
+LEVINE = "Mark Levine, The Jazz Piano Book (1989): left-hand voicings (ch. 7), fourth chords"
+WINN = "Edward R. Winn, How to Play Ragtime (1913): the Winn bass"
 SHUFFLE_POSITIONS = (0, .1875, .25, .4375, .5, .6875, .75, .9375)
 SHUFFLE_DURATIONS = (.1875, .0625) * 4
 SHELL_PATTERN_IDS = frozenset(("boogie_walking_shells",))
@@ -155,26 +158,35 @@ ALL_PATTERN_LIST = (
     _make_scored_pattern("new_orleans_bass", "New Orleans bass", "blues swing", (MELLIS,),
                          ((0, .375, "root_up"), (.375, .015625, "flat_third_up", True),
                           (.375, .375, "third_up"), (.75, .25, "fifth_up"))),
-    # The Lessons tab's patterns: two-feel, Charleston, shells, light stride, two-note shells,
-    # broken tenths and a quartal pad (walking bass, stride and bossa bass are above)
-    _make_scored_pattern("two_feel", "Two-feel: root and 5th", "swing", (LESSONS,),
-                         ((0, .5, "root"), (.5, .5, "fifth_low")), transcribed=False),
-    _make_scored_pattern("charleston", "Charleston chords", "swing blues", (LESSONS, BASIC_VOICING),
+    # The Lessons tab's patterns, from Siskind, Levine and Winn (walking bass, stride, Charleston
+    # and bossa bass are above or below)
+    _make_scored_pattern("charleston", "Charleston: chords", "swing blues", (LESSONS, BASIC_VOICING),
                          ((0, .375, "chord"), (.375, .125, "chord")), transcribed=False),
-    _make_scored_pattern("bass_shells", "Bass shells: root, 3rd, 7th", "swing", (LESSONS,),
-                         ((0, .5, "shell"), (.5, .5, "shell")), transcribed=False),
+    _make_scored_pattern("open_fifths", "Root and open 5th", "swing ballad straight", (SISKIND,),
+                         ((0, .5, "power"), (.5, .5, "power")), transcribed=False),
+    _make_scored_pattern("type_a_shells", "Type A shells: root, 3rd under 7th", "swing blues ballad", (SISKIND,),
+                         ((0, .375, "shell_a"), (.5, .25, "shell_a")), transcribed=False),
+    _make_scored_pattern("ragtime_bass", "Ragtime bass: bass note, chord", "swing blues", (WINN,),
+                         ((0, .25, "root"), (.25, .2, "chord"), (.5, .25, "fifth"), (.75, .2, "chord")),
+                         transcribed=False),
     _make_scored_pattern("light_stride", "Light stride: bass and shells", "swing", (LESSONS,),
                          ((0, .25, "root"), (.25, .25, "upper_shell"),
                           (.5, .25, "fifth_low"), (.75, .25, "upper_shell")), transcribed=False),
-    _make_scored_pattern("shells_charleston", "Shells in the Charleston rhythm", "swing", (LESSONS, BASIC_VOICING),
+    _make_scored_pattern("shells_charleston", "Charleston: shells", "swing", (LESSONS, BASIC_VOICING),
                          ((0, .375, "shell"), (.375, .125, "shell"), (.875, .125, "shell")), transcribed=False),
-    _make_scored_pattern("two_note_shells", "Two-note shells: root and 7th, root and 10th", "swing", (LESSONS,),
-                         ((0, .5, "seventh_shell"), (.5, .5, "tenth_shell")), transcribed=False),
+    _make_scored_pattern("type_a_charleston", "Charleston: Type A shells", "swing blues", (SISKIND, BASIC_VOICING),
+                         ((0, .375, "shell_a"), (.375, .125, "upper_shell_a")), transcribed=False),
+    _make_scored_pattern("rootless_charleston", "Charleston: rootless voicings", "swing blues", (LEVINE,),
+                         ((0, .375, "rootless"), (.375, .125, "rootless")), transcribed=False),
+    _make_scored_pattern("rootless_held", "Rootless voicings, held", "ballad bossa", (LEVINE,),
+                         ((0, .5, "rootless"), (.5, .5, "rootless")), transcribed=False),
     _make_scored_pattern("broken_tenths", "Broken chord: root, 5th, 10th", "ballad", (LESSONS,),
                          tuple((index / 8, .125, role) for index, role in enumerate(
                              "root fifth tenth fifth root fifth tenth fifth".split())), transcribed=False),
     _make_scored_pattern("quartal_pad", "Quartal pad (stacked 4ths)", "swing ballad", (LESSONS,),
                          ((0, 1, "quartal"),), transcribed=False),
+    _make_scored_pattern("fourths_from_ninth", "Fourth chords from the 9th", "swing ballad bossa", (LEVINE,),
+                         ((0, 1, "quartal_ninth"),), transcribed=False),
 )
 
 
@@ -198,21 +210,32 @@ ALL_PATTERN_LIST += (
 )
 
 CURATED_PATTERN_IDS_BY_STYLE = {
-    "swing": ("walking_bass", "stride", "two_feel", "charleston", "bass_shells", "light_stride",
-              "shells_charleston", "two_note_shells", "quartal_pad"),
+    "swing": ("walking_bass", "stride", "charleston", "open_fifths", "type_a_shells", "ragtime_bass",
+              "light_stride", "shells_charleston", "type_a_charleston", "rootless_charleston", "fourths_from_ninth"),
     "blues": ("boogie_simple", "boogie_walking", "boogie_walking_shells",
-              "left_hand_shuffle", "new_orleans_bass"),
-    "bossa nova": ("bossa_chord_comp", "bossa_bass", "block_chords"),
+              "left_hand_shuffle", "new_orleans_bass", "type_a_shells", "ragtime_bass", "rootless_charleston"),
+    "bossa nova": ("bossa_chord_comp", "bossa_bass", "block_chords", "rootless_held", "fourths_from_ninth"),
     "latin": ("latin_montuno", "tango", "bossa_bass"),
-    "straight pop/rock": ("pop_rock", "broken_chords"),
-    "ballad": ("broken_chords", "arpeggio_ascending", "rolled_chords", "broken_tenths", "quartal_pad"),
+    "straight pop/rock": ("pop_rock", "broken_chords", "open_fifths"),
+    "ballad": ("broken_chords", "arpeggio_ascending", "rolled_chords", "broken_tenths", "quartal_pad",
+               "rootless_held", "open_fifths", "type_a_shells", "fourths_from_ninth"),
 }
+# The order of every style's menu: bass lines first, then broken and held chords, shells, the
+# Charleston rhythm's patterns together, and the jazz voicings last
+MENU_ORDER = (
+    "walking_bass", "stride", "light_stride", "boogie_simple", "boogie_walking",
+    "boogie_walking_shells", "left_hand_shuffle", "new_orleans_bass", "ragtime_bass",
+    "latin_montuno", "tango", "bossa_bass", "bossa_chord_comp", "pop_rock",
+    "open_fifths", "block_chords", "broken_chords", "broken_tenths", "arpeggio_ascending",
+    "rolled_chords", "type_a_shells", "charleston", "shells_charleston", "type_a_charleston",
+    "rootless_charleston", "rootless_held", "quartal_pad", "fourths_from_ninth",
+)
 CURATED_PATTERN_IDS = frozenset(
     pattern_id for pattern_ids in CURATED_PATTERN_IDS_BY_STYLE.values()
     for pattern_id in pattern_ids
 )
-PATTERN_LIST = tuple(pattern for pattern in ALL_PATTERN_LIST
-                     if pattern.id in CURATED_PATTERN_IDS)
+PATTERN_LIST = tuple(sorted((pattern for pattern in ALL_PATTERN_LIST if pattern.id in CURATED_PATTERN_IDS),
+                            key=lambda pattern: MENU_ORDER.index(pattern.id)))
 PATTERNS = {pattern.id: pattern for pattern in ALL_PATTERN_LIST}
 CURATED_PATTERNS = {pattern.id: pattern for pattern in PATTERN_LIST}
 
@@ -229,8 +252,8 @@ if len({pattern.id for pattern in ALL_PATTERN_LIST}) != len(ALL_PATTERN_LIST):
     raise ValueError("Left-hand pattern IDs must be unique")
 if CURATED_PATTERN_IDS - CURATED_PATTERNS.keys():
     raise ValueError("Curated pattern IDs must exist")
-if any(len(pattern_ids) > 10 for pattern_ids in CURATED_PATTERN_IDS_BY_STYLE.values()):
-    raise ValueError("Each style may offer at most ten piano patterns")
+if CURATED_PATTERN_IDS - set(MENU_ORDER):
+    raise ValueError("Every offered pattern needs its place in MENU_ORDER")
 
 
 def pattern_fidelity(pattern):
@@ -250,11 +273,11 @@ def list_patterns(category=None):
 
 
 def list_patterns_for_style(style):
-    """Return the ordered, small set chosen for one playback style."""
+    """Return the set chosen for one playback style, in menu order (MENU_ORDER)."""
     if style not in CURATED_PATTERN_IDS_BY_STYLE:
         raise ValueError(f"Unknown style: {style!r}")
-    return tuple(CURATED_PATTERNS[pattern_id]
-                 for pattern_id in CURATED_PATTERN_IDS_BY_STYLE[style])
+    return tuple(pattern for pattern in PATTERN_LIST
+                 if pattern.id in CURATED_PATTERN_IDS_BY_STYLE[style])
 
 
 def export_pattern_catalog(output, patterns=None):

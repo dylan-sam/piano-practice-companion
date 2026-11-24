@@ -88,9 +88,50 @@ function blockVoicing(chord: Chord, low: number): number[] {
   return chosen.sort((a, b) => a - b)
 }
 
+/**
+ * Levine's left-hand voicing of a chord (The Jazz Piano Book, ch. 7): four notes without the
+ * root, in semitones above it, with the 3rd at the bottom (position A). Position B starts from
+ * the 7th (its last two notes, then its first two).
+ *
+ *   D-7: F A C E (3 5 7 9)     G7: B E F A (3 13 7 9)     C^7: E G B D (3 5 7 9)
+ */
+function rootlessSteps(chord: Chord): number[] {
+  const { quality, tensions } = chord
+  const dark = tensions.includes('alt') // an altered dominant takes the b9 and the b13
+  if (quality === 'min7' || quality === 'min') return [3, 7, 10, 14]
+  if (quality === 'min6' || quality === 'minMaj7') return [3, 7, quality === 'min6' ? 9 : 11, 14]
+  if (quality === 'half') return [3, 6, 10, 12]
+  if (quality === 'dim7' || quality === 'dim') return [0, 3, 6, 9]
+  if (quality === 'dom7' || quality === 'sus7') {
+    const thirteenth = dark || tensions.includes('#5') || tensions.includes('b13') ? 8 : 9
+    const ninth = dark || tensions.includes('b9') ? 13 : tensions.includes('#9') ? 15 : 14
+    return [quality === 'sus7' ? 5 : 4, thirteenth, 10, ninth]
+  }
+  return [4, 7, quality === 'maj7' ? 11 : 9, 14] // major: the 6th unless a major 7th is written
+}
+
+/**
+ * The rootless voicing of a chord, in position A or B: the one whose notes move least from the
+ * last voicing played (`last`), its lowest note between C3 and Bb3, so ii-V-I alternates A, B, A.
+ */
+function rootlessVoicing(chord: Chord, last: number[] | null): number[] {
+  const steps = rootlessSteps(chord)
+  // Stack the notes upwards from the first, which is placed from C3
+  const stack = (order: number[]) => order.slice(1).reduce((notes, step) =>
+    [...notes, midiNote((chord.root + step) % 12, notes[notes.length - 1] + 1)], [midiNote((chord.root + order[0]) % 12, 48)])
+  const positions = [stack(steps), stack([steps[2], steps[3], steps[0], steps[1]])].filter((notes) => notes[0] <= 58)
+  // How far the hand moves from the last voicing (the first one sits nearest E3)
+  const moved = (notes: number[]) => last ? notes.reduce((sum, note, i) => sum + Math.abs(note - (last[i] ?? note)), 0)
+    : Math.abs(notes[0] - 52)
+  return positions.sort((a, b) => moved(a) - moved(b))[0] ?? stack(steps)
+}
+
+/** What a pattern remembers from one chord to the next: the last rootless voicing, for the voice leading. */
+interface PatternMemory { rootless: number[] | null }
+
 /** Resolve one scored piano role against the chord sounding at its attack. */
-function rolePitches(chord: Chord, role: string, nextChord?: Chord): number[] {
-  if (role.endsWith('_up')) return rolePitches(chord, role.slice(0, -3), nextChord).map((pitch) => pitch + 12)
+function rolePitches(chord: Chord, role: string, nextChord?: Chord, memory: PatternMemory = { rootless: null }): number[] {
+  if (role.endsWith('_up')) return rolePitches(chord, role.slice(0, -3), nextChord, memory).map((pitch) => pitch + 12)
   const bass = midiNote(chord.bass)
   const root = midiNote(chord.root)
   const tones = voicingTones(chord)
@@ -122,16 +163,20 @@ function rolePitches(chord: Chord, role: string, nextChord?: Chord): number[] {
     case 'third_pair': return [bass, third]
     case 'upper_pair': return [third + 12, fifth + 12]
     case 'sixth_power': return [bass, aboveBass(9)]
-    case 'shell': case 'upper_shell': {
-      const guide = aboveBass(degree(1, 4), bass + 12)
-      const upper = aboveBass(degree(3, degree(2, 7)), bass + 12)
-      return [...new Set(role === 'shell' ? [bass, guide, upper] : [guide, upper])].sort((a, b) => a - b)
+    // Shells: the 3rd and 7th over the root (upper_: without it), an octave above the bass, or
+    // Siskind's Type A (_a: the 3rd from C3, the 7th just above it)
+    case 'shell': case 'upper_shell': case 'shell_a': case 'upper_shell_a': {
+      const typeA = role.endsWith('_a')
+      const guide = aboveBass(degree(1, 4), typeA ? 48 : bass + 12)
+      const upper = aboveBass(degree(3, degree(2, 7)), typeA ? guide + 1 : bass + 12)
+      return [...new Set(role.startsWith('upper') ? [guide, upper] : [bass, guide, upper])].sort((a, b) => a - b)
     }
-    // Two-note shells: the root with the 7th (or 6th) above it, or with the 3rd an octave up (the 10th)
-    case 'seventh_shell': return [bass, aboveBass(degree(3, degree(2, 7)))]
-    case 'tenth_shell': return [bass, aboveBass(degree(1, 4)) + 12]
+    // Levine's rootless left-hand voicings, led from the last one
+    case 'rootless': return (memory.rootless = rootlessVoicing(chord, memory.rootless))
     // Stacked 4ths: from the 3rd over a major 3rd (3rd, 13th, 9th: C -> E A D), else from the
     // root (root, 11th, 7th: Dm7 -> D G C)
+    // Three 4ths from the 9th (Levine's fourth chords: D-7 -> E A D)
+    case 'quartal_ninth': { const low = aboveBass(2, 50); return [low, low + 5, low + 10] }
     case 'quartal': {
       const low = chord.quality === 'maj' || chord.quality === 'maj7' || chord.quality === 'maj6' || chord.quality === 'dom7'
         ? aboveBass(degree(1, 4), 48) : aboveBass(0, 48)
@@ -218,6 +263,7 @@ export function generatePianoPattern(timeline: Timeline, pattern: PianoPattern, 
   const events: NoteEvent[] = []
   const end = timeline.totalBeats
   const walk: WalkState = { pitch: null, chord: null, index: null, adapted: false }
+  const memory: PatternMemory = { rootless: null }
   const walkingByBar = new Map<number, number[]>()
   timeline.bars.forEach((bar, barIndex) => {
     if (bar.measure === -1) {
@@ -263,7 +309,7 @@ export function generatePianoPattern(timeline: Timeline, pattern: PianoPattern, 
         const [pitch, adapted] = walkingPitch(active.slot.chord, pattern.id, stepIndex, walk)
         pitches = [pitch]
         Object.assign(walk, { pitch, chord: active.slot.chord, index: stepIndex, adapted })
-      } else pitches = rolePitches(active.slot.chord, step.role, active.next?.chord)
+      } else pitches = rolePitches(active.slot.chord, step.role, active.next?.chord, memory)
       if (walking && step.role.endsWith('_up')) pitches = pitches.map((pitch) => pitch + 12)
       pitches.forEach((note, noteIndex) => {
         const noteStart = start + (step.role === 'rolled' ? 0.025 * noteIndex : 0)

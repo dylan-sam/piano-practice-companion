@@ -54,18 +54,18 @@ interface CourseSong {
 }
 
 const SONGS = {
-  avalon: { title: 'Avalon', pattern: 'two_feel', patternText: 'a two-feel: the root, then the 5th, in half notes' },
+  avalon: { title: 'Avalon', pattern: 'open_fifths', patternText: 'the root with an open 5th above it, on beats 1 and 3 (Siskind)' },
   studyBlues: { title: 'Study Blues', pattern: 'charleston', patternText: 'the Charleston rhythm: the chord on beat 1 and on the "and" of 2' },
   tinRoof: { title: 'Tin Roof Blues', pattern: 'walking_bass', patternText: 'a walking bass: quarter notes on chord tones, reaching the next root by a half step' },
-  ladyBeGood: { title: 'Oh Lady Be Good', pattern: 'bass_shells', patternText: 'bass shells: root, 3rd and 7th (the 3rd under the 7th)' },
-  honeysuckle: { title: 'Honeysuckle Rose', pattern: 'light_stride', patternText: 'light stride: a bass note on beats 1 and 3, a shell on 2 and 4' },
-  justYou: { title: 'Just You, Just Me', pattern: 'shells_charleston', patternText: 'shells in the Charleston rhythm, with an anticipation on the "and" of 4' },
+  ladyBeGood: { title: 'Oh Lady Be Good', pattern: 'type_a_shells', patternText: 'Type A shells: the root, then the 3rd under the 7th, held on beat 1 and short on beat 3 (Siskind)' },
+  honeysuckle: { title: 'Honeysuckle Rose', pattern: 'ragtime_bass', patternText: 'a ragtime bass: a bass note on beats 1 and 3 (the root, then the 5th), the chord on 2 and 4 (Winn)' },
+  justYou: { title: 'Just You, Just Me', pattern: 'type_a_charleston', patternText: 'Type A shells in the Charleston rhythm: the whole shell on beat 1, the 3rd and 7th on the "and" of 2 (Siskind)' },
   gotRhythm: { title: 'I Got Rhythm', pattern: 'walking_bass', patternText: 'a walking bass through Rhythm Changes: roots and 5ths first' },
-  thisThing: { title: 'What Is This Thing Called Love', pattern: 'two_note_shells', patternText: 'two-note shells: root and 7th, root and 10th' },
-  embraceable: { title: 'Embraceable You', style: 'ballad', pattern: 'broken_tenths', patternText: 'a broken chord: root, 5th and 10th in eighth notes' },
+  thisThing: { title: 'What Is This Thing Called Love', pattern: 'rootless_charleston', patternText: 'rootless voicings in the Charleston rhythm: four notes without the root, the 3rd or the 7th at the bottom, whichever moves least (Levine)' },
+  embraceable: { title: 'Embraceable You', style: 'ballad', pattern: 'rootless_held', patternText: 'rootless voicings held for two beats, the band\'s bass playing the root (Levine)' },
   wonderful: { title: "'S Wonderful", style: 'bossa-nova', pattern: 'bossa_bass', patternText: 'a bossa bass: root and 5th in the bossa rhythm, with the chord' },
   teaForTwo: { title: 'Tea for two', style: 'bossa-nova', pattern: 'bossa_bass', patternText: 'the bossa bass' },
-  modalStudy: { title: 'Modal Study', pattern: 'quartal_pad', patternText: 'a quartal pad: the chord in stacked 4ths, held' },
+  modalStudy: { title: 'Modal Study', pattern: 'fourths_from_ninth', patternText: 'fourth chords: three notes in 4ths from the 9th, held (Levine)' },
 } satisfies Record<string, CourseSong>
 type SongId = keyof typeof SONGS
 
@@ -201,7 +201,7 @@ export const PROGRAM: LessonUnit[] = [
         hands(4, 2, 'Rhythm on C7: groups of 3 eighth notes and an eighth rest', 'Groups of 3, then 4 and 5 eighths: phrases that start on any beat.', { check: 'melody' }),
         ...song(4, 'avalon', 2, { key: C, bpm: 90, done: 'in C at 90 BPM' }),
         ...song(4, 'avalon', 3, { key: C, bpm: 90, done: 'two keys (F and C) at 90 BPM' }),
-        improvise(4, 'avalon', 'One chorus over the two-feel.', { key: C, bpm: 90 }),
+        improvise(4, 'avalon', 'One chorus over the open 5ths.', { key: C, bpm: 90 }),
         ear(4, 'dictation', '4 notes, then 6.'),
       ] },
     ],
@@ -294,7 +294,7 @@ export const PROGRAM: LessonUnit[] = [
       ] },
       { week: 16, steps: [
         voicings(16, 1, 'shell', 'ii-V-I shells in 12 keys', 'Shells through every key, slowly.', 60),
-        improvise(16, 'honeysuckle', '1 chorus over the stride (or shells).', { bpm: 100, done: 'head, chorus, head' }),
+        improvise(16, 'honeysuckle', '1 chorus over the ragtime bass (or shells).', { bpm: 100, done: 'head, chorus, head' }),
         ear(16, 'dictation', '8 notes.'),
       ] },
     ],

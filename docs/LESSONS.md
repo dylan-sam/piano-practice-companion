@@ -50,19 +50,26 @@ Sheet Sightreading, the band's piano muted so the left hand is heard:
 
 | Song | Left-hand pattern | Piano pattern id |
 |---|---|---|
-| Avalon | two-feel: root, then 5th, in half notes | `two_feel` |
+| Avalon | the root with an open 5th above it, on beats 1 and 3 (Siskind) | `open_fifths` |
 | Study Blues | Charleston: the chord on 1 and on the "and" of 2 | `charleston` |
 | Tin Roof Blues, I Got Rhythm | walking bass | `walking_bass` |
-| Oh Lady Be Good | bass shells: root, 3rd, 7th | `bass_shells` |
-| Honeysuckle Rose | light stride: bass on 1 and 3, shells on 2 and 4 | `light_stride` |
-| Just You, Just Me | shells in the Charleston rhythm, with an anticipation | `shells_charleston` |
-| What Is This Thing Called Love? | two-note shells: root and 7th, root and 10th | `two_note_shells` |
-| Embraceable You | broken chord: root, 5th, 10th | `broken_tenths` (Ballad) |
+| Oh Lady Be Good | Type A shells: the root, the 3rd under the 7th from C3; long on 1, short on 3 (Siskind) | `type_a_shells` |
+| Honeysuckle Rose | ragtime bass: the root and the 5th on 1 and 3, the chord on 2 and 4 (Winn) | `ragtime_bass` |
+| Just You, Just Me | Type A shells in the Charleston rhythm: the whole shell on 1, the 3rd and 7th on the "and" of 2 (Siskind) | `type_a_charleston` |
+| What Is This Thing Called Love? | rootless voicings in the Charleston rhythm, the 3rd or the 7th at the bottom, whichever moves least (Levine) | `rootless_charleston` |
+| Embraceable You | rootless voicings held for two beats (Levine) | `rootless_held` (Ballad) |
 | 'S Wonderful, Tea for Two | bossa bass | `bossa_bass` (Bossa Nova) |
-| Modal Study | quartal pad: stacked 4ths | `quartal_pad` |
+| Modal Study | fourth chords: three notes in 4ths from the 9th, held (Levine) | `fourths_from_ninth` |
 
-The new patterns are in `left_hand_patterns.py` (the Lessons tab entries), so
-they are in the Piano pattern menu of every screen too.
+The patterns are in `left_hand_patterns.py` (the Lessons tab entries), so they
+are in the Piano pattern menu of the other screens too, under every style they
+suit. They follow three books: Jeremy Siskind, *Playing Solo Jazz Piano* (2022)
+for the bass notes and the Type A shells (the 3rd under the 7th, between C3
+and G4); Mark Levine, *The Jazz Piano Book* (1989) for the rootless left-hand
+voicings (chapter 7: four notes, the 3rd or the 7th at the bottom) and the
+fourth chords; and Edward R. Winn, *How to Play Ragtime* (1913, public domain)
+for the bass note and chord alternation, here with single bass notes instead of
+octaves.
 
 ## Scales
 

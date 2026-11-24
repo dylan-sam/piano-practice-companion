@@ -1,7 +1,7 @@
 # Piano patterns
 
-The app offers **24 piano patterns** across its six styles, two to nine per
-style (8 of them the Lessons tab's song patterns, [docs/LESSONS.md](docs/LESSONS.md)), plus a "chord comping" entry (the style's own comping) for every style
+The app offers **28 piano patterns** across its six styles, three to eleven per
+style (the Lessons tab's song patterns among them, [docs/LESSONS.md](docs/LESSONS.md)), plus a "chord comping" entry (the style's own comping) for every style
 except Blues. Patterns removed from the menus have been deleted from the
 catalog. Rebuild `data/left_hand_patterns.json` with
 `python left_hand_patterns.py`.
@@ -19,39 +19,54 @@ catalog. Rebuild `data/left_hand_patterns.json` with
 |---|---|---|---|
 | Walking bass | `walking_bass` | Swing | scored example |
 | Stride bass | `stride` | Swing | scored example |
+| Light stride: bass and shells | `light_stride` | Swing | adaptation (Lessons) |
 | Simple boogie / barrelhouse shuffle | `boogie_simple` | Blues | scored example |
 | Boogie walking bass | `boogie_walking` | Blues | scored example |
 | Boogie walking with chord shells | `boogie_walking_shells` | Blues | adaptation |
 | Left hand shuffle | `left_hand_shuffle` | Blues | scored example |
 | New Orleans bass | `new_orleans_bass` | Blues | scored example |
-| Blocked chords | `block_chords` | Bossa Nova | adaptation |
+| Ragtime bass: bass note, chord | `ragtime_bass` | Swing, Blues | adaptation (Lessons, Winn) |
+| Latin montuno (2-3 clave) | `latin_montuno` | Latin | adaptation |
+| Tango bass | `tango` | Latin | scored example |
 | Bossa bass | `bossa_bass` | Bossa Nova, Latin | original prototype |
 | Bossa chord comp 2 | `bossa_chord_comp` | Bossa Nova | adaptation |
-| Tango bass | `tango` | Latin | scored example |
-| Latin montuno (2-3 clave) | `latin_montuno` | Latin | adaptation |
 | Pop and rock bass | `pop_rock` | Straight Pop/Rock | scored example |
+| Root and open 5th | `open_fifths` | Swing, Straight Pop/Rock, Ballad | adaptation (Lessons, Siskind) |
+| Blocked chords | `block_chords` | Bossa Nova | adaptation |
 | Broken chords | `broken_chords` | Straight Pop/Rock, Ballad | scored example |
+| Broken chord: root, 5th, 10th | `broken_tenths` | Ballad | adaptation (Lessons) |
 | Ascending arpeggio | `arpeggio_ascending` | Ballad | scored example |
 | Rolled chords | `rolled_chords` | Ballad | scored example |
-| Two-feel: root and 5th | `two_feel` | Swing | adaptation (Lessons) |
-| Charleston chords | `charleston` | Swing | adaptation (Lessons) |
-| Bass shells: root, 3rd, 7th | `bass_shells` | Swing | adaptation (Lessons) |
-| Light stride: bass and shells | `light_stride` | Swing | adaptation (Lessons) |
-| Shells in the Charleston rhythm | `shells_charleston` | Swing | adaptation (Lessons) |
-| Two-note shells: root and 7th, root and 10th | `two_note_shells` | Swing | adaptation (Lessons) |
-| Broken chord: root, 5th, 10th | `broken_tenths` | Ballad | adaptation (Lessons) |
-| Quartal pad (stacked 4ths) | `quartal_pad` | Swing, Ballad | adaptation (Lessons) |
+| Type A shells: root, 3rd under 7th | `type_a_shells` | Swing, Blues, Ballad | adaptation (Lessons, Siskind) |
+| Charleston: chords | `charleston` | Swing | adaptation (Lessons) |
+| Charleston: shells | `shells_charleston` | Swing | adaptation (Lessons) |
+| Charleston: Type A shells | `type_a_charleston` | Swing | adaptation (Lessons, Siskind) |
+| Charleston: rootless voicings | `rootless_charleston` | Swing, Blues | adaptation (Lessons, Levine) |
+| Rootless voicings, held | `rootless_held` | Bossa Nova, Ballad | adaptation (Lessons, Levine) |
+| Quartal pad (stacked 4ths) | `quartal_pad` | Ballad | adaptation (Lessons) |
+| Fourth chords from the 9th | `fourths_from_ninth` | Swing, Bossa Nova, Ballad | adaptation (Lessons, Levine) |
 
-The menus, with the default of each style first:
+The menus, with the default of each style first; the patterns follow one
+order in every menu (`MENU_ORDER`): bass lines, then broken and held chords,
+shells, the Charleston rhythm's patterns together, and the jazz voicings last.
 
 | Style | Piano patterns |
 |---|---|
-| Swing | Swing chord comping, stride bass, walking bass, two-feel, Charleston chords, bass shells, light stride, shells in the Charleston rhythm, two-note shells, quartal pad |
-| Blues | simple boogie, boogie walking bass, left-hand shuffle, New Orleans bass, boogie walking with chord shells |
-| Bossa Nova | Bossa chord comp 1 (the style's comping), blocked chords, bossa bass, Bossa chord comp 2 |
+| Swing | Swing chord comping, walking bass, stride bass, light stride, ragtime bass, root and open 5th, Type A shells, Charleston: chords, shells, Type A shells, rootless voicings; fourth chords from the 9th |
+| Blues | simple boogie, boogie walking bass, boogie walking with chord shells, left-hand shuffle, New Orleans bass, ragtime bass, Type A shells, Charleston: rootless voicings |
+| Bossa Nova | Bossa chord comp 1 (the style's comping), bossa bass, Bossa chord comp 2, blocked chords, rootless voicings held, fourth chords from the 9th |
 | Latin | Latin montuno, Latin chord comping, tango bass, bossa bass |
-| Straight Pop/Rock | pop and rock bass, Straight Pop/Rock chord comping, broken chords |
-| Ballad | ascending arpeggio, Ballad chord comping, broken chords, rolled chords, broken chord with tenths, quartal pad |
+| Straight Pop/Rock | pop and rock bass, Straight Pop/Rock chord comping, root and open 5th, broken chords |
+| Ballad | ascending arpeggio, Ballad chord comping, root and open 5th, broken chords, broken chord with tenths, rolled chords, Type A shells, rootless voicings held, quartal pad, fourth chords from the 9th |
+
+The Lessons patterns follow three books: Jeremy Siskind, *Playing Solo Jazz
+Piano* (2022) for the bass note with an open 5th and the Type A shells (the
+3rd under the 7th, between C3 and G4); Mark Levine, *The Jazz Piano Book*
+(1989) for the rootless left-hand voicings of chapter 7 (four notes, the 3rd or
+the 7th at the bottom, whichever moves least from the last chord) and the
+fourth chords; and Edward R. Winn, *How to Play Ragtime* (1913, public domain)
+for the bass note and chord alternation, here with single bass notes. The
+two-feel, bass shells and two-note shells were removed.
 
 ## Sources and fidelity
 
@@ -183,5 +198,8 @@ a backing style and its piano pattern follows iReal Pro's style guide.
   [the two-bar son montuno](https://www.rhythmdictionary.com/p/montuno-son-2-3),
   [the Midwest Clinic's montuno handout](https://www.midwestclinic.org/user_files_1/pdfs/clinicianmaterials/2005/victor_lopez.pdf)
 - [iReal Pro's style guide](https://www.irealpro.com/learn/backing-track-styles/)
+- Jeremy Siskind, *Playing Solo Jazz Piano* (2022), [its left-hand chapter](https://jeremysiskind.com/wp-content/uploads/2022/12/Chapter-B-1.pdf);
+  Mark Levine, *The Jazz Piano Book* (Sher Music, 1989): chapter 7 (left-hand voicings) and its fourth chords;
+  Edward R. Winn, [*How to Play Ragtime*](https://archive.nyu.edu/bitstream/2451/61723/2/937644_1.pdf) (1913-1921)
 - [Jazz Empowers' five comping patterns](https://www.jazzresources.org/jazz-band-director-cohort-blog/the-first-5-comping-patterns-to-teach-your-students),
   [Jens Larsen's comping rhythm examples](https://jenslarsen.nl/WP/wp-content/uploads/2019/12/Comping-Rhythms-10-Examples-You-Need-To-Know-PDF.pdf)
