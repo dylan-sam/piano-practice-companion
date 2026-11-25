@@ -1,6 +1,8 @@
 import { barMeters, beatsPerBar, isCompound, playbackOrder, type Chart } from '../music/chart'
+import { chorusKeyOffset } from './keyOrder'
 import { parseChord, transposeChord, type Chord } from '../music/chords'
 import { PULSE } from './meter'
+import { substituteChart, type SubstitutionSettings } from '../music/substitutions'
 
 // One click of the count-in: where it falls, the number shown, and how strong it is
 // (the start of a bar, a beat or pulse, or an eighth in between)
@@ -64,6 +66,7 @@ export interface Slot {
   measure: number // bar index in the chart; -1 for the final chord
   chordIndex: number // position in the written bar; -1 for a carried or ending chord
   chorus: number
+  written?: Chord // a substitute's chord written there (Substitutions menu), transposed as the slot
   compound?: boolean // in 6/8, 9/8 or 12/8
 }
 
@@ -90,14 +93,13 @@ export interface Timeline {
 export interface PracticeOptions {
   loop?: [from: number, to: number] | null // written bar indices, inclusive
   keyStep?: number // semitones added to the key on each chorus (5 = round the cycle of fourths)
+  randomKeys?: { seed: number } // instead: the twelve keys in a random order (keyOrder.ts)
+  subs?: SubstitutionSettings // chord substitutions, chorus by chorus (music/substitutions.ts)
   ending?: boolean // false: stop after the last bar instead of resolving to the first chord
   countIn?: boolean // false: continue an endless exercise without another count-in
 }
 
-// Transposition for each chorus, kept within -5..+6 so the band's register doesn't drift
-export function chorusTranspose(transpose: number, keyStep: number, chorus: number): number {
-  return ((((transpose + keyStep * chorus + 5) % 12) + 12) % 12) - 5
-}
+export { chorusKeyOffset, chorusTranspose } from './keyOrder'
 
 // Bars in the order they are played, or the looped range in written order
 export function practiceOrder(chart: Chart, loop: PracticeOptions['loop']): number[] {
@@ -112,11 +114,10 @@ export function practiceOrder(chart: Chart, loop: PracticeOptions['loop']): numb
 
 /** Expand the written chart into timed chord slots and bars for playback. */
 export function buildTimeline(chart: Chart, transpose: number, choruses: number, practice: PracticeOptions = {}): Timeline {
-  const keyStep = practice.keyStep ?? 0
   const chords = new Map<string, Chord>()
   // The chord of a symbol in a chorus's key (parsed once, then cached)
   const toChord = (symbol: string, chorus: number): Chord => {
-    const semitones = chorusTranspose(transpose, keyStep, chorus)
+    const semitones = chorusKeyOffset(practice, chorus, transpose)
     const id = `${semitones} ${symbol}`
     let chord = chords.get(id)
     if (!chord) {
@@ -148,8 +149,10 @@ export function buildTimeline(chart: Chart, transpose: number, choruses: number,
     // A blank bar keeps the chord that was sounding at the end of the previous one;
     // a loop starting on a blank bar picks up the chord written before it
     let held: Chord | null = carried ? toChord(carried, chorus) : null
+    // The chart of this chorus, with its substitutions
+    const sheet = substituteChart(chart, practice.subs, chorus)
     order.forEach((measure, n) => {
-      const bar = chart.bars[measure]
+      const bar = sheet.bars[measure]
       const { beats, compound } = meters[measure]
       bars.push({ start: beat, beats, measure, chorus, isFirst: n === 0, isLast: n === order.length - 1, compound })
 
@@ -159,7 +162,8 @@ export function buildTimeline(chart: Chart, transpose: number, choruses: number,
         let at = beat
         for (const [chordIndex, c] of bar.chords.entries()) {
           held = c.symbol ? toChord(c.symbol, chorus) : null // N.C. leaves a gap
-          if (held) slots.push({ chord: held, start: at, beats: c.beats, measure, chordIndex, chorus, compound })
+          const written = c.written ? { written: toChord(c.written, chorus) } : {}
+          if (held) slots.push({ chord: held, start: at, beats: c.beats, measure, chordIndex, chorus, compound, ...written })
           at += c.beats
         }
       }
@@ -200,4 +204,38 @@ export function slotAtBeat(timeline: Timeline, beat: number): Slot | undefined {
 export function barAtBeat(timeline: Timeline, beat: number): Bar | null {
   const bar = timeline.bars.findLast((b) => b.start <= beat + 1e-6)
   return bar && beat < timeline.totalBeats ? bar : null
+}
+
+/**
+ * The beat where a written chord is first played (in the first chorus), to start the band from it.
+ * Null when the bar is not played, e.g. outside the practice loop.
+ */
+export function chordStartBeat(timeline: Timeline, chart: Chart, measure: number, chordIndex: number): number | null {
+  const bar = timeline.bars.find((b) => b.measure === measure && b.chorus === 0)
+  if (!bar) return null
+  const offset = (chart.bars[measure]?.chords ?? []).slice(0, Math.max(0, chordIndex)).reduce((sum, c) => sum + c.beats, 0)
+  return bar.start + (offset < bar.beats - 1e-6 ? offset : 0)
+}
+
+/** The chord after a slot (a chord written again is the same chord), for the scale of a V. */
+export function chordAfter(timeline: Timeline, slot: Slot): Chord | null {
+  const index = timeline.slots.indexOf(slot)
+  const same = (a: Slot) => a.chord.root === slot.chord.root && a.chord.quality === slot.chord.quality && a.chord.suffix === slot.chord.suffix
+  return timeline.slots.slice(index + 1).find((next) => next.chordIndex >= 0 && !same(next))?.chord ?? null
+}
+
+/**
+ * The chords of a written bar as the band plays them in a chorus (transposed, in that chorus's
+ * key), each with the chord after it: what the chord helper shows when a bar is tapped. A bar
+ * with no chord written shows the chord it holds; empty when the bar is not played or is N.C.
+ */
+export function chordsOfBar(timeline: Timeline, measure: number, chorus = 0): { chord: Chord; next: Chord | null; chordIndex: number; written?: Chord }[] {
+  // A bar played twice in a chorus (inside a repeat) counts once: its first pass
+  const bar = timeline.bars.find((b) => b.measure === measure && b.chorus === chorus)
+  const inBar = bar ? timeline.slots.filter((slot) => slot.measure === measure && slot.start >= bar.start - 1e-9
+    && slot.start < bar.start + bar.beats - 1e-9) : []
+  // A bar with no chord written holds the chord before it (a carried slot)
+  const written = inBar.some((slot) => slot.chordIndex >= 0) ? inBar.filter((slot) => slot.chordIndex >= 0) : inBar.slice(0, 1)
+  return written.map((slot) => ({ chord: slot.chord, next: chordAfter(timeline, slot), chordIndex: Math.max(0, slot.chordIndex),
+    ...(slot.written ? { written: slot.written } : {}) }))
 }

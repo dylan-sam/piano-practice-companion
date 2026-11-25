@@ -1,4 +1,4 @@
-// The Lessons tab: a 30-week program for pianists new to jazz (program.ts), unit by unit and week
+// The Lessons tab: a 46-week program for pianists new to jazz (program.ts), unit by unit and week
 // by week. Each step says what to do, why, how long and when it is done, and its Start button
 // opens the screen that practises it, set up for the step. Progress is kept on this device and
 // only suggests the next step: any step can be opened at any time.
@@ -119,7 +119,7 @@ export function Lessons() {
       </header>
       <main className="lessons-page">
         <section className="lessons-intro">
-          <h1>Jazz piano in 30 weeks</h1>
+          <h1>Jazz piano in 46 weeks</h1>
           <p>
             About 7 months at 20 to 30 minutes a day, 5 days a week, with a MIDI keyboard. Both hands and a little improvising
             from the first week: every song is learnt with a left hand that grows in stages (bass, chords, then the song's
@@ -150,7 +150,7 @@ export function Lessons() {
                 if (open !== view.open.includes(unit.id)) toggleUnit(unit.id, open)
               }}>
               <summary>
-                <span className="lesson-unit-title">{unit.id === 'review' ? unit.title : `Unit ${unit.id.slice(1)}. ${unit.title}`}</span>
+                <span className="lesson-unit-title">{unit.number ? `Unit ${unit.number}. ${unit.title}` : unit.title}</span>
                 <span className="lesson-unit-weeks">{unit.weeks} · {unitDone} of {steps.length} done</span>
               </summary>
               <p><strong>Goal:</strong> {unit.goal}</p>

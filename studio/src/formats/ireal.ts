@@ -34,9 +34,9 @@ export function mapStyle(name: string, time: TimeSignature = [4, 4]): string {
   if (/samba|latin|bolero|cha|son |montuno|tango|salsa|afro|rumba|mambo/.test(s)) return 'latin'
   if (/shuffle|blues|boogie/.test(s)) return 'blues'
   if (/ballad/.test(s) && !/soul|rock|pop|rnb|r&b/.test(s)) return 'ballad'
-  if (/swing|bop|jazz|gypsy|trad|new orleans|second line|waltz/.test(s)) return 'swing'
+  if (/swing|bop|jazz|gypsy|trad|new orleans|second line|waltz/.test(s)) return inThree ? 'jazz-waltz' : 'swing'
   if (/pop|rock|funk|rnb|r&b|disco|soul|even|reggae|country|folk|house|smooth|bluegrass/.test(s)) return 'straight pop/rock'
-  return inThree ? 'ballad' : 'swing'
+  return inThree ? 'jazz-waltz' : 'swing'
 }
 
 // The irealb:// character scramble on 50-character blocks; the swap is its own inverse

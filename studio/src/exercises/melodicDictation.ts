@@ -14,6 +14,7 @@ import { melodyProgram, type MelodyNote } from '../music/melody'
 import type { Tune } from '../music/songs'
 import type { StyleDefinition } from '../styles/types'
 import { CHANNELS, BASE_BPM } from '../engine/arrange'
+import { clickTrack } from '../engine/click'
 import { generateDrums } from '../engine/drums'
 import { melodyEvents } from '../engine/melody'
 import { writeMidi } from '../engine/midiWriter'
@@ -292,6 +293,7 @@ export function melodyAloneMidi(chart: Chart, style: StyleDefinition, transpose:
       events: generateDrums([], style.drums, style.swing, timeline.clicks) },
     { name: 'Melody', channel: CHANNELS.melody, program: melodyProgram(chart.melody!), pan: 54, reverb: 45,
       events: melodyEvents(chart, timeline, CHANNELS.melody, style.swing, transpose) },
+    clickTrack(timeline),
   ])
   return { midi, timeline }
 }

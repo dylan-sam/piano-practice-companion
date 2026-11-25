@@ -3,7 +3,7 @@
 // again from the keys at each change, so a note can still turn into an approach tone when the
 // next key resolves it.
 
-import { barAtBeat, slotAtBeat, type Bar, type Slot, type Timeline } from '../engine/timeline'
+import { barAtBeat, chordAfter, slotAtBeat, type Bar, type Slot, type Timeline } from '../engine/timeline'
 import type { MelodyNote } from '../music/melody'
 import type { KeyCentre } from '../music/roman'
 import { NO_TONES, resolvesApproach, toneColor, type ToneColor, type ToneCounts } from './toneColors'
@@ -55,16 +55,9 @@ function placed(timeline: Timeline, beat: number, swing: number): { beat: number
  * The chord sounding at a beat of the song, written in its bar or carried over from an earlier
  * bar (a bar left blank keeps its chord); none during the count-in, a N.C. or the ending.
  */
-export function chordSlotAt(timeline: Timeline, beat: number): Slot | undefined {
+function chordSlotAt(timeline: Timeline, beat: number): Slot | undefined {
   const slot = slotAtBeat(timeline, beat)
   return slot && slot.measure >= 0 && beat < slot.start + slot.beats ? slot : undefined
-}
-
-/** The chord after a slot (a chord written again is the same chord), for the scale of a V. */
-export function chordAfter(timeline: Timeline, slot: Slot) {
-  const index = timeline.slots.indexOf(slot)
-  const same = (a: Slot) => a.chord.root === slot.chord.root && a.chord.quality === slot.chord.quality && a.chord.suffix === slot.chord.suffix
-  return timeline.slots.slice(index + 1).find((next) => next.chordIndex >= 0 && !same(next))?.chord ?? null
 }
 
 /** Whether a note starts on a strong beat of its bar (1 and 3 in 4/4, the downbeat otherwise) and lasts a beat or more. */

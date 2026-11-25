@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chordTones, closeVoicingTones, parseChord, rootlessVoicings } from '../src/music/chords'
+import { chordTones, closeVoicingTones, parseChord, pitchClassOf, rootlessVoicings, spellOnLetter } from '../src/music/chords'
 import { matchesPlayedChord } from '../src/exercises/sightReading'
 
 const chord = (symbol: string) => {
@@ -7,6 +7,14 @@ const chord = (symbol: string) => {
   if (!parsed) throw new Error(`Cannot parse ${symbol}`)
   return parsed
 }
+
+describe('rootless voicings (the band\'s comping and the left-hand patterns share them)', () => {
+  it('takes the alterations written', () => {
+    expect(rootlessVoicings(chord('G7b9b13'))[0].map((i) => i % 12)).toEqual([4, 8, 10, 1])
+    expect(rootlessVoicings(chord('G7b9'))[0].map((i) => i % 12)).toEqual([4, 9, 10, 1])
+    expect(rootlessVoicings(chord('G7alt'))[0].map((i) => i % 12)).toEqual([4, 8, 10, 3])
+  })
+})
 
 describe('chart qualities sent by the catalog', () => {
   it('voices triads without an added seventh', () => {
@@ -59,5 +67,15 @@ describe('written alterations', () => {
     expect(tones('Co^7')).toEqual([0, 3, 6, 11])
     expect(parseChord('A#/C##')!.bass).toBe(2)
     expect(parseChord('Ab#11')!.root).toBe(8) // the # belongs to the 11
+  })
+})
+
+describe('note spelling', () => {
+  it('reads note names and writes a pitch class on a given letter', () => {
+    expect(['C', 'Eb', 'F#', 'Bbb', 'B#'].map(pitchClassOf)).toEqual([0, 3, 6, 9, 0])
+    expect(spellOnLetter(8, 'A')).toBe('Ab')
+    expect(spellOnLetter(8, 'G')).toBe('G#')
+    expect(spellOnLetter(0, 'B')).toBe('B#')
+    expect(spellOnLetter(2, 'E')).toBe('Ebb')
   })
 })

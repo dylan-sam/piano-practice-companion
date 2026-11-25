@@ -266,6 +266,7 @@ notes you play sound through an acoustic piano.
 | Bass pattern | Walking Bass, Boogie Walking Bass, Latin Bassline, Ballad Bassline, Root-Fifth Bassline, for any style |
 | Key | the song's key, a random key (chosen when a song loads), or any key |
 | Tempo, choruses, Practice | as in the player (loop, keys, speed up); choosing keys or a speed-up while the band plays goes on from where it is, with the choruses needed to go round the keys, and the chords already played keep their colours; a new loop starts over |
+| Substitutions | as in the players (not in infinite mode): the band plays the chosen chord substitutions, the sheet shows them in blue, and the chords to play are the substitutes |
 | Mixer | bass, drums and master volume |
 
 Each style starts with its natural bass:
@@ -329,6 +330,12 @@ of three ways:
 
 The line scrolls to the left on large screens, and upwards on phones.
 
+Chord substitutions come into the line at random, as part of it: a backdoor
+ii-V, a turnaround or secondary dominant, a passing diminished chord, a tritone
+substitution (whole chords only, so two chords stay in each bar). A substitute
+is written in blue, and it is the chord to play. The same goes for the
+infinite lines of Lick Sightreading and Free Improvisation.
+
 - **7th chords** slider (0 to 100 %): how often a progression that has a
   seventh-chord version is played in that version (`SEVENTH_VARIANTS` in
   `studio/src/exercises/sightReading.ts`). At 100 %, ii V I is always
@@ -370,10 +377,11 @@ auto-scroller On/Off).
 |---|---|
 | Mode | **Pick a song** or **Random song** (Lead Sheet Sightreading), **Pick an exercise** or **Random exercise** (Exercises Sightreading) |
 | Songs | Lead Sheet Sightreading: the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody. **Import** MuseScore MusicXML files or a Studio export: they are saved for the Lead Sheet Player too |
-| Exercises | Exercises Sightreading: the 646 exercises and licks of the [lick database](LICKS.md) (triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, licks) |
+| Exercises | Exercises Sightreading: the 677 exercises and licks of the [lick database](LICKS.md) (triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, licks) |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
+| Substitutions | as in the players: the band plays the chosen substitutes (in blue on the sheet; with Check > Both, the left hand plays them), never under a melody note of a beat or more it clashes with |
 | Mixer | bass, piano, drums and melody: the band plays the melody too, so turn the Melody slider down or mute it to read on your own |
 
 The notes you play sound through an acoustic piano. Swing and Blues play
@@ -478,7 +486,7 @@ below it.
 | Licks | check boxes, like the Progressions filter: the playlists of one-chord licks of the [lick database](LICKS.md) (133) to offer, vocabulary and licks from standards over a major, minor, dominant or diminished chord; none checked offers them all. Kept on this device |
 | Lick | one lick of the checked playlists, listed by playlist; **Random lick** picks any of them (licks of two bars over one chord, such as *Blue third*, cross the song's chord changes and follow them) |
 | Rest between licks | Off: the lick starts again on the bar line after it ends. On: a rest as long as the lick comes first |
-| Style, piano pattern, key, tempo, choruses, Practice, Mixer | as in Lead Sheet Sightreading (no key choice or Practice in infinite mode: the key changes with the progressions). A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
+| Style, piano pattern, key, tempo, choruses, Practice, Substitutions, Mixer | as in Lead Sheet Sightreading (no key choice, Practice or Substitutions in infinite mode: the key changes with the progressions). With Substitutions, the lick stays as written over the written chords, and a substitute is left out under a lick note of a beat or more it clashes with. A new style or piano pattern goes on from where the band is, in infinite mode too, and the lick's eighths then swing as the new style does |
 
 The first lick starts on the first full bar. Notes over N.C. are left out.
 
@@ -552,7 +560,7 @@ its share) (`studio/src/exercises/toneColors.ts`):
 | blue | approach tone: a short outside note followed by a key a half step away on a chord or colour tone; it turns blue when that key is played | D♭ then C |
 | red | outside: none of these; a note of a beat or more on a strong beat (1 or 3 in 4/4) stays red even when it resolves | D♭ held on beat 1 |
 
-The chord's scale (`chordScale`) is read from its symbol, with three corrections
+The chord's scale (`chordScale`) is read from its symbol, with two corrections
 from the chord after it:
 
 | Chord | Scale |
@@ -575,13 +583,19 @@ major 3rd, the D Dorian of the Modal Study), so the key's scales follow the song
 infinite line, each bar takes the key of the progression playing at its
 downbeat (`lineKeys`).
 
-Under the sheet, **Scales** follows the music, for any song: **Now** names the
-scale of the chord sounding with its notes, also over a bar left blank (the
-chord carries on). For a lesson song it adds the song's **scale ideas** for the
-part being played (**Show all** lists every part), from its scale map
-(`studio/src/lessons/scaleMaps.ts`, [LESSONS.md](LESSONS.md#scales)). It stays in
-view right on top of the bottom bar while the sheet scrolls; Display > **Scale
-ideas under the sheet** leaves it after the end of the sheet instead.
+A tap on a bar, or the **Chords** button of the bottom bar, opens the **chord
+helper** (with **Follow the chord playing**): its chords on a keyboard with the
+scales to improvise with, best first (the chord's scale where it is, also for a
+bar left blank, where the chord carries on; its pentatonic; the key's scales,
+with the lesson map's key passages; other good choices), as in the players
+(`studio/src/exercises/scaleSuggestions.ts`). The **Substitutions** button (songs,
+not an infinite line) has the band play chord substitutions, as in the players:
+the sheet and the chord helper show them, with the substitutes' own scales
+(Lydian dominant over a tritone substitution), and a change goes on from where
+the band is, the page kept. For a lesson song, the song's
+**scale ideas** for the part being played (**Show all** lists every part) sit
+under the sheet, from its scale map (`studio/src/lessons/scaleMaps.ts`,
+[LESSONS.md](LESSONS.md#scales)).
 
 Keys in the count-in are not written. Opened from a lesson, the band's piano
 starts muted so your left hand is heard.

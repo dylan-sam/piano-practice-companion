@@ -1,6 +1,6 @@
 # Piano patterns
 
-The app offers **28 piano patterns** across its six styles, three to eleven per
+The app offers **29 piano patterns** across its seven styles, one to eleven per
 style (the Lessons tab's song patterns among them, [docs/LESSONS.md](docs/LESSONS.md)), plus a "chord comping" entry (the style's own comping) for every style
 except Blues. Patterns removed from the menus have been deleted from the
 catalog. Rebuild `data/left_hand_patterns.json` with
@@ -43,6 +43,7 @@ catalog. Rebuild `data/left_hand_patterns.json` with
 | Charleston: Type A shells | `type_a_charleston` | Swing | adaptation (Lessons, Siskind) |
 | Charleston: rootless voicings | `rootless_charleston` | Swing, Blues | adaptation (Lessons, Levine) |
 | Rootless voicings, held | `rootless_held` | Bossa Nova, Ballad | adaptation (Lessons, Levine) |
+| Waltz: bass on 1, chords on 2 and 3 | `jazz_waltz_two_three` | Jazz Waltz | adaptation (waltz accompaniment, Levine) |
 | Quartal pad (stacked 4ths) | `quartal_pad` | Ballad | adaptation (Lessons) |
 | Fourth chords from the 9th | `fourths_from_ninth` | Swing, Bossa Nova, Ballad | adaptation (Lessons, Levine) |
 
@@ -52,6 +53,7 @@ shells, the Charleston rhythm's patterns together, and the jazz voicings last.
 
 | Style | Piano patterns |
 |---|---|
+| Jazz Waltz | Jazz Waltz chord comping (Wynton Kelly's figures), Waltz: bass on 1, chords on 2 and 3 |
 | Swing | Swing chord comping, walking bass, stride bass, light stride, ragtime bass, root and open 5th, Type A shells, Charleston: chords, shells, Type A shells, rootless voicings; fourth chords from the 9th |
 | Blues | simple boogie, boogie walking bass, boogie walking with chord shells, left-hand shuffle, New Orleans bass, ragtime bass, Type A shells, Charleston: rootless voicings |
 | Bossa Nova | Bossa chord comp 1 (the style's comping), bossa bass, Bossa chord comp 2, blocked chords, rootless voicings held, fourth chords from the 9th |
@@ -63,10 +65,22 @@ The Lessons patterns follow three books: Jeremy Siskind, *Playing Solo Jazz
 Piano* (2022) for the bass note with an open 5th and the Type A shells (the
 3rd under the 7th, between C3 and G4); Mark Levine, *The Jazz Piano Book*
 (1989) for the rootless left-hand voicings of chapter 7 (four notes, the 3rd or
-the 7th at the bottom, whichever moves least from the last chord) and the
-fourth chords; and Edward R. Winn, *How to Play Ragtime* (1913, public domain)
+the 7th at the bottom, whichever moves least from the last chord; the b9, #9
+and b13 of chapter 8 when the symbol writes them, from the same voicing table
+as the band's comping, `rootlessVoicings`) and the fourth chords; and Edward R. Winn, *How to Play Ragtime* (1913, public domain)
 for the bass note and chord alternation, here with single bass notes. The
 two-feel, bass shells and two-note shells were removed.
+
+The Jazz Waltz's two choices were picked by ear from three proposals. Its
+chord comping varies, bar to bar, the figures of a published transcription of
+Wynton Kelly comping on Miles Davis's "Someday My Prince Will Come" (1961): the
+dotted-quarter cell (1 and the "and" of 2), the two off-beats, beat 2 held,
+beats 1 and 3, a chord held on 1, a chord laid in on the "and" of 1. Its
+pattern is the classic waltz accompaniment (bass on 1, chords on 2 and 3) with
+Levine's rootless voicings, while the band's bass holds each chord's root; it
+is written in 4/4 on beats 2 and 4, which a 3/4 bar plays on 2 and 3
+(`meter.ts`). Kelly's two-bar hemiola and a plain "on-off" rhythm (1 and the
+"and" of 2 every bar) were left out.
 
 ## Sources and fidelity
 
@@ -100,6 +114,26 @@ included:
 
 A chord change changes the notes of the following attacks, without restarting
 the figure or adding an attack.
+
+**Other meters.** Every pattern is written for a 4/4 bar. A bar of another
+meter keeps its hits on the beat, as the styles' own comping, bass and drums do
+(`studio/src/engine/meter.ts`):
+
+| Bar | Plays | Stride bass, for example |
+|---|---|---|
+| 3/4 | beats 1, 2 and 4 of the 4/4 bar | bass, chord, chord (oom-pah-pah) |
+| 2/4, 5/4, 6/4 | beats 1-2; 1, 2, 4, 3, 4; 1, 2, 4, 3, 2, 4 | |
+| a pickup of one beat | beat 1 | bass |
+| 6/8, 9/8, 12/8 | each half of the 4/4 bar on one dotted-quarter pulse, on the eighths, never swung | bass, chord on the 3rd eighth, bass, chord on the 6th |
+
+A walking bass in 3/4 walks in three quarter notes; the passing note between
+two bars is added only within one beat.
+
+The styles' own chord comping (no piano pattern chosen) follows the same rule:
+a 3-beat chord plays beats 1, 2 and 4 of the style's 4-beat rhythms. Until
+1.2 a 3-beat chord used them as written, so a hit on beat 4 (Bossa Nova,
+Latin, Straight Pop/Rock) sounded on the next bar's downbeat with the old
+chord (`studio/src/styles/index.ts`; `tests/meter.test.ts`, "comping in 3/4").
 
 **Walking basses.** The walking bass and boogie walking bass play the printed
 figure when one chord lasts the whole figure. When the chord changes inside the

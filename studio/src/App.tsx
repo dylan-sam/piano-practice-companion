@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { arrange, BASE_BPM } from './engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from './engine/pianoPatterns'
 import { warmUpMidi } from './engine/warmup'
-import { chorusTranspose, type Timeline } from './engine/timeline'
+import { buildTimeline, chordStartBeat, chorusKeyOffset, type Timeline } from './engine/timeline'
+import { useHear } from './audio/hear'
+import { ChordHelperButton, ChordHelperPanel } from './ui/ChordHelper'
+import { Substitutions } from './ui/Substitutions'
+import { useChordHelper } from './ui/useChordHelper'
+import { substituteChart } from './music/substitutions'
+import { useSubstitutedChart } from './ui/useSubstitutedChart'
 import { irealLink } from './formats/irealWrite'
 import { reportError } from './errorReports'
 import { chartFromHash, labFromHash, shareUrl, styleShareUrl } from './formats/share'
@@ -16,7 +22,7 @@ import { offsetToKey, prettyNoteName } from './music/chords'
 import { emptyChart } from './music/edit'
 import { isSavedTune, STARTER, type Tune } from './music/songs'
 import { loadBundledLeadSheets } from './library/bundled'
-import { getStyle, STYLES, type StyleDefinition } from './styles'
+import { getStyle, STYLES, styleForChart, type StyleDefinition } from './styles'
 import { labFromStyle, styleFromLab, styleSource, STEPS_PER_BEAT, type LabStyle } from './styles/lab'
 import { Chart } from './ui/Chart'
 import { Editor, EditorHeader } from './ui/Editor'
@@ -26,7 +32,7 @@ import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
 import { TopbarMenu } from './ui/TopbarMenu'
 import { DisplayMenu } from './ui/DisplayMenu'
-import { chorusesForKeys, NO_PRACTICE, practiceChange, rampedBpm, type PracticeSettings } from './music/practice'
+import { BPM_RANGE, changesKeys, chorusesForKeys, NO_PRACTICE, practiceChange, practiceOptions, rampedBpm, type PracticeSettings } from './music/practice'
 import { Practice } from './ui/Practice'
 import { StyleLab } from './ui/StyleLab'
 import { useWindowKeys } from './ui/useWindowKeys'
@@ -34,8 +40,11 @@ import { Transport } from './ui/Transport'
 import { handlePracticeShortcut, type PracticeShortcuts } from './ui/shortcuts'
 import { Wordmark } from './ui/AppLink'
 import type { Player } from './audio/player'
-import { useHeardBeat, usePlayer } from './audio/usePlayer'
-import { MELODY_PARTS, useMixer } from './audio/useMixer'
+import { useHeardBeat, usePausedAt, usePlayer } from './audio/usePlayer'
+import { channelVolumes, MELODY_PARTS, useMixer } from './audio/useMixer'
+import { exportMidi, trackFilename } from './engine/exportTrack'
+import { TrackDownloads } from './ui/TrackDownload'
+import { downloadBlob, useTrackDownload, type TrackSource } from './ui/useTrackDownload'
 import { LeadSheet } from './ui/LeadSheet'
 import { useBackClose } from './ui/backButton'
 import { useDrawerScreen } from './ui/useNarrowScreen'
@@ -65,11 +74,12 @@ interface Draft {
   from: Tune | null
 }
 
-const BPM_RANGE: [number, number] = [40, 300]
 // The mixer strips of a lead sheet, with the melody instrument
 const MAX_CHORUSES = 24
 // Keep a tempo inside the allowed range
 const clampBpm = (v: number) => Math.max(BPM_RANGE[0], Math.min(BPM_RANGE[1], v))
+// Start a little before a chosen chord, so its notes on the beat sound
+const START_LEAD_SECONDS = 0.02
 
 // The comp instrument is named after the style's General MIDI program
 const LAST_TUNE = 'eartraining:last-tune'
@@ -135,8 +145,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
 
   const [tunes, setTunes] = useState<Tune[]>([])
   const [songId, setSongId] = useState(STARTER.id)
-  const [styleId, setStyleId] = useState(STARTER.chart.style)
-  const [patternId, setPatternId] = useState<string | null>(() => defaultPatternForStyle(STARTER.chart.style))
+  const [styleId, setStyleId] = useState(styleForChart(STARTER.chart))
+  const [patternId, setPatternId] = useState<string | null>(() => defaultPatternForStyle(styleForChart(STARTER.chart)))
   const styleRef = useRef(styleId)
   const [lab, setLabState] = useState<LabStyle | null>(null)
   const labRef = useRef<LabStyle | null>(null)
@@ -162,12 +172,15 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const [choruses, setChoruses] = useState(3)
   const [playing, setPlaying] = useState(false)
   const [position, setPosition] = useState<Position | null>(null)
+  // Where the band was paused: Play goes on from there
+  const { pausedAt, mark: startMark, hold: holdPause, holdAt: holdStart, forget: forgetPause } = usePausedAt(playerRef)
   // Decode the sounds in the background, the style on screen first
   const readiness = usePlayer(
     playerRef,
     () => {
       setPlaying(false)
       setPosition(null)
+      forgetPause()
     },
     () => {
       const first = getStyle(styleRef.current)
@@ -211,7 +224,16 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
 
   // During practice the chorus decides the key on the stand and the tempo
   const chorus = position ? Math.min(position.chorus, choruses - 1) : 0
-  const shownTranspose = playing ? chorusTranspose(transpose, practice.keyStep, chorus) : transpose
+  const shownTranspose = playing ? chorusKeyOffset(practice, chorus, transpose) : transpose
+  // The chord helper (tap a chord): its chords in the chorus playing (its key with Practice > Keys),
+  // otherwise as the first chorus
+  const keyPlan = useMemo(() => ({ keyStep: practice.keyStep, randomKeys: practice.randomKeys, subs: practice.subs }),
+    [practice.keyStep, practice.randomKeys, practice.subs])
+  // The sheet as the band plays it: the chorus playing (the first one when stopped), with its substitutions in a colour
+  const shownChart = useSubstitutedChart(chart, practice.subs, playing, chorus)
+  const chordHelper = useChordHelper({ chart, transpose, choruses, keyPlan, chorus: playing ? chorus : 0,
+    sounding: position && position.measure >= 0 ? position : null })
+  const closeChordHelper = chordHelper.close
   const liveBpm = rampedBpm(bpm, practice, playing ? chorus : 0, BPM_RANGE)
 
   // Tempo changes only the playback rate; the arrangement is not regenerated
@@ -223,19 +245,28 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const start = async (opts: ArrangeOptions, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player) return
-    const { loop, keyStep } = opts.practice
-    const { midi, timeline } = arrange(chart, resolveStyle(opts.styleId), opts.transpose, opts.choruses, { loop, keyStep }, opts.patternId)
+    const { midi, timeline } = arrange(chart, resolveStyle(opts.styleId), opts.transpose, opts.choruses, practiceOptions(opts.practice), opts.patternId)
     timelineRef.current = timeline
+    forgetPause()
     await player.play(midi, fromSeconds)
     player.setRate(liveBpm / BASE_BPM)
     setPlaying(true)
   }
 
+  /** Stop the band; the next Play starts from the beginning. */
   const stop = useCallback(() => {
     playerRef.current?.stop()
     setPlaying(false)
     setPosition(null)
-  }, [])
+    forgetPause()
+  }, [forgetPause])
+
+  /** Pause the band where it is: the highlight stays, and Play goes on from there. */
+  const pausePlayback = () => {
+    holdPause()
+    playerRef.current?.stop()
+    setPlaying(false)
+  }
 
   // Changing style, key or choruses while playing continues from the same spot with a new arrangement;
   // a new loop starts over
@@ -249,6 +280,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     const player = playerRef.current
     const loopChanged = String(next.practice.loop) !== String(practice.loop)
     if (playing && player) void start(next, loopChanged ? 0 : player.position)
+    else if (loopChanged) stop() // a paused band starts the new loop from its beginning
   }
 
   // Change the practice settings, adding choruses when going round the keys needs more. A tempo
@@ -261,8 +293,10 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     changeArrangement({ practice: next, choruses: chorusesForKeys(practice, next, choruses) })
   }
 
-  // Play or stop
-  const toggle = () => (playing ? stop() : void start({ styleId, patternId, transpose, choruses, practice }))
+  // Play, pause, or go on from where the band was paused
+  const toggle = () => (playing ? pausePlayback() : void start({ styleId, patternId, transpose, choruses, practice }, pausedAt ?? 0))
+  /** Play from the beginning. */
+  const restart = () => void start({ styleId, patternId, transpose, choruses, practice }, 0)
   const shortcuts: PracticeShortcuts = {
     toggle: () => {
       if (readiness.kind === 'ready') toggle()
@@ -291,16 +325,18 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     playerRef.current?.stop()
     setPlaying(false)
     setPosition(null)
+    forgetPause()
     setSongId(next.id)
-    setStyleId(labRef.current ? LAB_STYLE : next.chart.style)
-    setPatternId(labRef.current ? null : defaultPatternForStyle(next.chart.style))
+    setStyleId(labRef.current ? LAB_STYLE : styleForChart(next.chart))
+    setPatternId(labRef.current ? null : defaultPatternForStyle(styleForChart(next.chart)))
     setTranspose(0)
     setBpm(next.chart.bpm)
     setPractice((p) => ({ ...p, loop: null }))
     setPicking(null)
+    closeChordHelper()
     setLibraryOpen(false)
     localStorage.setItem(lastTuneKey(mode), next.id)
-  }, [mode])
+  }, [mode, forgetPause, closeChordHelper])
 
   // Open a tune of the library
   const selectSong = (id: string) => {
@@ -390,15 +426,18 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const downloadStudioExport = (group: ExportGroup) => {
     const content = serializeStudioPlaylists(tunes, group)
     const filename = EXPORT_CHOICES.find((choice) => choice.group === group)?.file
-    const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `ear-training-${filename || 'playlist'}.json`
-    document.body.append(link)
-    link.click()
-    link.remove()
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    downloadBlob(new Blob([content], { type: 'application/json' }), `ear-training-${filename || 'playlist'}.json`)
   }
+
+  // The band's track to download, made with the settings of the moment it is asked for
+  const trackDownload = useTrackDownload()
+  const mixerNow = mixer(style.comp.program)
+  const trackSource: TrackSource = {
+    midi: () => exportMidi({ chart, style: resolveStyle(styleId), patternId, transpose, choruses, practice, bpm, muted: mixerNow.muted }),
+    mix: () => ({ volumes: channelVolumes(mixerNow.volumes, mixerNow.muted), master: mixerNow.masterMuted ? 0 : mixerNow.master }),
+    filename: (extension) => trackFilename(chart, transpose, bpm, extension),
+  }
+
 
   // Load a ChoCo score from the catalog and open it
   const loadChoco = async (id: string) => {
@@ -527,6 +566,31 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     showTune(shownTunes.find((item) => item.id !== draft.from?.id) ?? STARTER)
   }
 
+  // ---- The chord helper: tap a chord (a bar of a lead sheet) to see its scales ----
+
+  const hear = useHear(playerRef, readiness.kind === 'ready')
+
+  // ---- Start from a chord: the chord helper's Start from here, while the band is stopped or paused ----
+
+  /**
+   * Make a written chord the start point: Play then starts the band there, without a count-in, and
+   * the chord is marked; asking again for the same chord clears it (Play starts from the beginning).
+   */
+  const startFromChord = (measure: number, chordIndex: number) => {
+    const mark = `${measure}:${chordIndex}`
+    const timeline = buildTimeline(chart, transpose, choruses, practiceOptions(practice))
+    // The chord is counted in the first chorus's chart, as drawn (a substitution can split a chord)
+    const beat = chordStartBeat(timeline, substituteChart(chart, practice.subs, 0), measure, chordIndex)
+    if (beat === null || mark === startMark) {
+      forgetPause()
+      setPosition(null)
+      return
+    }
+    // A hair early, so the chord's first notes, written on the beat, are played
+    holdStart(Math.max(0, beat * 60 / BASE_BPM - START_LEAD_SECONDS), mark)
+    setPosition(positionAt(timeline, beat))
+  }
+
   // ---- Loop picking: tap the first bar, then the last ----
 
   const pickBar = (index: number) => {
@@ -548,7 +612,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const readout = (() => {
     if (picking) return picking === 'first' ? 'Tap the first bar of the loop' : 'Now tap the last bar'
     const extras = [
-      practice.keyStep && position && !position.countIn ? `in\u00a0${prettyNoteName((chart.key + shownTranspose + 12) % 12)}` : '',
+      changesKeys(practice) && position && !position.countIn ? `in\u00a0${prettyNoteName((chart.key + shownTranspose + 12) % 12)}` : '',
       practice.ramp && position ? `${liveBpm}\u00a0bpm` : '',
     ]
       .filter(Boolean)
@@ -556,6 +620,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     if (!position) return `${loopLabel ?? `${chart.bars.filter((b) => !b.spacer).length} bars`} × ${choruses}`
     if (position.countIn) return `Count-in  ${position.countIn}`
     if (position.ending) return 'Ending'
+    if (startMark && !playing) return `Start from Bar\u00a0${position.measure + 1}`
     // Non-breaking spaces keep each part on one line when the readout wraps on phones
     return `Chorus\u00a0${position.chorus + 1}/${choruses}  Bar\u00a0${position.measure + 1}${extras ? `  ${extras}` : ''}`
   })()
@@ -621,6 +686,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
                       </span>
                     </button>
                   ))}
+                  <TrackDownloads download={trackDownload} source={trackSource} />
                 </div>
               )}
             </Popover>
@@ -668,23 +734,24 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
             </article>
           ) : leadSheet ? (
             <LeadSheet
-              chart={chart}
+              chart={shownChart}
               style={style}
               transpose={shownTranspose}
               {...playhead}
               range={picking && picking !== 'first' ? [picking.from, picking.from] : practice.loop}
-              onBarClick={picking ? pickBar : undefined}
+              onBarClick={picking ? pickBar : chordHelper.open}
               autoScroll={playing}
             />
           ) : (
             <Chart
-              chart={chart}
+              chart={draft ? chart : shownChart}
               style={style}
               transpose={draft ? 0 : shownTranspose}
               {...playhead}
               range={picking && picking !== 'first' ? [picking.from, picking.from] : draft ? null : practice.loop}
               selectedBar={draft ? editBar : null}
-              onBarClick={draft ? setEditBar : picking ? pickBar : undefined}
+              onBarClick={draft ? setEditBar : picking ? pickBar : chordHelper.open}
+              startAt={draft || playing ? null : startMark}
               autoScroll={playing && !draft}
               header={draft ? <EditorHeader chart={draft.chart} onChange={(c) => setDraft({ ...draft, chart: c })} /> : undefined}
             />
@@ -748,6 +815,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         readiness={readiness}
         playing={playing}
         onToggle={toggle}
+        paused={pausedAt !== null}
+        onRestart={restart}
         position={readout}
         styleId={styleId}
         pianoPatternId={patternId}
@@ -770,9 +839,17 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
         maxChoruses={MAX_CHORUSES}
         onChoruses={(n) => changeArrangement({ choruses: n })}
       >
+        <ChordHelperButton helper={chordHelper} />
         <Practice chart={chart} settings={practice} onChange={changePractice} onPickLoop={() => setPicking('first')} />
-        <Mixer {...mixer(style.comp.program)} parts={leadSheet ? MELODY_PARTS : undefined} />
+        <Substitutions practice={practice} onChange={changePractice} />
+        <Mixer {...mixerNow} parts={leadSheet ? MELODY_PARTS : undefined} />
       </Transport>}
+      {!draft && <ChordHelperPanel helper={chordHelper} onHear={hear}
+        actions={playing ? undefined : ({ measure, chordIndex }) => (
+          <button className="button" onClick={() => { startFromChord(measure, chordIndex); chordHelper.close() }}>
+            {startMark === `${measure}:${chordIndex}` ? 'Start from the beginning again' : 'Start the band from here'}
+          </button>
+        )} />}
       </>
       )}
 

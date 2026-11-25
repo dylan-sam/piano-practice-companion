@@ -1,9 +1,9 @@
 # Piano Practice Companion
 
 An app for practising harmony at the piano with real songs: play along with a band on
-**38,307 chord charts**, train your ear to name chord progressions, and
-sight-read chords on a MIDI keyboard. It runs in a desktop browser and as an
-Android or iOS app.
+**38,307 chord charts**, train your ear to name chord progressions, sight-read
+chords and melodies and improvise on a MIDI keyboard, and follow a 46-week
+jazz piano program. It runs in a desktop browser and as an Android or iOS app.
 
 The charts come from [ChoCo](https://github.com/smashub/choco), a large open
 chord corpus, checked and corrected for this project (see [the data](#the-data)).
@@ -36,10 +36,11 @@ The main menu has four areas, each opening a menu of its screens, and the **Less
 | **Ear Training** | [Name the progression](#name-the-progression), [Melodic Dictation](#melodic-dictation) |
 | **Sightreading** (with a MIDI keyboard) | [Chord Sightreading](#chord-sightreading), [Lead Sheet Sightreading](#lead-sheet-sightreading), [Exercises Sightreading](#exercises-sightreading), [Lick Sightreading](#lick-sightreading) |
 | **Improvisation** (with a MIDI keyboard) | [Free Improvisation](#free-improvisation) |
-| **Lessons** | a 30-week jazz piano program whose steps open the screens above, set up for each step ([docs/LESSONS.md](docs/LESSONS.md)) |
+| **Lessons** | [a 46-week jazz piano program](#lessons) whose steps open the screens above, set up for each step |
 
 The back button (and the title at the top left of a screen) goes up one level:
-from a screen to its area's menu, then to the main menu.
+from a screen to its area's menu, then to the main menu; a screen opened from a
+lesson step goes back to the Lessons tab.
 
 **Delete all my data**, at the bottom of the main menu, deletes everything the
 app keeps on the device (saved and imported songs and playlists, settings,
@@ -56,22 +57,67 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
 - **Find a song**: search the 38,307 charts by title, or choose songs that
   contain chosen progressions (a ii-V-I, a I-V-vi-IV...). A song found in
   several collections offers its versions in a menu, the best one first.
-- **Arrange it**: six styles (Swing, Bossa Nova, Latin, Ballad, Blues,
-  Straight Pop/Rock), 28 piano patterns, any key, tempo and number of choruses.
+- **Arrange it**: seven styles (Swing, Jazz Waltz, Bossa Nova, Latin, Ballad,
+  Blues, Straight Pop/Rock), 29 piano patterns, any key, tempo and number of
+  choruses. A song in 3/4 starts as a **Jazz Waltz**: ride cymbal and a bass in
+  three, the piano comping with Wynton Kelly's waltz figures (from his playing on
+  "Someday My Prince Will Come"), or the pattern "bass on 1, chords on 2 and 3".
 - **Pattern Creator**: create your own groove on a step grid (drums, bass, comping),
   keep it, share it as a link and use it as a style in your practice.
+- **Pause and start again**: the play button pauses the band, and Play goes
+  on from the same place (Space too); the button beside it plays from the
+  beginning. It works the same in every screen with a band.
+- **Chord helper**: tap a chord (a bar of a lead sheet), or the **Chords**
+  button beside Practice, to see the chord on a keyboard with the scales to
+  improvise with over it: the chord's scale where it is (a V going to a minor
+  chord gets its b9 and b13) and its pentatonic; **Show more scales** adds the
+  key's pentatonics and blues scale and other good choices (Lydian, bebop
+  dominant, altered...). **Follow the chord playing** moves it from chord to
+  chord with the band. **Hear** plays the chord or the scale.
+- **Substitutions** (beside Practice, on every screen with a band and a song:
+  the players, Lead Sheet, Exercises, Lick and Chord Sightreading, Free
+  Improvisation): the band plays chosen chord substitutions, drawn in blue on
+  the sheet, each described in Roman numerals: the ii added before a long V7
+  (V7 → ii−7 V7), a passing diminished chord (I ii−7 → I ♯I°7 ii−7, ii−7 iii−7 → ii−7 ♯ii°7 iii−7), the
+  backdoor ii-V (ii−7 V7 I → iv−7 ♭VII7 I), the turnaround with dominants
+  (vi−7 ii−7 → VI7 ii−7), the secondary dominant (ii−7 V7 I → II7 V7 I), the
+  tritone substitution (any dominant going down a 5th: V7 I → ♭II7 I), the
+  altered dominant (V7 I → V7♭9 I, V7 i−7 → V7♭9♭13 i−7). The
+  ticked ones apply from the top down, each on the chords the ones above it
+  made; drag them to change the order (Turnaround, Secondary dominant, Tritone
+  substitution: C A−7 D−7 G7 → C E♭7 A♭7 D♭7). They play every chorus, from a
+  chosen chorus on, every other chorus or here and there at random, also in the
+  MIDI, WAV and MP3 downloads; on a lead sheet, none goes under a long melody
+  note it would clash with. The chord helper shows the chord written under a
+  substitute and the substitute's own scales (Lydian dominant over a ♭II7).
+  The infinite lines add substitutions on their own, at random (in blue).
+- **Start from a chord**: in the chord helper, while the band is stopped or
+  paused, **Start the band from here**: the chord is marked and Play starts the
+  band there, without a count-in.
 - **Practice**: loop a range of bars or a section, go round the keys (up a
-  fourth, a half step or a whole step each chorus), speed up each chorus.
+  fourth or a fifth, up or down a half step, up a whole step, a minor or a
+  major third each chorus, or a random key each chorus, all twelve keys before
+  one comes back), speed up each chorus.
 - **Swing marking**: a sheet whose style swings its eighths shows the usual
   marking (two eighths = a triplet quarter and eighth) under the style, at the
   top left.
-- **Mixer**: volume and mute for bass, piano and drums, and a master volume.
+- **Mixer**: volume and mute for bass, piano and drums, a metronome (**Click**,
+  muted until you turn it on: a bell on each downbeat, a click on the other
+  beats, every dotted quarter in 6/8) and a master volume. **Sync** delays the
+  highlight and the judging of your notes when Bluetooth headphones or speakers
+  play the band late (0 to 300 ms; a negative value for the other way).
 - **Auto-scroll**: while the song plays, a long chart scrolls by itself so the
   yellow highlight stays near the middle of the screen, at a speed set by the
   tempo and the number of beats in a row. It can be turned off in the Display
   menu (Sheet auto-scroller On/Off).
-- **Display**: Roman numerals (each chord as a degree of the key, following key
+- **Display**: the sheet size (A− / A+, from 70% to 175%, for every chart and
+  lead sheet), Roman numerals (each chord as a degree of the key, following key
   changes), minor written C− or Cm, and % for a bar that repeats the bar before.
+- **Download the band**: Export > MIDI file, WAV or MP3 audio of the song as
+  the band plays it now: style, piano pattern, choruses, practice loop, keys
+  and speed-up, and the mixer's levels (a muted part is left out). The audio is
+  made in the app (a progress bar, Cancel), with the same sounds and limiter as
+  the band you hear.
 - **Your own charts**: write or edit a chart (**Edit Song**), import iReal Pro
   links and playlists, export your songs to a file (**Export**: the songs you
   wrote or edited, the ones shared with you via link, the imported ones, or all
@@ -106,15 +152,16 @@ or the chart's own instrument) and has its own fader in the Mixer.
 
 ### Licks and exercises
 
-A database of **646 licks and improvisation exercises**, all in C and
+A database of **677 licks and improvisation exercises**, all in C and
 playable in any key, in Exercises Sightreading and Lick Sightreading
 ([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
 sixteenth; eighth-note triplets are used.
 
-- **Exercises** (222): triads and seventh chords through the keys (with and
+- **Exercises** (253): triads and seventh chords through the keys (with and
   without the fifth, 3-5-7-9), guide-tone lines and chord-tone lines through
-  ii-V-I in all keys, minor ii-V-i, turnarounds, the blues, rhythm changes and
-  the Coltrane cycle, 25 scales and scale patterns, approach notes and
+  ii-V-I in all keys, minor ii-V-i, turnarounds, the blues, rhythm changes,
+  the Coltrane cycle and four substitutions (the ii added, secondary dominants,
+  the tritone substitution, a passing diminished chord), altered dominants (ii-V7♭9-I, minor ii-V7♭9♭13-i) and the minor blues, 25 scales and scale patterns, approach notes and
   enclosures, intervals, and rhythm drills.
 - **Licks** over a ii-V-I, a minor ii-V-i, a ii-V, a V-I, a turnaround, the
   blues, or one chord: 301 from the melodies of the shipped standards, 99 from
@@ -216,12 +263,33 @@ it on a MIDI keyboard with the band; it is judged as in Lead Sheet Sightreading.
 
 ### Free Improvisation
 
+![Free Improvisation](docs/images/free-improvisation.png)
+
 Choose a song (the shipped lead sheets, the ChoCo catalog or your own charts), a
 **Random song** or **Infinite progressions**, and improvise with the band on a
 MIDI keyboard. Every key is written out on the chart as you play and coloured
-by how it sits on the chord: chord tone (black), colour tone (green), approach
-tone (blue, once you resolve it a half step away), outside (red). The page
-starts again at each chorus.
+by how it sits on the chord: chord tone (black), colour tone (green: a note of
+the chord's scale, or of the key's pentatonics and blues scale), approach tone
+(blue, once you resolve it a half step away), outside (red). The page starts
+again at each chorus. Tap a chord for the chord helper and its scales; for a
+lesson song, the song's scale ideas part by part sit under the sheet.
+
+### Lessons
+
+![The Lessons tab](docs/images/lessons.png)
+
+A 46-week jazz piano program, about 20 to 30 minutes a day: nine units (the
+first song, the blues, the ii-V-I, the minor ii-V-i, song form and Rhythm
+Changes, altered dominants, the minor blues, ballad and bossa, modal playing)
+and a review. Four units end with a week on a chord substitution (adding the
+ii, the secondary dominant, the tritone substitution, the passing diminished
+chord), practised then played in the unit's song. Intros and endings come back
+on several songs, and each unit's improvising brings one tool to build a solo
+(space, rhythm, motifs, tension and release, a shape over choruses). Each week has hands together, a song learnt
+with a left hand that grows in stages, a few minutes of improvising and ear
+training. Each step's **Start** opens its screen already set up, and steps with
+a target tick themselves when you reach it. Nothing is locked; progress stays
+on the device ([docs/LESSONS.md](docs/LESSONS.md)).
 
 All the exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 
@@ -724,9 +792,12 @@ authors. Google Play has no such restriction. This is not legal advice.
   (2017). [Jazzomat Research Project](https://jazzomat.hfm-weimar.de/). The
   common patterns follow the Dig That Lick project (K. Frieler, F. Hoeger,
   M. Pfleiderer and S. Dixon, ISMIR 2018).
-- **Exercises**: the triad, interval and rhythm drills follow K. B. Kelly and
-  E. Rasmussen, *A Guide to Exploring Jazz Improvisation - Book 1* (Maricopa
-  Open Digital Press, 2023, CC BY 4.0).
+- **Exercises and lessons**: the triad, interval and rhythm drills and the
+  order of the Lessons tab follow K. B. Kelly and E. Rasmussen, *A Guide to
+  Exploring Jazz Improvisation - Book 1* (Maricopa Open Digital Press, 2023,
+  CC BY 4.0). The lesson songs' left-hand patterns follow J. Siskind, *Playing
+  Solo Jazz Piano* (2022), M. Levine, *The Jazz Piano Book* (Sher Music, 1989)
+  and E. R. Winn, *How to Play Ragtime* (1913), in our own notes.
 - **Ideas** (no code taken): the Check menu of the reading screens (melody,
   chords or both hands) follows the hand choice of
   [PianoBooster](https://github.com/pianobooster/PianoBooster) (GPL); the note

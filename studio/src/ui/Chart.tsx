@@ -3,7 +3,7 @@ import { ROW_CELLS, tuplets, type Chart as ChartData, type ChartBar, type TimeSi
 import { parseChord, prettyNoteName, transposeChord, type Chord } from '../music/chords'
 import type { StyleDefinition } from '../styles/types'
 import { ChordSymbol, type ChordNotation } from './ChordSymbol'
-import { useDisplay } from './display'
+import { sheetScaleStyle, useDisplay } from './display'
 import { keyChange } from '../music/roman'
 import { useFitChords } from './fitChords'
 import { useAutoScroll } from './useAutoScroll'
@@ -21,7 +21,8 @@ interface ChartProps {
   barBeats: number
   range?: [number, number] | null // looped bars
   selectedBar?: number | null // the bar being edited
-  onBarClick?: (index: number) => void
+  onBarClick?: (index: number, chordIndex: number) => void // chordIndex: the written chord clicked (0 by keyboard)
+  startAt?: string | null // the chord the band will start from, as "bar:chord"
   header?: ReactNode // replaces the title block, e.g. with inputs in the editor
   concealHidden?: boolean // draw chords marked hidden as one blank per bar (exercises)
   concealOtherChords?: boolean // leave non-answer chords empty while preserving the bar layout
@@ -35,7 +36,7 @@ interface PlacedBar {
   bar: ChartBar
   column: number
   // keyPc: the key in force where the chord starts (catalog charts carry key changes, ChartBar.keys)
-  chords: { chord: Chord | null; symbol: string | null; beats: number; hidden: boolean; index: number; keyPc: number }[]
+  chords: { chord: Chord | null; symbol: string | null; beats: number; hidden: boolean; index: number; keyPc: number; substitute: boolean }[]
   closesRow: boolean
   repeats: boolean // the bar has the same chords, with the same lengths, as the bar before
 }
@@ -75,7 +76,7 @@ function rows(chart: ChartData, transpose: number, conceal: boolean, concealOthe
       column = 0
     }
     const chords: PlacedBar['chords'] = []
-    for (const [chordIndex, { symbol, beats, hidden }] of bar.chords.entries()) {
+    for (const [chordIndex, { symbol, beats, hidden, written }] of bar.chords.entries()) {
       const chordKey = keyAt(at)
       at += beats
       const last = chords.at(-1)
@@ -85,7 +86,8 @@ function rows(chart: ChartData, transpose: number, conceal: boolean, concealOthe
         continue
       }
       const parsed = symbol ? parseChord(symbol) : null
-      chords.push({ symbol, beats, hidden: !!hidden, chord: parsed ? transposeChord(parsed, transpose) : null, index: chordIndex, keyPc: chordKey })
+      chords.push({ symbol, beats, hidden: !!hidden, chord: parsed ? transposeChord(parsed, transpose) : null, index: chordIndex, keyPc: chordKey,
+        substitute: written !== undefined })
     }
     keyAt(Infinity) // a change after the last chord applies from the next bar
     row.push({ index, bar, column, chords, closesRow: false, repeats: repeatsBar(bar, chart.bars[index - 1]) })
@@ -118,13 +120,26 @@ interface BarProps {
   showTime: TimeSignature | null
   inRange: boolean
   selected: boolean
-  onClick?: (index: number) => void
+  onClick?: (index: number, chordIndex: number) => void
+  startChord: number | null // the written chord of this bar the band will start from
   chordFeedback?: Record<string, 'correct' | 'missed'>
   notation: ChordNotation & { repeatSign: boolean }
 }
 
+/**
+ * The written chord a click in a bar landed on: the chord symbol under the pointer (the bar's
+ * chord cells, in order), or the first chord for a click elsewhere in the bar (a % sign, a margin).
+ */
+function clickedChord(target: EventTarget, bar: Element, chords: PlacedBar['chords']): number {
+  const hit = target instanceof Element ? target.closest('.chord') : null
+  const cells = [...bar.querySelectorAll(':scope > .chord')]
+  const at = hit ? cells.indexOf(hit) : -1
+  return at >= 0 && chords[at] ? chords[at].index : 0
+}
+
 /** Render one chart bar, leaving context chords empty when the exercise requests it. */
-function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, active, progress, showTime, inRange, selected, onClick, chordFeedback, notation }: BarProps) {
+function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, active, progress, showTime, inRange, selected, onClick, startChord,
+  chordFeedback, notation }: BarProps) {
   const { bar, chords, column, closesRow, index } = placed
   // The chords of the bar, in the notation chosen in the Display menu (Roman numerals of the local key)
   const symbolNotation = (chordKey: number): ChordNotation =>
@@ -172,13 +187,13 @@ function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, activ
       tabIndex={interactive ? 0 : undefined}
       aria-label={interactive ? `Bar ${index + 1}` : undefined}
       aria-pressed={interactive ? selected : undefined}
-      onClick={interactive ? () => onClick(index) : undefined}
+      onClick={interactive ? (e) => onClick(index, clickedChord(e.target, e.currentTarget, chords)) : undefined}
       onKeyDown={
         interactive
           ? (e) => {
               if (e.key !== 'Enter' && e.key !== ' ') return
               e.preventDefault()
-              onClick(index)
+              onClick(index, 0)
             }
           : undefined
       }
@@ -206,11 +221,11 @@ function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, activ
       {showTime && <TimeSig time={showTime} />}
       {active && <span className="bar-highlight" style={{ transform: `scaleX(${progress})` }} />}
       {asRepeat && (
-        <span className="chord chord-repeat" style={{ gridColumn: '1 / -1' }} aria-label="Repeat the previous bar">
+        <span className={`chord chord-repeat${startChord !== null ? ' chord-start' : ''}`} style={{ gridColumn: '1 / -1' }} aria-label="Repeat the previous bar">
           {GLYPH.repeatBar}
         </span>
       )}
-      {!asRepeat && chords.map(({ chord, symbol, hidden, index: chordIndex, keyPc: chordKey }, j) =>
+      {!asRepeat && chords.map(({ chord, symbol, hidden, index: chordIndex, keyPc: chordKey, substitute }, j) =>
         hidden && conceal ? (
           <span key={j} className="chord chord-hidden" style={cell(j)} aria-label="Hidden chords">
             ?
@@ -219,7 +234,7 @@ function Bar({ rowCells, conceal, concealOtherChords, placed, prev, keyPc, activ
           <span key={j} className="chord chord-empty" style={cell(j)} aria-hidden="true" />
         ) : chord ? (
           <ChordSymbol key={j} chord={chord} keyPc={keyPc} style={cell(j)} notation={symbolNotation(chordKey)}
-            className={[hidden && 'chord-revealed', chordFeedback?.[`${index}:${chordIndex}`] === 'correct' && 'chord-correct',
+            className={[hidden && 'chord-revealed', substitute && 'chord-sub', startChord === chordIndex && 'chord-start', chordFeedback?.[`${index}:${chordIndex}`] === 'correct' && 'chord-correct',
               chordFeedback?.[`${index}:${chordIndex}`] === 'missed' && 'chord-missed'].filter(Boolean).join(' ')} />
         ) : symbol === null ? (
           <span key={j} className="chord chord-nc" style={cell(j)}>
@@ -291,6 +306,7 @@ function SwingMark() {
 /** Render an editable or read-only chord chart with optional exercise concealment. */
 export function Chart(props: ChartProps) {
   const { chart, style, transpose, activeMeasure, beatInBar, barBeats, range, selectedBar, onBarClick, header } = props
+  const [startBar, startChord] = props.startAt ? props.startAt.split(':').map(Number) : [-1, -1]
   const conceal = props.concealHidden ?? false
   const concealOtherChords = props.concealOtherChords ?? false
   const keyPc = (chart.key + transpose + 12) % 12
@@ -311,7 +327,7 @@ export function Chart(props: ChartProps) {
   useAutoScroll(sheetRef, !!props.autoScroll && display.autoScroll && props.activeMeasure !== null, `${props.activeMeasure}:${props.beatInBar}`)
 
   return (
-    <article className="sheet" ref={sheetRef} aria-label={`${chart.title} chord chart`}>
+    <article className="sheet" ref={sheetRef} aria-label={`${chart.title} chord chart`} style={sheetScaleStyle(display.sheetScale)}>
       {header ?? <SheetHead chart={chart} style={style} keyPc={keyPc} />}
 
       <div className="rows">
@@ -332,6 +348,7 @@ export function Chart(props: ChartProps) {
                 inRange={!!range && placed.index >= Math.min(...range) && placed.index <= Math.max(...range)}
                 selected={selectedBar === placed.index}
                 onClick={onBarClick}
+                startChord={startBar === placed.index ? startChord : null}
                 chordFeedback={props.chordFeedback}
                 notation={notation}
               />

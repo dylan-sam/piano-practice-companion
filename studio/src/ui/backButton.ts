@@ -3,7 +3,7 @@
 // demo), each open menu adds a history entry, so the browser's back button closes it the same way.
 import { useEffect, useRef } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { currentPath, navigate, parentRoute, routeUrl, ROUTES } from '../router'
+import { backRoute, currentPath, navigate, routeUrl, ROUTES } from '../router'
 
 // History state of an entry added for an open menu, holding the menu's number
 const MENU_STATE = 'eartrainingMenu'
@@ -57,13 +57,14 @@ export function useBackClose(open: boolean, close: () => void): void {
 
 /**
  * Handle one press of the back button: close the last opened menu (without saving), else go
- * up one level (a screen to its area's menu, an area's menu to the main menu). Returns false on
- * the main menu with nothing open, where the app may exit.
+ * up one level (a screen to its area's menu, or to the Lessons tab it was opened from; an
+ * area's menu to the main menu). Returns false on the main menu with nothing open, where the
+ * app may exit.
  */
 export function handleBack(): boolean {
   if (closeLastMenu()) return true
   if (currentPath() !== ROUTES.home) {
-    navigate(parentRoute(currentPath()))
+    navigate(backRoute(currentPath(), window.location.search))
     return true
   }
   return false
@@ -86,7 +87,7 @@ export function installBackHandler(): void {
   const path = currentPath()
   if (path !== ROUTES.home && history.length <= 2) {
     const { search, hash } = window.location
-    history.replaceState(null, '', routeUrl(parentRoute(path)))
+    history.replaceState(null, '', routeUrl(backRoute(path, search)))
     history.pushState(null, '', routeUrl(path) + search + hash)
   }
   // The browser has gone back one entry: if it was a menu's, close that menu

@@ -8,7 +8,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent 
 import { barMeters, type Chart as ChartData } from '../music/chart'
 import { melodyToAbc, type DrawnEvent, type NoteWriting } from '../music/abc'
 import type { StyleDefinition } from '../styles/types'
-import { useDisplay } from './display'
+import { sheetScaleStyle, useDisplay } from './display'
 import { SheetHead } from './Chart'
 import { useAutoScroll, type ReadingRow } from './useAutoScroll'
 import { boxIn, classNumber, lineOf, staffBoxes, symbolBox, union, type Box, type DrawnNote } from './engraving'
@@ -161,6 +161,16 @@ function sectionMarks(root: HTMLElement, chart: ChartData, notes: DrawnNote[], b
   })
 }
 
+/** The chord symbols abcjs drew, by written bar, in the bar's order. */
+function chordElementsByBar(score: Element, drawnBars: number[]): Map<number, Element[]> {
+  const byBar = new Map<number, Element[]>()
+  for (const element of score.querySelectorAll('.abcjs-chord')) {
+    const bar = drawnBars[classNumber(element, 'abcjs-mm')]
+    if (bar !== undefined) byBar.set(bar, [...(byBar.get(bar) ?? []), element])
+  }
+  return byBar
+}
+
 /** Render a chart that has a melody as an engraved lead sheet that follows playback. */
 export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, barBeats, range, onBarClick, autoScroll, noteFeedback,
   chordFeedback, writing, noteClasses, staffInput, zoom = 1 }: LeadSheetProps) {
@@ -188,7 +198,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
       abcjs.renderAbc(score, abc, {
         add_classes: true,
         responsive: 'resize',
-        staffwidth: (phone ? PHONE_STAFF_WIDTH : STAFF_WIDTH) / zoom,
+        staffwidth: (phone ? PHONE_STAFF_WIDTH : STAFF_WIDTH) / (zoom * display.sheetScale / 100),
         jazzchords: true,
         selectTypes: false, // clicks pick bars (loops); abcjs does not select notes
         foregroundColor: 'currentColor',
@@ -210,7 +220,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     return () => {
       cancelled = true
     }
-  }, [abc, events, drawnBars, phone, chart.title, zoom])
+  }, [abc, events, drawnBars, phone, chart.title, zoom, display.sheetScale])
 
   // The drawing scales with the sheet: measure the highlight again after a resize
   useEffect(() => {
@@ -252,15 +262,28 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
     }
   }, [notes, noteFeedback])
 
-  // Colour the chords played and missed: abcjs draws a bar's chord symbols in the bar's order
+  // Colour the substitutes the band plays (Substitutions menu) in place of the written chords
+  useEffect(() => {
+    const score = scoreRef.current
+    if (!score || !notes.length) return
+    const byBar = chordElementsByBar(score, drawnBars)
+    const marked: Element[] = []
+    chart.bars.forEach((bar, index) => bar.chords.forEach((chord, at) => {
+      const element = chord.written !== undefined ? byBar.get(index)?.at(at) : undefined
+      if (!element) return
+      element.classList.add('lead-chord-sub')
+      marked.push(element)
+    }))
+    return () => {
+      for (const element of marked) element.classList.remove('lead-chord-sub')
+    }
+  }, [notes, chart, drawnBars])
+
+  // Colour the chords played and missed
   useEffect(() => {
     const score = scoreRef.current
     if (!chordFeedback || !score || !notes.length) return
-    const byBar = new Map<number, Element[]>()
-    for (const element of score.querySelectorAll('.abcjs-chord')) {
-      const bar = drawnBars[classNumber(element, 'abcjs-mm')]
-      if (bar !== undefined) byBar.set(bar, [...(byBar.get(bar) ?? []), element])
-    }
+    const byBar = chordElementsByBar(score, drawnBars)
     const marked: Element[] = []
     for (const [key, result] of Object.entries(chordFeedback)) {
       const [bar, index] = key.split(':').map(Number)
@@ -325,7 +348,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
   }, [current])
   useAutoScroll(sheetRef, !!autoScroll && display.autoScroll && activeMeasure !== null, `${activeMeasure}:${beatInBar}`, locate)
 
-  // A click on a bar, or above it on its chords, picks it (loops)
+  // A click on a bar, or above it on its chords, picks it (loops, the chord helper)
   const onClick = (event: MouseEvent) => {
     const score = scoreRef.current
     if (!score || !clickRef.current) return
@@ -341,7 +364,7 @@ export function LeadSheet({ chart, style, transpose, activeMeasure, beatInBar, b
   const activeAnchors = activeMeasure === null ? undefined : boxes.anchors.get(activeMeasure)
   const reach = active && activeAnchors ? anchorX(activeAnchors, Math.min(beatInBar, barBeats)) - active.left : 0
   return (
-    <article className="sheet lead-sheet" ref={sheetRef} aria-label={`${chart.title} lead sheet`}>
+    <article className="sheet lead-sheet" ref={sheetRef} aria-label={`${chart.title} lead sheet`} style={sheetScaleStyle(display.sheetScale)}>
       <SheetHead chart={chart} style={style} keyPc={keyPc} />
       <div className={`lead-score${onBarClick ? ' lead-score-clickable' : ''}${staffInput ? ' lead-score-input' : ''}`}
         onClick={onClick} {...input.handlers}>

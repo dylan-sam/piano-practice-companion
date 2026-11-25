@@ -37,6 +37,7 @@ describe('sight-reading bass patterns', () => {
   it('selects a named default for every style', () => {
     expect(STYLES.map((style) => [style.id, defaultBassPatternForStyle(style.id)])).toEqual([
       ['swing', 'walking_bass'],
+      ['jazz-waltz', 'walking_bass'],
       ['blues', 'boogie_walking'],
       ['bossa-nova', 'latin_bassline'],
       ['latin', 'latin_bassline'],
@@ -185,10 +186,11 @@ describe('infinite progression transitions', () => {
     expect(timeline.clicks).toHaveLength(0)
     const { midi } = arrange(line.chart, getStyle('swing'), 0, 1, { countIn: false }, null, { comp: false })
     const tracks = midiTracks(midi)
-    expect(tracks).toHaveLength(4)
+    expect(tracks).toHaveLength(5)
     expect(tracks[1]).toContain(0x90) // bass note-on
     expect(tracks[2]).not.toContain(0x91) // no piano note-on
     expect(tracks[3]).toContain(0x99) // drum note-on
+    expect(tracks[4]).toContain(0x94) // metronome click note-on (muted by default in the mixer)
   })
 
   it('connects progressions from the generated ChoCo exercise bank', () => {
@@ -200,6 +202,23 @@ describe('infinite progression transitions', () => {
     expect(() => arrange(line.chart, getStyle('swing'), 0, 1, { ending: false }, null, { comp: false })).not.toThrow()
     const continued = infiniteLine(bank.progressions, {}, true, random, line.steps.at(-1), 6)
     expect(continued.steps.length).toBeGreaterThan(6)
+  })
+
+  it('adds chord substitutions at random, whole chords only, two chords still to a bar', () => {
+    const bank = bankJson as { progressions: Progression[] }
+    let seed = 5
+    const random = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647 }
+    const lines = Array.from({ length: 6 }, () => infiniteLine(bank.progressions, {}, false, random, undefined, 40, 1))
+    const substituted = lines.flatMap((line) => line.steps.filter((step) => step.written))
+    expect(substituted.length).toBeGreaterThan(0)
+    for (const line of lines) {
+      const chords = line.chart.bars.flatMap((bar) => bar.chords)
+      expect(chords.map((c) => c.symbol)).toEqual(line.steps.map((step) => step.symbol))
+      expect(chords.map((c) => c.written)).toEqual(line.steps.map((step) => step.written))
+      expect(line.chart.bars.every((bar, i) => bar.chords.length === 2 || i === line.chart.bars.length - 1)).toBe(true)
+      // The sheet's ends as written: the next sheet goes on from its last chord
+      expect(line.steps.at(-1)!.written).toBeUndefined()
+    }
   })
 
   it('gives each bar the key of the progression at its downbeat', () => {

@@ -11,7 +11,9 @@ export type Readiness = { kind: 'loading'; progress: number } | { kind: 'ready' 
 interface TransportProps {
   readiness: Readiness
   playing: boolean
-  onToggle: () => void
+  onToggle: () => void // play, pause, or go on from where the band was paused
+  paused?: boolean // the band was paused: Play goes on from there
+  onRestart?: () => void // play from the beginning (enabled while playing or paused)
   position: string
   styleId: string
   extraStyles?: { id: string; name: string }[] // e.g. the style being made in the Pattern Creator
@@ -134,8 +136,8 @@ export function Transport(props: TransportProps) {
           className="play"
           disabled={readiness.kind !== 'ready'}
           onClick={props.onToggle}
-          aria-label={loading ? 'Loading sounds' : playing ? 'Stop' : 'Play'}
-          title={readiness.kind === 'ready' ? 'Play / stop (Space)' : undefined}
+          aria-label={loading ? 'Loading sounds' : playing ? 'Pause' : 'Play'}
+          title={readiness.kind === 'ready' ? (playing ? 'Pause (Space)' : props.paused ? 'Go on (Space)' : 'Play (Space)') : undefined}
         >
           {loading && (
             <svg className="play-ring" viewBox="0 0 60 60" aria-hidden="true">
@@ -144,9 +146,17 @@ export function Transport(props: TransportProps) {
             </svg>
           )}
           <svg className="play-icon" viewBox="0 0 24 24" aria-hidden="true">
-            {playing ? <rect x="6" y="6" width="12" height="12" rx="1.5" /> : <path d="M8 5.5v13l10.5-6.5z" />}
+            {playing ? <><rect x="6.5" y="5.5" width="4" height="13" rx="1" /><rect x="13.5" y="5.5" width="4" height="13" rx="1" /></>
+              : <path d="M8 5.5v13l10.5-6.5z" />}
           </svg>
         </button>
+        {/* Always there (greyed out before the first Play), so the bar never shifts when the band starts or goes on */}
+        {props.onRestart && (
+          <button className="restart" onClick={props.onRestart} disabled={!playing && !props.paused}
+            aria-label="Play from the beginning" title="Play from the beginning">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="6" width="2.5" height="12" rx="1" /><path d="M19 6v12l-9.5-6z" /></svg>
+          </button>
+        )}
 
         <div className="readout">
           {readiness.kind === 'loading' && <>Loading sounds {Math.round(readiness.progress * 100)}%</>}

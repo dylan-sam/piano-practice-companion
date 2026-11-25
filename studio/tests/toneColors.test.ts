@@ -60,6 +60,12 @@ describe('chord scales in context', () => {
     expect(toneColor(68, chord('G7'), { next: chord('C-'), key: { tonic: 0, minor: false } })).toBe('color') // Ab: the b9 of G7 going to Cm
   })
 
+  test('an altered dominant takes the whole altered scale, #9 included', () => {
+    expect(toneColor(70, chord('G7alt'))).toBe('color') // Bb: the #9
+    expect(toneColor(68, chord('G7alt'))).toBe('color') // Ab: the b9
+    expect(toneColor(69, chord('G7alt'))).toBe('outside') // A: the natural 9th
+  })
+
   test('a minor key leaves out its major pentatonic', () => {
     // F# over G7 going to C: in D major pentatonic only
     expect(toneColor(66, chord('G7'), { next: chord('C'), key: { tonic: 2, minor: false } })).toBe('color')

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Part } from '../engine/arrange'
-import { BAND_PARTS } from '../audio/useMixer'
+import { BAND_PARTS, SYNC_RANGE } from '../audio/useMixer'
 import { Popover } from './Popover'
 
 interface MixerProps {
@@ -14,17 +14,21 @@ interface MixerProps {
   masterMuted: boolean
   onMaster: (volume: number) => void
   onMasterMute: () => void
+  sync: number // the output's extra delay in milliseconds (Bluetooth speakers or headphones)
+  onSync: (ms: number) => void
   level: () => { peak: number; rms: number } // output level in dBFS
 }
 
 
-/** Mix only the instrument parts offered by the current screen. */
-export function Mixer({ parts = BAND_PARTS, labels, volumes, muted, onVolume, onMute, master, masterMuted, onMaster, onMasterMute, level }: MixerProps) {
+/** Mix the instrument parts offered by the current screen, the metronome (Click, muted until turned on) and the Sync. */
+export function Mixer({ parts = BAND_PARTS, labels, volumes, muted, onVolume, onMute, master, masterMuted, onMaster, onMasterMute,
+  sync, onSync, level }: MixerProps) {
+  const strips: Part[] = [...parts, 'click']
   return (
     <Popover
       id="mixer"
       className="band"
-      active={parts.some((p) => muted[p]) || masterMuted}
+      active={parts.some((p) => muted[p]) || masterMuted || !muted.click || sync !== 0}
       label={
         <>
           <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -37,7 +41,7 @@ export function Mixer({ parts = BAND_PARTS, labels, volumes, muted, onVolume, on
     >
       {() => (
         <div className="mixer" aria-label="Mixer">
-          {parts.map((part) => (
+          {strips.map((part) => (
             <div key={part} className={`strip${muted[part] ? ' strip-muted' : ''}`}>
               <span className="label">{labels[part]}</span>
               <input
@@ -74,6 +78,16 @@ export function Mixer({ parts = BAND_PARTS, labels, volumes, muted, onVolume, on
             <button className="mute" aria-pressed={masterMuted} onClick={onMasterMute}>
               Mute
             </button>
+          </div>
+          {/* Speakers or headphones that are late (Bluetooth): the highlight and the judging wait for them */}
+          <div className="mixer-sync">
+            <label className="label" htmlFor="mixer-sync">Sync</label>
+            <input id="mixer-sync" className="sync-slider" type="range" min={-SYNC_RANGE} max={SYNC_RANGE} step={10}
+              value={sync} onChange={(e) => onSync(Number(e.target.value))} />
+            <output className="strip-value" htmlFor="mixer-sync">{sync > 0 ? `+${sync}` : sync} ms</output>
+            <button className="mute" disabled={sync === 0} onClick={() => onSync(0)}>Reset</button>
+            <p className="mixer-sync-help">If the band sounds late through Bluetooth speakers or headphones, move it right until
+              the highlight and your notes line up with what you hear.</p>
           </div>
         </div>
       )}

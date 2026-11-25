@@ -411,6 +411,15 @@ export const PROGRESSIONS: { name: string; context: string; spans: ChordSpan[]; 
   { name: 'diatonic cycle (ii-V-I-IV-vii-III-vi)', context: 'diatonic cycle', spans: parseChords('D-7:4 G7:4 C^7:4 F^7:4 Bh7:4 E7b9:4 A-6:8'), level: 1 },
   { name: 'cycle of dominants', context: 'cycle of dominants', spans: parseChords('E7:2 A7:2 D7:2 G7:2 C7:2 F7:2 Bb7:2 Eb7:2 Ab7:2 Db7:2 F#7:2 B7:2 E7:4'), level: 2 },
   { name: 'Coltrane cycle', context: 'Coltrane changes', spans: parseChords('C^7:2 Eb7:2 Ab^7:2 B7:2 E^7:2 G7:2 C^7:4'), level: 3 },
+  // The four substitutions of the Lessons tab (music/substitutions.ts), each before its song
+  { name: 'V7 with its ii added, in F and C', context: 'ii added', spans: parseChords('F^7:4 G-7:2 C7:2 F^7:4 F^7:4 C^7:4 D-7:2 G7:2 C^7:4 C^7:4'), level: 1 },
+  { name: 'I-VI-II-V turnaround with secondary dominants', context: 'secondary dominants', spans: parseChords('C^7:2 A7:2 D7:2 G7:2 C^7:2 A7:2 D7:2 G7:2 C^7:4'), level: 1 },
+  { name: 'ii-bII7-I with the tritone substitution in all keys', context: 'tritone substitution', spans: cadencesInAllKeys('D-7:2 Db7:2 C^7:4'), level: 2 },
+  { name: 'I-#Io7-ii-V with a passing diminished chord', context: 'passing diminished', spans: parseChords('C^7:2 C#o7:2 D-7:2 G7:2 C^7:2 C#o7:2 D-7:2 G7:2 C^7:4'), level: 1 },
+  // The altered dominants and the minor blues of the Lessons tab (the b9, and the b13 before a minor chord)
+  { name: 'ii-V7b9-I in all keys', context: 'altered dominant', spans: cadencesInAllKeys('D-7:2 G7b9:2 C^7:4'), scales: true, level: 2 },
+  { name: 'minor ii-V7b9b13-i in all keys', context: 'altered dominant', spans: cadencesInAllKeys('Dh7:2 G7b9b13:2 C-6:4'), scales: true, level: 2 },
+  { name: 'minor blues', context: 'minor blues', spans: parseChords('C-7:4 F-7:4 C-7:4 C-7:4 F-7:4 F-7:4 C-7:4 C-7:4 Ab7:4 G7b9b13:4 C-7:4 Dh7:2 G7b9b13:2 C-7:4'), scales: true, level: 2 },
 ]
 
 /** Guide-tone lines and chord-tone and scale lines through the progressions. */

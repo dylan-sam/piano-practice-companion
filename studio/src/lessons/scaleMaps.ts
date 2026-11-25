@@ -2,14 +2,14 @@
 // unit's new idea explained in a few lines. Each unit brings one new idea and keeps the earlier
 // ones (pentatonic, then blues, then ii-V-I, then V7 to minor and bebop, then pentatonics per
 // chord, then modes). Shown before an improvising step (Lessons) and under the sheet of Free
-// Improvisation, which also shows the scale of the chord sounding for any song.
+// Improvisation; the scale of any chord is in the chord helper (exercises/scaleSuggestions.ts).
 //
 // Notes are written relative to the song's key, so they follow any transposition: "{0}" is the
 // tonic, "{7}" the note a 5th above it ("{7}7" is the V7 chord), and so on. A note that must be
 // spelled on a given letter says how many letters above the tonic's: "{1.0}" is a half step up on
 // the tonic's own letter (F# in F, where "{1}" would be Gb).
 
-import { keyPrefersFlats, noteName, type Chord } from '../music/chords'
+import { keyPrefersFlats, NOTE_LETTERS, noteName, pitchClassOf, spellOnLetter } from '../music/chords'
 import type { KeyCentre } from '../music/roman'
 
 /** One idea for a part of a song: a scale, where to play it, and why it works. */
@@ -28,7 +28,7 @@ export interface KeyPassage { bars: [number, number]; tonic: number; minor?: boo
 export interface ScaleMap {
   song: string // the start of the song's title
   tonic: number // the song's key as written, a pitch class (the placeholders count from it)
-  unit: string // the unit whose idea it brings
+  unit: string // the id of the unit whose idea it brings (program.ts; shown by unitName)
   idea: string // the unit's new idea, in a few lines
   sections: ScaleSection[]
   keys?: KeyPassage[] // where the song moves to another key, for the key's scales of the colours
@@ -48,12 +48,18 @@ const V_TO_MINOR = 'A V7 going to a minor chord takes a darker scale, Mixolydian
   'passing note), which keeps the chord tones on the beats in eighth-note lines.'
 const PER_CHORD = "Fewer notes and more space: a major pentatonic built on each chord's root (a minor pentatonic over a minor " +
   'chord), long notes that sing, and rests between phrases.'
+const MINOR_KEY = "A minor ii-V-i takes its notes from the minor key's harmonic minor scale: Locrian with a natural 9th over the " +
+  'ø7 (the ii), Mixolydian with a flat 9th and flat 13th over the V7, Dorian or melodic minor over the i. The b9 of the V wants ' +
+  'to fall a half step to the 5th of the i: aim your lines there.'
+const MINOR_BLUES = "The minor blues plays the key's minor pentatonic and blues scale over every chord, as the blues does, and now " +
+  'nothing rubs: they are the notes of the minor key. Then follow the chords: Dorian over the i−7 and iv−7, Mixolydian over ' +
+  'the ♭VI7, and the b9 and b13 over the V7.'
 const MODES = 'A modal tune stays on one chord for many bars: play its mode (Dorian over a minor 7th) and make phrases, not ' +
   'runs. The minor pentatonic a 5th above the chord (A minor pentatonic over Dm7) gives an open, modern sound.'
 
 export const SCALE_MAPS: ScaleMap[] = [
   {
-    song: 'Avalon', tonic: 5, unit: 'Unit 1', idea: PENTATONIC,
+    song: 'Avalon', tonic: 5, unit: 'u1', idea: PENTATONIC,
     sections: [
       { label: 'A (bars 1 to 17)', bars: [0, 16], ideas: [
         { scale: '{0} major pentatonic', over: 'the whole part', why: 'The key of the song: its five notes fit {7}7, {0} and {2}-7.' },
@@ -69,7 +75,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Study Blues', tonic: 5, unit: 'Unit 2', idea: BLUES,
+    song: 'Study Blues', tonic: 5, unit: 'u2', idea: BLUES,
     sections: [
       { label: 'Bars 1 to 4 (I)', bars: [0, 3], ideas: [
         { scale: '{0} blues scale', over: 'the whole blues', why: 'One scale for every chord: the blues sound, and nothing to think about.' },
@@ -85,7 +91,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Tin Roof Blues', tonic: 3, unit: 'Unit 2', idea: BLUES,
+    song: 'Tin Roof Blues', tonic: 3, unit: 'u2', idea: BLUES,
     sections: [
       { label: 'Each chorus of 12 bars', bars: [0, 36], ideas: [
         { scale: '{0} blues scale', over: 'every chord', why: 'One scale for the whole blues: the minor 3rd against the major chords is the blues sound.' },
@@ -96,7 +102,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Oh Lady Be Good', tonic: 7, unit: 'Unit 3', idea: II_V_I,
+    song: 'Oh Lady Be Good', tonic: 7, unit: 'u3', idea: II_V_I,
     sections: [
       { label: 'A (bars 1 to 16)', bars: [0, 15], ideas: [
         { scale: '{0} major pentatonic, or {0} blues scale', over: 'the {0} bars', why: 'A riff tune: the pentatonic or the blues scale fits its bluesy melody.' },
@@ -113,7 +119,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Honeysuckle Rose', tonic: 5, unit: 'Unit 3', idea: II_V_I,
+    song: 'Honeysuckle Rose', tonic: 5, unit: 'u3', idea: II_V_I,
     keys: [{ bars: [10, 13], tonic: 5 }], // the bridge visits the IV
     sections: [
       { label: 'A (bars 1 to 10)', bars: [0, 9], ideas: [
@@ -131,7 +137,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Just You, Just Me', tonic: 0, unit: 'Unit 4', idea: V_TO_MINOR,
+    song: 'Just You, Just Me', tonic: 0, unit: 'u4', idea: V_TO_MINOR,
     sections: [
       { label: 'A (bars 1 to 16)', bars: [0, 15], ideas: [
         { scale: '{9} Mixolydian b9 b13', over: '{9}7 going to {2}-', why: 'A V7 going to a minor chord: the notes of {2} minor ({10} and {5}).' },
@@ -149,7 +155,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'I Got Rhythm', tonic: 10, unit: 'Unit 4', idea: V_TO_MINOR,
+    song: 'I Got Rhythm', tonic: 10, unit: 'u4', idea: V_TO_MINOR,
     keys: [{ bars: [0, 15], tonic: 9, minor: true }, // the verse, in the relative minor
       { bars: [44, 46], tonic: 9 }, { bars: [47, 48], tonic: 2 }, { bars: [49, 51], tonic: 7 }], // the bridge's chain of V7s
     sections: [
@@ -170,7 +176,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'What Is This Thing Called Love', tonic: 0, unit: 'Unit 4', idea: V_TO_MINOR,
+    song: 'What Is This Thing Called Love', tonic: 0, unit: 'u4', idea: V_TO_MINOR,
     keys: [{ bars: [1, 4], tonic: 5, minor: true }, { bars: [9, 12], tonic: 5, minor: true }, // each A starts in the IV's minor
       { bars: [17, 20], tonic: 10 }, { bars: [25, 28], tonic: 5, minor: true }], // the bridge's ii-V-I a step down
     sections: [
@@ -189,7 +195,56 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Embraceable You', tonic: 7, unit: 'Unit 5', idea: PER_CHORD,
+    song: 'Love Me Or Leave Me', tonic: 0, unit: 'uMinor', idea: MINOR_KEY,
+    keys: [{ bars: [0, 3], tonic: 9, minor: true }, { bars: [7, 11], tonic: 9, minor: true }, // the A sections start in the relative minor
+      { bars: [16, 19], tonic: 2, minor: true }, { bars: [23, 27], tonic: 9, minor: true }], // the bridge visits the ii's minor
+    sections: [
+      { label: 'A (bars 1 to 16)', bars: [0, 15], ideas: [
+        { scale: '{9} harmonic minor (= {4} Mixolydian b9 b13)', over: '{11}ø7 {4}7 {9}-7', why: 'A minor ii-V-i in {9} minor: one scale for the three chords.' },
+        { scale: '{9} minor pentatonic', over: 'the {9}-7 bars', why: 'The minor pentatonic of the i: no note to avoid.' },
+        { scale: '{0} major pentatonic', over: '{0}^7 {9}-6 {7}7', why: 'The relative major: the same notes, another home.' },
+      ] },
+      { label: 'Bridge (bars 17 to 24)', bars: [16, 23], ideas: [
+        { scale: '{2} harmonic minor (= {9} Mixolydian b9 b13)', over: '{9}7 {9}7#5 {2}-7', why: 'The V7 of {2} minor, with its #5 (b13) written.' },
+        { scale: '{7} Mixolydian', over: '{7}7', why: 'A V7 going to a major chord: its plain scale.' },
+      ] },
+      { label: 'A (bars 25 to 34)', bars: [24, 33], ideas: [
+        { scale: '{9} harmonic minor, then {0} major pentatonic', over: 'as in the first A', why: 'The same moves.' },
+        { scale: '{5} melodic minor', over: '{5}-6 in the last bar', why: 'The iv minor before the last {0}: a darker colour on the way home.' },
+      ] },
+    ],
+  },
+  {
+    song: 'Minor Study Blues', tonic: 0, unit: 'uMinorBlues', idea: MINOR_BLUES,
+    keys: [{ bars: [0, 11], tonic: 0, minor: true }],
+    sections: [
+      { label: 'Bars 1 to 8 (i and iv)', bars: [0, 7], ideas: [
+        { scale: '{0} minor pentatonic or blues scale', over: 'the whole part', why: 'The notes of the minor key: they fit {0}-7 and {5}-7.' },
+        { scale: '{0} Dorian, then {5} Dorian', over: '{0}-7, then {5}-7', why: 'Each minor 7th chord, its own mode.' },
+      ] },
+      { label: 'Bars 9 to 12 (turnaround)', bars: [8, 11], ideas: [
+        { scale: '{8} Mixolydian', over: '{8}7', why: 'The ♭VI7: a dominant that falls a half step to the V.' },
+        { scale: '{7} Mixolydian b9 b13 (= {0} harmonic minor)', over: '{7}7b9b13 and {2}ø7', why: 'The minor ii-V: aim the b9 ({8}) down to {7}, the 5th of {0}-7.' },
+      ] },
+    ],
+  },
+  {
+    song: 'Black And Tan Fantasy', tonic: 1, unit: 'uMinorBlues', idea: MINOR_BLUES,
+    keys: [{ bars: [0, 12], tonic: 9, minor: true }, { bars: [13, 27], tonic: 9 }], // a blues in Bb minor, then a strain in Bb major
+    sections: [
+      { label: 'Minor blues (bars 1 to 13)', bars: [0, 12], ideas: [
+        { scale: '{9} minor pentatonic or blues scale', over: 'the whole blues', why: 'The minor blues in {9} minor: the notes of the key.' },
+        { scale: '{9} Dorian, then {2} Dorian', over: '{9}-7, then {2}-7', why: 'The i and the iv, each its own mode.' },
+        { scale: '{4} Mixolydian b9 b13', over: '{4}7', why: 'The V7 going to the minor i.' },
+      ] },
+      { label: 'Second strain (bars 14 to 28)', bars: [13, 27], ideas: [
+        { scale: '{9} major pentatonic', over: 'the {9} bars', why: 'The tune turns to {9} major.' },
+        { scale: 'Mixolydian of each', over: '{9}7 {2}7 {7}7 {0}7 {5}7', why: 'A cycle of dominants, each a 5th above the next.' },
+      ] },
+    ],
+  },
+  {
+    song: 'Embraceable You', tonic: 7, unit: 'u5', idea: PER_CHORD,
     keys: [{ bars: [9, 13], tonic: 7 }, { bars: [22, 24], tonic: 5 }], // the key of the V, then of the IV
     sections: [
       { label: 'First half (bars 1 to 16)', bars: [0, 15], ideas: [
@@ -206,7 +261,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: "'S Wonderful", tonic: 3, unit: 'Unit 5', idea: PER_CHORD,
+    song: "'S Wonderful", tonic: 3, unit: 'u5', idea: PER_CHORD,
     keys: [{ bars: [16, 19], tonic: 4 }], // the bridge, a major 3rd up
     sections: [
       { label: 'A (bars 1 to 16)', bars: [0, 15], ideas: [
@@ -224,7 +279,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Tea for two', tonic: 5, unit: 'Unit 5', idea: PER_CHORD,
+    song: 'Tea for two', tonic: 5, unit: 'u5', idea: PER_CHORD,
     keys: [{ bars: [8, 14], tonic: 4 }, { bars: [22, 26], tonic: 2, minor: true }], // a major 3rd up, then the ii's minor
     sections: [
       { label: 'Bars 1 to 8', bars: [0, 7], ideas: [
@@ -240,7 +295,7 @@ export const SCALE_MAPS: ScaleMap[] = [
     ],
   },
   {
-    song: 'Modal Study', tonic: 2, unit: 'Unit 6', idea: MODES,
+    song: 'Modal Study', tonic: 2, unit: 'u6', idea: MODES,
     keys: [{ bars: [0, 15], tonic: 0, minor: true }, { bars: [16, 23], tonic: 1, minor: true }, { bars: [24, 31], tonic: 0, minor: true }],
     sections: [
       { label: 'A sections', bars: [0, 15], ideas: [
@@ -279,10 +334,7 @@ export function inKey(text: string, keyPc: number): string {
 
 /** The note `step` semitones above a tonic, written on the letter `letters` letters above the tonic's. */
 function spelled(tonic: string, step: number, letters: number): string {
-  const letter = LETTERS[(LETTERS.indexOf(tonic[0]) + letters) % 7]
-  const tonicPc = (NATURAL[LETTERS.indexOf(tonic[0])] + (tonic[1] === 'b' ? -1 : tonic[1] === '#' ? 1 : 0) + 12) % 12
-  const shift = ((((tonicPc + step - NATURAL[LETTERS.indexOf(letter)]) % 12) + 18) % 12) - 6
-  return letter + (shift < 0 ? 'b'.repeat(-shift) : '#'.repeat(shift))
+  return spellOnLetter((pitchClassOf(tonic) + step) % 12, NOTE_LETTERS[(NOTE_LETTERS.indexOf(tonic[0]) + letters) % 7])
 }
 
 /**
@@ -299,43 +351,4 @@ export function keysWithPassages(chartKeys: readonly KeyCentre[], map: ScaleMap 
 /** The section of a map that holds a written bar, if any. */
 export function sectionAt(map: ScaleMap, bar: number): ScaleSection | undefined {
   return map.sections.find((section) => bar >= section.bars[0] && bar <= section.bars[1])
-}
-
-// Names of the scales chordScale gives, by their steps
-const SCALE_NAMES: Record<string, string> = {
-  '0,2,4,5,7,9,11': 'major', '0,2,4,6,7,9,11': 'Lydian', '0,2,4,5,7,9,10': 'Mixolydian', '0,2,4,6,7,9,10': 'Lydian dominant',
-  '0,1,4,5,7,8,10': 'Mixolydian b9 b13', '0,2,4,5,7,8,10': 'Mixolydian b13', '0,1,4,6,8,10': 'altered', '0,2,3,5,7,9,10': 'Dorian',
-  '0,2,3,5,7,9,11': 'melodic minor', '0,2,3,5,6,8,10': 'Locrian natural 2', '0,2,3,5,6,8,9,11': 'diminished',
-  '0,2,4,6,8,9,11': 'Lydian augmented', '0,2,5,7,9,10': 'Mixolydian (sus)', '0,2,4,5,6,9,10': 'Mixolydian b5',
-}
-
-/**
- * The scale of a chord in words, with its notes.
- *
- *   (G7 going to Cm) -> 'G Mixolydian b9 b13: G A♭ B C D E♭ F'
- */
-export function describeScale(chord: Chord, steps: readonly number[], keyPc: number): string {
-  const sorted = [...steps].sort((a, b) => a - b)
-  const name = SCALE_NAMES[sorted.join(',')] ?? 'scale'
-  const root = noteName(chord.root, keyPrefersFlats(keyPc) || keyPrefersFlats(chord.root))
-  return `${pretty(root)} ${name}: ${spellScale(root, sorted).map(pretty).join(' ')}`
-}
-
-const LETTERS = 'CDEFGAB'
-const NATURAL = [0, 2, 4, 5, 7, 9, 11]
-/** A note name with typeset flats and sharps. */
-const pretty = (name: string) => name.replace(/b/g, '♭').replace(/#/g, '♯')
-
-/**
- * The notes of a scale spelled from its root: a seven-note scale takes each letter once (G Ab B C
- * D Eb F, not G G# B...); other scales follow the root's sharps or flats.
- */
-export function spellScale(root: string, steps: readonly number[]): string[] {
-  const rootPc = (NATURAL[LETTERS.indexOf(root[0])] + (root.length > 1 ? (root[1] === 'b' ? -1 : 1) : 0) + 12) % 12
-  if (steps.length !== 7) return steps.map((step) => noteName(rootPc + step, root.includes('b')))
-  return steps.map((step, i) => {
-    const letter = LETTERS[(LETTERS.indexOf(root[0]) + i) % 7]
-    const shift = ((((rootPc + step - NATURAL[LETTERS.indexOf(letter)]) % 12) + 18) % 12) - 6
-    return letter + (shift < 0 ? 'b'.repeat(-shift) : '#'.repeat(shift))
-  })
 }

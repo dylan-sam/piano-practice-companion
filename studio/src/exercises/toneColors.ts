@@ -3,7 +3,7 @@
 // tones and outside tones. Nothing is right or wrong; the colours show where the notes land.
 
 import { chordTones, type Chord } from '../music/chords'
-import { chordSlots } from './lickReading'
+import { chordSlots, isAltered } from './lickReading'
 import type { KeyCentre } from '../music/roman'
 
 /** Where a note sits on a chord. */
@@ -26,7 +26,7 @@ export const NO_TONES: ToneCounts = { chord: 0, color: 0, approach: 0, outside: 
  *
  *   C7 -> C E G Bb
  */
-export function chordPitchClasses(chord: Chord): Set<number> {
+function chordPitchClasses(chord: Chord): Set<number> {
   const pcs = new Set(chordTones(chord).map((interval) => (chord.root + interval) % 12))
   pcs.add(chord.bass)
   return pcs
@@ -34,33 +34,53 @@ export function chordPitchClasses(chord: Chord): Set<number> {
 
 // The full diminished scale: whole step, half step (the lick slots keep seven notes)
 const DIMINISHED = [0, 2, 3, 5, 6, 8, 9, 11]
+const ALTERED = [0, 1, 3, 4, 6, 8, 10] // b9, #9, 3, #11, b13, b7
+const LYDIAN_DOMINANT = [0, 2, 4, 6, 7, 9, 10]
+
+/**
+ * A dominant 7th that leads to the next chord by step, as the substitutes do: down a half step
+ * (bII7 to I, the tritone substitution) or up a whole step to a chord that is not minor (bVII7 to
+ * I, the backdoor dominant). None for an altered dominant or one with a b9 or b13 written.
+ */
+export function stepDominant(chord: Chord, next?: Chord | null): 'tritone' | 'backdoor' | null {
+  if (chord.quality !== 'dom7' || !next || isAltered(chord) || chord.tensions.some((t) => t === 'b9' || t === 'b13')) return null
+  const up = (next.root - chord.root + 12) % 12
+  if (up === 11) return 'tritone'
+  return up === 2 && chordTones(next)[1] !== 3 ? 'backdoor' : null
+}
 // Scales of the key, whose notes sound well over most chords of a song (from its tonic): a major
 // key takes all three (the minor ones for the blues sound), a minor key its minor pentatonic and
 // blues scale
-export const KEY_SCALES: { name: string; steps: number[]; major: boolean; minor: boolean }[] = [
-  { name: 'major pentatonic', steps: [0, 2, 4, 7, 9], major: true, minor: false },
-  { name: 'minor pentatonic', steps: [0, 3, 5, 7, 10], major: true, minor: true },
-  { name: 'blues scale', steps: [0, 3, 5, 6, 7, 10], major: true, minor: true },
+const KEY_SCALES: { steps: number[]; major: boolean; minor: boolean }[] = [
+  { steps: [0, 2, 4, 7, 9], major: true, minor: false }, // major pentatonic
+  { steps: [0, 3, 5, 7, 10], major: true, minor: true }, // minor pentatonic
+  { steps: [0, 3, 5, 6, 7, 10], major: true, minor: true }, // blues scale
 ]
 
 /** Whether a pitch class is in one of the scales of a key (KEY_SCALES). */
-export function inKeyScales(pc: number, key: KeyCentre): boolean {
+function inKeyScales(pc: number, key: KeyCentre): boolean {
   return KEY_SCALES.some((scale) => (key.minor ? scale.minor : scale.major) && scale.steps.includes((pc - key.tonic + 12) % 12))
 }
 
 /**
  * The scale of a chord, in semitones above its root: the chord's own scale (chordSlots, the
- * scales of Lick Sightreading), with three corrections from the chord that follows:
+ * scales of Lick Sightreading), with two corrections from the chord that follows, and the full
+ * scales where a lick's seven slots leave notes out:
  *
  *   a V going to a minor chord (G7 -> Cm)          Mixolydian b9 b13: G Ab B C D Eb F
  *   a V going to a major chord, even a triad (G -> C)   Mixolydian: G A B C D E F
+ *   a dominant going down a half step (Db7 -> C)    Lydian dominant: Db Eb F G Ab Bb Cb (the
+ *   or up a step to I (Bb7 -> C, stepDominant)      tritone substitution's #11 is the V's root)
  *   a diminished chord                              the full diminished scale (8 notes)
+ *   an altered dominant (G7alt, G7#9, G7#5)         the altered scale, with the #9: G Ab Bb B C# Eb F
  *
  * A V is a major triad or a dominant 7th whose root moves up a 4th, with no alteration written
  * (resolvesAsV, shared with the licks of Lick Sightreading).
  */
 export function chordScale(chord: Chord, next?: Chord | null): number[] {
   if (chord.quality === 'dim7' || chord.quality === 'dim') return DIMINISHED
+  if (stepDominant(chord, next)) return LYDIAN_DOMINANT
+  if (isAltered(chord)) return ALTERED
   return [...new Set(chordSlots(chord, next))]
 }
 

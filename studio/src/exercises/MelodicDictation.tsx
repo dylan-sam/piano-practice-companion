@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { MELODY_PARTS, useMixer } from '../audio/useMixer'
-import { useHeardBeat, usePlayer } from '../audio/usePlayer'
+import { useHeardBeat, usePausedAt, usePlayer } from '../audio/usePlayer'
 import { arrange, BASE_BPM, type Part } from '../engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from '../engine/pianoPatterns'
 import type { Timeline } from '../engine/timeline'
@@ -15,7 +15,7 @@ import type { Chart as ChartData } from '../music/chart'
 import { prettyNoteName } from '../music/chords'
 import { moveBySteps, nearestLetter, signatureKey, spelledName, spelledPitch } from '../music/staff'
 import type { Tune } from '../music/songs'
-import { getStyle, STYLES } from '../styles'
+import { getStyle, STYLES, styleForChart } from '../styles'
 import { Wordmark } from '../ui/AppLink'
 import { DisplayOptions } from '../ui/DisplayMenu'
 import { LeadSheet } from '../ui/LeadSheet'
@@ -107,18 +107,29 @@ export function MelodicDictation() {
   const [playing, setPlaying] = useState<Playing>(null)
   const [position, setPosition] = useState<ReturnType<typeof measureAt>>(null)
 
+  // Where the excerpt was paused: Play goes on from there
+  const { pausedAt, hold: holdPause, forget: forgetPause } = usePausedAt(playerRef)
   const readiness = usePlayer(playerRef, () => {
     setPlaying(null)
     setPosition(null)
+    forgetPause()
   }, () => STYLES.map(warmUpMidi))
   const mixer = useMixer(playerRef, readiness)
 
-  /** Stop whatever is playing. */
+  /** Stop whatever is playing; the next Play starts the excerpt over. */
   const stop = useCallback(() => {
     playerRef.current?.stop()
     setPlaying(null)
     setPosition(null)
-  }, [])
+    forgetPause()
+  }, [forgetPause])
+
+  /** Pause the excerpt where it is: Play goes on from there. */
+  const pauseExcerpt = () => {
+    holdPause()
+    playerRef.current?.stop()
+    setPlaying(null)
+  }
 
   // Set when a new excerpt is asked: it plays by itself once drawn and the sounds are ready
   const autoPlay = useRef(false)
@@ -140,7 +151,7 @@ export function MelodicDictation() {
     }
     setError('')
     setTranspose(transposeFor(key, next.chart))
-    const style = getStyle(next.chart.style)
+    const style = getStyle(styleForChart(next.chart))
     setStyleId(style.id)
     setPatternId(defaultPatternForStyle(style.id))
     setBpm(Math.max(BPM_RANGE[0], Math.min(START_BPM, next.chart.bpm)))
@@ -187,10 +198,14 @@ export function MelodicDictation() {
       ? arrange(line, lineStyle, transpose, opts.repeats, { ending: false }, opts.patternId)
       : melodyAloneMidi(line, lineStyle, transpose, opts.repeats)
     timelineRef.current = timeline
+    forgetPause()
     await player.play(midi, fromSeconds)
     player.setRate(bpm / BASE_BPM)
     setPlaying(which)
   }
+
+  /** Play the excerpt, going on from where it was paused. */
+  const playOrGoOn = () => void playLine('excerpt', settings.band, undefined, pausedAt ?? 0)
 
   // A new excerpt plays at once, unless the browser still waits for a first tap (Play then starts it)
   useEffect(() => {
@@ -205,6 +220,7 @@ export function MelodicDictation() {
     if (!player || !excerpt || readiness.kind !== 'ready') return
     timelineRef.current = null
     setPosition(null)
+    forgetPause()
     await player.play(keyReferenceMidi(reference, keyPc, minor, BASE_BPM))
     player.setRate(1)
     setPlaying(reference)
@@ -338,8 +354,9 @@ export function MelodicDictation() {
     const upper = key.toUpperCase()
     if (key === ' ' && tag !== 'BUTTON') {
       e.preventDefault()
-      if (playing) stop()
-      else void playLine()
+      if (playing === 'excerpt') pauseExcerpt()
+      else if (playing) stop()
+      else playOrGoOn()
     } else if (key === 'Enter' && tag !== 'BUTTON') {
       if (results) nextExcerpt()
       else check()
@@ -554,7 +571,9 @@ export function MelodicDictation() {
       <Transport
         readiness={readiness}
         playing={playing === 'excerpt'}
-        onToggle={() => (playing === 'excerpt' ? stop() : void playLine())}
+        onToggle={() => (playing === 'excerpt' ? pauseExcerpt() : playOrGoOn())}
+        paused={pausedAt !== null}
+        onRestart={() => void playLine()}
         position={readout}
         styleId={styleId}
         onStyle={(id) => change({ styleId: id, patternId: defaultPatternForStyle(id) })}

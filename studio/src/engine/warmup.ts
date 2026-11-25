@@ -5,6 +5,7 @@
 import type { StyleDefinition } from '../styles/types'
 import { DRUM_NOTES } from '../styles/drums'
 import { CHANNELS } from './arrange'
+import { CLICK_NOTES } from './click'
 import type { NoteEvent } from './events'
 import { writeMidi } from './midiWriter'
 
@@ -37,5 +38,6 @@ export function warmUpMidi(style: StyleDefinition): Uint8Array {
       program: style.drums.kit,
       events: sweep(CHANNELS.drums, [...new Set(Object.values(DRUM_NOTES))]),
     },
+    { name: 'Click', channel: CHANNELS.click, program: 0, drums: true, events: sweep(CHANNELS.click, CLICK_NOTES) },
   ])
 }

@@ -1,5 +1,7 @@
 import type { BassPart, CompHit, DrumHit, StyleDefinition } from './types'
 import type { DrumName } from './drums'
+import { JAZZ_WALTZ } from './jazzWaltz'
+import type { Chart } from '../music/chart'
 
 // These six presets correspond to the project's existing accompaniment styles.
 const hit = (at: number, drum: DrumName, velocity: number): DrumHit => [at, drum, velocity]
@@ -39,7 +41,9 @@ function makeStyle(
   return {
     id, name, family, swing, tempo: { default: tempo, min: 40, max: 300 }, bass,
     comp: { program: 0, voicing: 'rootless', velocity: [56, 75], pedal: id === 'ballad',
-      rhythms: { '4': chords, '3': chords, '2': [[[0, 0.8]]], '1': [[[0, 0.7]]] } },
+      // A chord of 3 beats (3/4) plays beats 1, 2 and 4 of these 4-beat rhythms (meter.ts), so no hit
+      // falls on the next bar's downbeat
+      rhythms: { '4': chords, '2': [[[0, 0.8]]], '1': [[[0, 0.7]]] } },
     drums: { kit: family === 'jazz' ? 32 : 0, countIn,
       grooves: { middle: [{ bars: 1, hits: drums }] },
       ending: [hit(0, 'kick', 85), hit(0, 'crash', 90)] },
@@ -53,6 +57,7 @@ export const STYLES: StyleDefinition[] = [
       hit(1, 'hhPedal', 65), hit(2, 'kick', 35), hit(2, 'ride', 64),
       hit(3, 'ride', 70), hit(3.5, 'ride', 50), hit(3, 'hhPedal', 65),
       [1.5, 'snare', 45, 0.15]]),
+  JAZZ_WALTZ,
   makeStyle('blues', 'Blues', 'pop', 0.66, 120, rootFifth,
     [[[0, 0.8], [2, 0.8]], [[1, 0.8], [3, 0.8]]],
     [hit(0, 'kick', 68), hit(0, 'hhClosed', 42), hit(1, 'snare', 60),
@@ -84,6 +89,14 @@ export const STYLES: StyleDefinition[] = [
 export function getStyle(id: string): StyleDefinition {
   // Fall back to swing for charts referring to a removed preset.
   return STYLES.find((style) => style.id === id) ?? STYLES[0]
+}
+
+/**
+ * The style a song starts with: a song in 3/4 is played as a Jazz Waltz, whatever its chart
+ * says (a 3/4 swing, ballad or folk tune alike); other songs take their chart's style.
+ */
+export function styleForChart(chart: Pick<Chart, 'style' | 'time'>): string {
+  return chart.time?.[0] === 3 && chart.time[1] === 4 ? JAZZ_WALTZ.id : chart.style
 }
 
 export type { StyleDefinition } from './types'

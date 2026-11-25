@@ -27,6 +27,7 @@
   --line: #cfc7b7;
   --control: #f3efe6;
   --highlighter: #ffde3b;
+  --sub-color: #1f6fd1; /* substituted chords */
   --highlighter-blend: multiply;
   --note-playing: #b8460e;
   --on-ink: #fbf8f1;
@@ -56,6 +57,7 @@
     --line: #36322c;
     --control: #24211d;
     --highlighter: rgb(255 214 51 / 0.3);
+    --sub-color: #6fb0ff;
     --note-playing: #ffb15c;
     --highlighter-blend: normal;
     --on-ink: #121110;
@@ -118,8 +120,7 @@ button:disabled {
 .stage {
   min-width: 0;
   overflow: auto;
-  --stage-pad-bottom: 48px; /* the sticky scale panel sits over it, down to the bottom bar */
-  padding: 32px 40px var(--stage-pad-bottom);
+  padding: 32px 40px 48px;
 }
 
 /* ---------- Top bar ---------- */
@@ -349,6 +350,16 @@ button:disabled {
 }
 
 /* ---------- Lead sheet ---------- */
+
+/* The sheet size of the Display menu (A- / A+): the title and the bars are zoomed, the paper keeps its margins */
+.sheet > .rows,
+.sheet > .sheet-head {
+  zoom: var(--sheet-scale, 1);
+}
+
+.display-size:hover {
+  background: none;
+}
 
 .sheet {
   max-width: 1040px;
@@ -737,6 +748,11 @@ button:disabled {
 .tone-note-approach path { fill: #3b78d8; stroke: #3b78d8; }
 .tone-note-outside path { fill: #d95757; stroke: #d95757; }
 
+/* A substitute on a lead sheet (the Substitutions menu) */
+text.lead-chord-sub {
+  fill: var(--sub-color);
+}
+
 /* Chords checked on a lead sheet: played (in any voicing or rhythm) or missed */
 text.lead-chord-correct {
   fill: #2e9d55;
@@ -841,6 +857,12 @@ text.lead-chord-missed {
   background: var(--desk);
 }
 
+/* The bar's buttons (Chords, Scoring, Practice, Substitutions, Mixer) 16 px apart, as the controls,
+   not the 28 px between the bar's parts, so four of them fit beside a sightreading screen's controls */
+.transport > .popover + .popover {
+  margin-left: -12px;
+}
+
 .transport-main {
   display: flex;
   align-items: center;
@@ -875,6 +897,34 @@ text.lead-chord-missed {
   width: 20px;
   height: 20px;
   fill: currentColor;
+}
+
+/* Play from the beginning: a smaller round button beside Play */
+.restart {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  margin-left: -6px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.restart svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.restart:active {
+  scale: 0.96;
+}
+
+.restart:disabled {
+  opacity: 0.35;
 }
 
 .play-ring {
@@ -1070,7 +1120,38 @@ input[type='range']::-moz-range-thumb {
 
 .mixer {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+}
+
+/* Sync, under the faders: a slider for the output's delay, its value and Reset */
+.mixer-sync {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 54px 64px;
+  align-items: center;
+  gap: 4px 8px;
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.mixer-sync .sync-slider {
+  width: 100%;
+  min-height: 28px;
+}
+
+.mixer-sync .strip-value {
+  text-align: right;
+}
+
+.mixer-sync-help {
+  grid-column: 1 / -1;
+  max-width: 34ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 /* ---------- Practice ---------- */
@@ -1201,6 +1282,45 @@ input[type='range']::-moz-range-thumb {
 .share-desc {
   font-size: 12px;
   color: var(--muted);
+}
+
+/* Export > the band's track (ui/TrackDownload.tsx): a heading, the three files, the render's progress */
+.track-downloads {
+  display: grid;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.share-group {
+  padding: 0 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.track-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 8px;
+}
+
+.track-progress progress {
+  flex: 1;
+  min-width: 0;
+}
+
+.track-error {
+  margin: 4px 10px;
+  font-size: 12px;
+  color: #b3261e;
+}
+
+.track-note {
+  padding: 2px 10px 6px;
 }
 
 .share-panel > .share-desc {
@@ -1555,7 +1675,7 @@ input.fader::-moz-range-thumb {
 
 /* ---------- Narrow screens ----------
    Phones upright are below 820 px wide (any window below 600 px); landscape phones (below 500 px high)
-   keep the desktop layout, made compact at the end of this file; the transport is compact up to 1100 px
+   keep the desktop layout, made compact at the end of this file; the transport is compact up to 1759 px
    (ui/useNarrowScreen.ts) */
 
 @media (max-width: 1100px) {
@@ -1564,8 +1684,7 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    --stage-pad-bottom: 24px;
-    padding: 24px 24px var(--stage-pad-bottom);
+    padding: 24px 24px 24px;
   }
 
   .sheet {
@@ -1640,8 +1759,7 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    --stage-pad-bottom: 12px;
-    padding: 12px 12px var(--stage-pad-bottom);
+    padding: 12px 12px 12px;
   }
 
   .sheet {
@@ -2321,6 +2439,18 @@ input.fader::-moz-range-thumb {
   border-radius: 5px;
 }
 
+/* A substitute (the Substitutions menu): the chord the band plays instead of the written one */
+.chord.chord-sub {
+  color: var(--sub-color);
+}
+
+/* The chord the band will start from (Chord Player: tap a chord while stopped) */
+.chord.chord-start {
+  background: color-mix(in srgb, var(--highlighter) 55%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  border-radius: 5px;
+}
+
 .chord.chord-missed {
   background: color-mix(in srgb, #d95757 38%, transparent);
   border-radius: 5px;
@@ -2696,6 +2826,11 @@ input.fader::-moz-range-thumb {
   color: var(--ink);
 }
 
+/* A chord substitution of the line, in the sheets' substitute colour */
+.sight-card-sub strong {
+  color: var(--sub-color);
+}
+
 .sight-card-active {
   background: var(--control);
 }
@@ -3009,19 +3144,18 @@ input.fader::-moz-range-thumb {
   padding-bottom: var(--inset-bottom);
 }
 
-.topbar-short {
-  display: none;
-}
-
 @media (max-width: 820px) and (min-height: 501px), (max-width: 600px) {
-  .topbar-short {
-    display: inline;
-  }
-
   .wordmark {
     flex: 1 1 0;
     min-width: 0;
     line-height: 1.15;
+  }
+
+  /* The title keeps its words whole on up to two lines: the buttons beside it shorten on small
+     phones (below), and what still does not fit is cut, never drawn under them */
+  .wordmark-text {
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* The level menu leaves room for the title and the More button */
@@ -3071,9 +3205,10 @@ input.fader::-moz-range-thumb {
   }
 }
 
-/* Phones, landscape phones, tablets and narrow windows (ui/useNarrowScreen.ts COMPACT_TRANSPORT_QUERY):
-   the arrangement controls move into a Settings sheet so they never run off the screen */
-@media (max-width: 1100px), (max-height: 500px) {
+/* Phones, landscape phones, tablets and windows below 1760 px (ui/useNarrowScreen.ts COMPACT_TRANSPORT_QUERY):
+   the arrangement controls move into a Settings sheet so they never run off the screen (the whole
+   bottom bar needs about 1720 px) */
+@media (max-width: 1759px), (max-height: 500px) {
   /* The transport: play, position and Settings in one row, above the phone's navigation bar */
   .transport,
   .exercise .transport,
@@ -3156,7 +3291,7 @@ input.fader::-moz-range-thumb {
 }
 
 /* Tablets and narrow desktop windows: the Settings sheet is a panel at the bottom right, not the full width */
-@media (min-width: 821px) and (max-width: 1100px) and (min-height: 501px) {
+@media (min-width: 821px) and (max-width: 1759px) and (min-height: 501px) {
   .transport-settings > .popover-panel {
     left: auto;
     right: 12px;
@@ -3214,8 +3349,7 @@ input.fader::-moz-range-thumb {
   }
 
   .stage {
-    --stage-pad-bottom: 10px;
-    padding: 10px 14px var(--stage-pad-bottom);
+    padding: 10px 14px 10px;
   }
 
   .sheet {
@@ -3269,6 +3403,11 @@ input.fader::-moz-range-thumb {
     height: 38px;
   }
 
+  .restart {
+    width: 32px;
+    height: 32px;
+  }
+
   /* The Settings panel opens at the right, beside the chart, in two columns */
   .transport-settings > .popover-panel {
     top: 0;
@@ -3309,10 +3448,6 @@ input.fader::-moz-range-thumb {
 
   .topbar-long {
     display: none;
-  }
-
-  .topbar-short {
-    display: inline;
   }
 
   .exercise-level .select {
@@ -3585,15 +3720,325 @@ input.fader::-moz-range-thumb {
 .delete-data-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .delete-data-yes { background: #d95757; border-color: #d95757; color: #fff; }
 
-/* Scale ideas: the card of an improvising step, the panel under the sheet of Free Improvisation */
+/* Scale ideas of a lesson song: the card of an improvising step, the section under the sheet of Free Improvisation */
 .scale-card { margin: 6px 0; }
 .scale-panel { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 .scale-panel p { margin: 4px 0; }
-/* Always in view: stuck to the bottom of the scrolling page, short enough to leave room for the sheet */
-.scale-panel-fixed { position: sticky; bottom: calc(-1 * var(--stage-pad-bottom, 0px)); margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; z-index: 2; max-height: 35vh; overflow-y: auto; box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.08); }
-.scale-panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; margin-top: 8px; }
+.scale-panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
 .scale-section { margin: 6px 0; padding: 4px 8px; border-left: 3px solid transparent; }
 .scale-section ul { margin: 4px 0; padding-left: 18px; }
 .scale-section-current { border-left-color: #2e9d55; }
 .scale-name { font-weight: 600; }
 .scale-why { color: var(--ink-2); }
+
+/* Small phones upright: the MIDI button says only MIDI, and the title drops its stand icon, so
+   a long title (Exercises Sightreading, Free Improvisation) fits beside the buttons */
+@media (max-width: 420px) and (min-height: 501px) {
+  .topbar-verb {
+    display: none;
+  }
+
+  .wordmark svg {
+    display: none;
+  }
+}
+
+/* While a screen's code downloads (Root.tsx): an empty page in the app's colour, no flash of white */
+.screen-loading {
+  min-height: 100dvh;
+  background: var(--desk);
+}
+
+/* The crash catch (ui/CrashScreen.tsx): a short message and Reload, centred on the desk */
+.crash-screen {
+  max-width: 520px;
+  margin: 12vh auto 0;
+  padding: 24px;
+  background: var(--paper, #fff);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.crash-screen h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.crash-screen code {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* The chord helper (ui/ChordHelper.tsx): a card above the bottom bar, on the right of a computer
+   screen; on a phone it spans the width and scrolls, so the sheet stays half visible */
+.chord-helper {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--transport-h) + var(--inset-bottom, 0px) + 8px); /* as the Settings panel of a narrow window */
+  z-index: 30;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - var(--transport-h) - 120px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.helper-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.helper-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.helper-tab {
+  display: inline-flex;
+  align-items: flex-end; /* every tab's chord on the same bottom line, whatever its glyphs */
+  height: 34px;
+  padding: 2px 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.helper-tab[aria-selected='true'] {
+  background: var(--highlighter);
+  border-color: var(--ink);
+}
+
+.chord.helper-chord {
+  font-family: var(--script); /* the chart's handwriting, which has the chord glyphs */
+  font-size: 22px;
+}
+
+.chord.helper-chord-title {
+  font-size: 28px;
+}
+
+/* The chord written under a substitute, in the line's own size */
+.chord.helper-chord-written {
+  font-family: var(--script);
+  font-size: 17px;
+}
+
+.helper-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+
+/* A substitute: the chord written there */
+.helper-instead {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--sub-color);
+}
+
+.helper-tones,
+.helper-scale-notes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.helper-keyboard {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 4px 0;
+}
+
+.key-white { fill: #fff; stroke: var(--ink-2); stroke-width: 0.8; }
+.key-black { fill: #2b2b2b; }
+.key-white.key-chord { fill: color-mix(in srgb, var(--highlighter) 70%, #fff); }
+.key-black.key-chord { fill: #6b5a1e; }
+.key-tone { fill: var(--ink); }
+.key-tone-black { fill: #f5d76e; }
+.key-scale { fill: #2e9d55; }
+.key-scale-black { fill: #7fdc9c; }
+
+.helper-scales {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.helper-group {
+  display: grid;
+  gap: 4px;
+}
+
+.helper-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.helper-scale {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.helper-scale[aria-pressed='true'] {
+  border-color: #2e9d55;
+  box-shadow: inset 3px 0 0 #2e9d55;
+}
+
+.helper-scale-name {
+  font-weight: 600;
+}
+
+.helper-scale-why {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.helper-badge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #2e9d55;
+  color: #fff;
+}
+
+.helper-follow {
+  margin: 2px 0 4px;
+  font-size: 13px;
+}
+
+.helper-more {
+  margin-top: 8px;
+}
+
+.helper-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* The full bottom bar: the helper's bottom on the bottom of the bar's other panels (Practice,
+   Substitutions, Mixer), which sit 18 px above their buttons (.popover-panel), 32 px high in the
+   middle of the bar */
+@media (min-width: 1760px) and (min-height: 501px) {
+  .chord-helper {
+    bottom: calc(var(--transport-h) / 2 + 16px + 18px + var(--inset-bottom, 0px));
+  }
+}
+
+/* Phones and narrow windows (the bottom bar's height is then automatic): the width of the screen,
+   just above the compact bottom bar */
+@media (max-width: 820px) and (min-height: 501px), (max-width: 600px) {
+  .chord-helper {
+    right: 8px;
+    left: 8px;
+    bottom: calc(72px + var(--inset-bottom, 0px));
+    width: auto;
+    max-height: 55dvh;
+  }
+}
+
+/* The Substitutions menu (ui/Substitutions.tsx): one row a substitution, a handle to drag it to
+   another place, a check box and its Roman numerals */
+.substitutions-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.substitution {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  border-radius: 6px;
+}
+
+.substitution.dragging {
+  background: var(--paper-edge);
+}
+
+.substitution .check {
+  height: auto;
+  align-items: flex-start;
+  padding: 3px 0;
+}
+
+.substitution .check input {
+  margin-top: 3px;
+}
+
+/* The handle: big enough for a finger, and the page does not scroll while it is dragged */
+.reorder-handle {
+  flex: none;
+  width: 28px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  cursor: grab;
+  touch-action: none;
+}
+
+.reorder-handle:active {
+  cursor: grabbing;
+}
+
+.reorder-handle svg {
+  width: 10px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.substitution-name {
+  display: block;
+  font-weight: 600;
+}
+
+.substitution-roman {
+  display: block;
+  font-size: 13px;
+}
+

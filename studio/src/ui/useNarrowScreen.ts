@@ -9,8 +9,9 @@ export const LANDSCAPE_QUERY = '(max-height: 500px) and (min-width: 601px)'
 export const DRAWER_QUERY = `${NARROW_QUERY}, ${LANDSCAPE_QUERY}`
 // Narrow enough for two bars to a chart row: the same screens as NARROW_QUERY
 export const TWO_BAR_QUERY = NARROW_QUERY
-// Too narrow for the transport's controls in one row (phones, tablets, narrow windows): they open from Settings
-export const COMPACT_TRANSPORT_QUERY = '(max-width: 1100px), (max-height: 500px)'
+// Too narrow for the transport's controls in one row (phones, tablets, windows below the 1760 px the
+// whole bottom bar needs): they open from Settings
+export const COMPACT_TRANSPORT_QUERY = '(max-width: 1759px), (max-height: 500px)'
 
 /** Subscribe to changes of a media query. */
 function subscribeTo(text: string) {
@@ -37,7 +38,7 @@ export function useTwoBarRows(): boolean {
   return useSyncExternalStore(subscribeTwoBars, () => !!window.matchMedia?.(TWO_BAR_QUERY).matches, () => false)
 }
 
-/** Whether the transport shows play, position and a Settings button only (screens up to 1100 px wide). */
+/** Whether the transport shows play, position and a Settings button only (screens up to 1759 px wide). */
 export function useCompactTransport(): boolean {
   return useSyncExternalStore(subscribeCompact, () => !!window.matchMedia?.(COMPACT_TRANSPORT_QUERY).matches, () => false)
 }

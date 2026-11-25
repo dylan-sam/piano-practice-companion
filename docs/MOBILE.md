@@ -83,8 +83,8 @@ nothing hides behind the phone's own buttons.
 |---|---|---|
 | Upright phone | below 820 px wide (or any screen below 600 px) | top-bar buttons in a ⋯ menu; song list in a drawer opened by *Songs*; **2 bars per row**; Settings panel from the bottom |
 | Landscape phone | below 500 px high | the desktop layout, made compact: thinner top bar and play bar, short button labels, tune list in a drawer, smaller title and rows, **4 bars per row**; Settings panel at the right, beside the chart |
-| Tablet, narrow window | up to 1100 px wide | the desktop layout; Settings panel at the bottom right |
-| Desktop | wider | everything in view, no Settings panel |
+| Tablet, laptop, narrow window | up to 1759 px wide | the desktop layout; the bottom bar's controls, Chords, Substitutions, Practice and Mixer in a Settings panel at the bottom right |
+| Desktop | 1760 px wide or more | everything in view, no Settings panel |
 
 On every screen except the desktop, the play bar keeps only play, the position
 and a **Settings** button. The panel it opens holds style, pattern, key, tempo,
@@ -96,7 +96,7 @@ in `ui/useNarrowScreen.ts`:
 | `NARROW_QUERY` | upright phones and narrow windows (menus, drawers) |
 | `TWO_BAR_QUERY` | the same (two bars per row) |
 | `LANDSCAPE_QUERY` | landscape phones (compact desktop layout) |
-| `COMPACT_TRANSPORT_QUERY` | up to 1100 px wide, and landscape phones (Settings panel) |
+| `COMPACT_TRANSPORT_QUERY` | up to 1759 px wide (the whole bottom bar needs about 1760 px), and landscape phones (Settings panel) |
 
 Everything else (sound bank, exercises, saved tunes and settings, kept in the
 web view's storage) runs unchanged.

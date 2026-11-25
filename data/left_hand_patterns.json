@@ -1581,6 +1581,42 @@
     "shell_variations": []
   },
   {
+    "id": "jazz_waltz_two_three",
+    "name": "Waltz: bass on 1, chords on 2 and 3",
+    "categories": [
+      "jazz_waltz"
+    ],
+    "styles": [
+      "jazz waltz"
+    ],
+    "default_for": [],
+    "sources": [
+      "Waltz accompaniment: bass on 1, chords on 2 and 3 (Nathaniel School, 3/4 left-hand patterns)",
+      "Mark Levine, The Jazz Piano Book (1989): left-hand voicings (ch. 7), fourth chords"
+    ],
+    "fidelity": "adapted",
+    "cycle_bars": 1,
+    "source_meter": "4/4",
+    "beat_interval_quarters": null,
+    "steps": [
+      {
+        "position": 0.25,
+        "duration": 0.2,
+        "role": "rootless",
+        "grace": false,
+        "initial_only": false
+      },
+      {
+        "position": 0.75,
+        "duration": 0.2,
+        "role": "rootless",
+        "grace": false,
+        "initial_only": false
+      }
+    ],
+    "shell_variations": []
+  },
+  {
     "id": "quartal_pad",
     "name": "Quartal pad (stacked 4ths)",
     "categories": [

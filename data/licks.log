@@ -1,9 +1,9 @@
-Lick database built 2026-11-23
+Lick database built 2026-11-25
 
 Generated exercises and vocabulary:
   Exercises: triads: 33
   Exercises: seventh chords: 39
-  Exercises: guide tones and chord-tone lines: 40
+  Exercises: guide tones and chord-tone lines: 71
   Exercises: scales and scale patterns: 55
   Exercises: approach notes and enclosures: 20
   Exercises: intervals: 27
@@ -51,30 +51,4 @@ One-chord licks, by group:
   Colours: 13
   Blues: 9
 
-Weimar Jazz Database solos: 450 songs, 7299 windows make licks, 704 kept
-  turned down (too few notes): 3778
-  turned down (a note is held over the start): 2512
-  turned down (off the sixteenth and triplet grid): 2323
-  turned down (starts late): 1782
-  turned down (fewer than 4 different notes): 1373
-  turned down (long rest inside): 775
-  turned down (range wider than a 12th): 561
-  turned down (does not land on a chord tone of the I): 348
-  turned down (too many repeated notes): 276
-  turned down (stops early): 181
-  turned down (leap wider than an octave): 171
-  turned down (no note on the I): 44
-  ii-V-I major: 60 of 464
-  minor ii-V-i: 60 of 203
-  ii-V: 60 of 565
-  V-I: 60 of 176
-  I-vi-ii-V turnaround: 51 of 97
-  Blues I7-IV7: 60 of 288
-  Major chord: 60 of 1262
-  Minor chord: 60 of 1417
-  Dominant chord: 60 of 2401
-  Altered dominant: 60 of 205
-  Half-diminished chord: 60 of 139
-  Diminished chord: 53 of 82
-Common patterns: 307 runs of 7 notes shared by 3 players or more, 120 kept
-
+No /home/claude/w/weimar/weimar_solos.json: no Weimar licks built

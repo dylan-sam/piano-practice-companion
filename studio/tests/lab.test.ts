@@ -35,7 +35,7 @@ describe('Pattern Creator', () => {
   test('every style can be opened in the lab and played', () => {
     for (const style of STYLES) {
       const lab = labFromStyle(style)
-      expect(lab.beats, style.id).toBe(4)
+      expect(lab.beats, style.id).toBe(style.id === 'jazz-waltz' ? 3 : 4) // the waltz opens as a 3-beat grid
       const { midi } = arrange(tune, styleFromLab(lab), 0, 2)
       expect(midi.length, style.id).toBeGreaterThan(100)
     }

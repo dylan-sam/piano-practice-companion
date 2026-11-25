@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.eartraining.app',
-  appName: 'Ear Training',
+  appName: 'Piano Practice Companion',
   webDir: 'dist',
   // The page pads itself by the system bars (--safe-area-inset-* on Android, env() on iOS; see index.css)
   ios: { contentInset: 'never' },

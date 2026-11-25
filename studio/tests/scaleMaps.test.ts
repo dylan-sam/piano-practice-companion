@@ -4,7 +4,8 @@ import lessonSongs from '../public/leadsheets/lessons.json'
 import { parseChord } from '../src/music/chords'
 import { chordScale } from '../src/exercises/toneColors'
 import { ALL_STEPS } from '../src/lessons/program'
-import { describeScale, inKey, keysWithPassages, scaleMapFor, sectionAt, SCALE_MAPS } from '../src/lessons/scaleMaps'
+import { inKey, keysWithPassages, scaleMapFor, sectionAt, SCALE_MAPS } from '../src/lessons/scaleMaps'
+import { describeScale } from '../src/music/scales'
 import { barKeyCentres } from '../src/music/roman'
 
 const charts = [...bundled.playlists, ...lessonSongs.playlists].flatMap((list) => list.charts)

@@ -1,12 +1,9 @@
-// The scale ideas of a song: the card before an improvising step (Lessons) and the panel under
-// the sheet of Free Improvisation, which follows the music: the scale of the chord sounding (any
-// song), and for a lesson song the ideas of the part being played, or all of them.
+// The scale ideas of a lesson song: the card before an improvising step (Lessons) and the
+// section under the sheet of Free Improvisation, which follows the part being played.
 
 import { useState } from 'react'
-import type { Chord } from '../music/chords'
-import { chordScale } from '../exercises/toneColors'
-import { useDisplay } from '../ui/display'
-import { describeScale, inKey, sectionAt, type ScaleMap, type ScaleSection } from './scaleMaps'
+import { inKey, sectionAt, type ScaleMap, type ScaleSection } from './scaleMaps'
+import { unitName } from './program'
 
 /** The ideas of one part of a song, in the key played. */
 function SectionIdeas({ section, keyPc, current }: { section: ScaleSection; keyPc: number; current?: boolean }) {
@@ -34,7 +31,7 @@ export function ScaleMapCard({ map, keyPc }: { map: ScaleMap; keyPc: number }) {
         Scale ideas for this song
       </button>
       {open && <>
-        <p><strong>{map.unit}'s new idea.</strong> {map.idea}</p>
+        <p><strong>{unitName(map.unit)}'s new idea.</strong> {map.idea}</p>
         {map.sections.map((section) => <SectionIdeas key={section.label} section={section} keyPc={keyPc} />)}
       </>}
     </div>
@@ -42,36 +39,27 @@ export function ScaleMapCard({ map, keyPc }: { map: ScaleMap; keyPc: number }) {
 }
 
 /**
- * Under the sheet: the scale of the chord sounding, then the lesson song's ideas for the part
- * being played (or all of them, with Show all). It stays in view at the bottom while the sheet
- * scrolls, unless the Display menu leaves it under the sheet; with no lesson map it shows only
- * while a chord sounds.
+ * Under the sheet of Free Improvisation, for a lesson song: the ideas of the part being played
+ * (or all of them, with Show all). It stays after the sheet; the scale of any chord is in the
+ * chord helper (tap a chord).
  */
-export function ScalePanel({ map, mapKey, songKey, bar, chord, next }: {
-  map?: ScaleMap
+export function SongScaleIdeas({ map, mapKey, bar }: {
+  map: ScaleMap
   mapKey: number // the key the map's notes are named in (its tonic, transposed)
-  songKey: number // the key of the bar sounding, for the spelling of the chord's scale
   bar: number | null // the written bar sounding
-  chord: Chord | null // the chord sounding, and the one after it
-  next: Chord | null
 }) {
   const [all, setAll] = useState(false)
-  const section = map && bar !== null ? sectionAt(map, bar) : undefined
-  const shown = !map ? [] : all ? map.sections : section ? [section] : []
-  const place = useDisplay().scalePanel
-  if (!map && !chord) return null
+  const section = bar !== null ? sectionAt(map, bar) : undefined
+  const shown = all ? map.sections : section ? [section] : []
   return (
-    <section className={`scale-panel${place === 'fixed' ? ' scale-panel-fixed' : ''}`} aria-label="Scales">
-      {chord && <p className="scale-now"><strong>Now:</strong> {describeScale(chord, chordScale(chord, next), songKey)}</p>}
-      {map && <>
-        <div className="scale-panel-head">
-          <strong>Scale ideas for this song</strong>
-          <button className="chip" aria-pressed={all} onClick={() => setAll(!all)}>{all ? 'Show the part playing' : 'Show all'}</button>
-        </div>
-        {all && <p className="scale-idea">{map.unit}'s new idea: {map.idea}</p>}
-        {shown.map((part) => <SectionIdeas key={part.label} section={part} keyPc={mapKey} current={part === section} />)}
-        {!shown.length && <p className="sight-hint">Press play: the ideas of the part being played show here.</p>}
-      </>}
+    <section className="scale-panel" aria-label="Scale ideas for this song">
+      <div className="scale-panel-head">
+        <strong>Scale ideas for this song</strong>
+        <button className="chip" aria-pressed={all} onClick={() => setAll(!all)}>{all ? 'Show the part playing' : 'Show all'}</button>
+      </div>
+      {all && <p className="scale-idea">{unitName(map.unit)}'s new idea: {map.idea}</p>}
+      {shown.map((part) => <SectionIdeas key={part.label} section={part} keyPc={mapKey} current={part === section} />)}
+      {!shown.length && <p className="sight-hint">Press play: the ideas of the part being played show here.</p>}
     </section>
   )
 }

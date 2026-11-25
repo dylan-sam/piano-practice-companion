@@ -5,9 +5,11 @@
 // left as they were. A step with a target is ticked when the screen reaches it (useLessonGoal).
 
 import { useMemo } from 'react'
+import { FROM_LESSONS } from '../router'
 import type { Part } from '../engine/arrange'
 import { CHECK_MODES, type CheckMode } from '../exercises/melodyReading'
 import { LEFT_HAND_STAGES, VOICINGS, type LeftHandStage, type Voicing } from '../exercises/sightReading'
+import { SUBSTITUTIONS, type SubstitutionId } from '../music/substitutions'
 
 export interface LessonLink {
   route: string // the screen (ROUTES)
@@ -25,24 +27,26 @@ export interface LessonLink {
   step?: string // the lesson step it was opened from, ticked when its target is reached
   goal?: number // the target: this percent right, at `bpm` or faster
   timing?: number // ... and notes on time within this many milliseconds on average
+  subs?: SubstitutionId[] // chord substitutions the band plays (and the sheet shows), every chorus
 }
 
 const PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
 
 /**
- * The address of a lesson step's screen with its settings.
+ * The address of a lesson step's screen with its settings, marked as opened from the Lessons tab.
  *
  *   { route: '/sightreading/lead-sheets', song: 'Avalon', bpm: 70, leftHand: 'bass' }
- *     -> '/sightreading/lead-sheets?song=Avalon&bpm=70&leftHand=bass'
+ *     -> '/sightreading/lead-sheets?song=Avalon&bpm=70&leftHand=bass&from=lessons'
  */
 export function lessonUrl(link: LessonLink): string {
-  const { route, mute, infinite, ...rest } = link
+  const { route, mute, infinite, subs, ...rest } = link
   const query = new URLSearchParams()
   for (const [name, value] of Object.entries(rest)) if (value !== undefined) query.set(name, String(value))
   if (mute?.length) query.set('mute', mute.join(','))
   if (infinite) query.set('infinite', '1')
-  const text = query.toString()
-  return text ? `${route}?${text}` : route
+  if (subs?.length) query.set('subs', subs.join(','))
+  query.set('from', FROM_LESSONS) // the back button leads to the Lessons tab
+  return `${route}?${query.toString()}`
 }
 
 /** A whole number from a query value within bounds, else undefined. */
@@ -75,6 +79,7 @@ export function readLessonLink(search: string): Omit<LessonLink, 'route'> | null
     step: query.get('step') ?? undefined,
     goal: numberIn(query.get('goal'), 1, 100),
     timing: numberIn(query.get('timing'), 1, 1000),
+    subs: query.get('subs')?.split(',').filter((id): id is SubstitutionId => SUBSTITUTIONS.some((s) => s.id === id)),
   }
 }
 

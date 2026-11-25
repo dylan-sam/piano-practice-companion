@@ -139,7 +139,7 @@ export function MidiButton({ keyboard }: { keyboard: ReturnType<typeof useMidiKe
       aria-label={keyboard.connected ? undefined : 'Connect MIDI keyboard'}>
       {keyboard.connected ? keyboard.devices.length ? keyboard.devices.join(', ')
         : <>Waiting for<span className="topbar-long"> MIDI</span> keyboard</>
-        : <>Connect<span className="topbar-long"> MIDI keyboard</span><span className="topbar-short"> MIDI</span></>}
+        : <><span className="topbar-verb">Connect </span>MIDI<span className="topbar-long"> keyboard</span></>}
     </button>
   )
 }

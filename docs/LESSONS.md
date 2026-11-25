@@ -1,6 +1,6 @@
 # Lessons
 
-The **Lessons** tab (main menu) is a 30-week jazz piano program: about 7 months
+The **Lessons** tab (main menu) is a 46-week jazz piano program: about 11 months
 at 20 to 30 minutes a day, 5 days a week, for a pianist who reads music and has
 a MIDI keyboard. The program is in `studio/src/lessons/program.ts`; this page
 says what it holds, how the screens are set up from it, and where it comes
@@ -8,6 +8,10 @@ from.
 
 - [The program](#the-program)
 - [How a song is learnt](#how-a-song-is-learnt)
+- [Substitution weeks](#substitution-weeks)
+- [Minor, altered and minor blues](#minor-altered-and-minor-blues)
+- [Intros and endings](#intros-and-endings)
+- [Building a solo](#building-a-solo)
 - [Steps and their links](#steps-and-their-links)
 - [Progress](#progress)
 - [Songs](#songs)
@@ -15,20 +19,30 @@ from.
 
 ## The program
 
-Six units and a review, each unit bringing 2 or 3 songs and each song one new
+Nine units and a review, each unit bringing 1 to 3 songs and most songs one new
 left-hand pattern. Every week has the four parts of a session: **hands
 together** (6 to 8 minutes), **the song** (10 to 12), **improvising** (4 to 6)
 and **ear training** (2 to 4).
 
 | Unit | Weeks | Theme | Songs |
 |---|---|---|---|
-| 1 | 1 to 4 | Time, chords and the first song | Avalon (in F, then C) |
-| 2 | 5 to 10 | The 12-bar blues | Study Blues, Tin Roof Blues |
-| 3 | 11 to 16 | The ii-V-I | Oh Lady Be Good, Honeysuckle Rose |
-| 4 | 17 to 22 | Song form and Rhythm Changes | Just You, Just Me; I Got Rhythm; What Is This Thing Called Love? |
-| 5 | 23 to 26 | Ballad and bossa | Embraceable You, 'S Wonderful, Tea for Two |
-| 6 | 27 to 29 | Modal playing | Modal Study |
-| Review | 30 | Each unit's last song in a new key, faster; a recording of a blues and a standard | |
+| 1 | 1 to 5 | Time, chords and the first song | Avalon (in F, then C); week 5: adding the ii |
+| 2 | 6 to 12 | The 12-bar blues | Study Blues, Tin Roof Blues; week 12: the secondary dominant |
+| 3 | 13 to 19 | The ii-V-I | Oh Lady Be Good, Honeysuckle Rose; week 19: the tritone substitution |
+| 4 | 20 to 23 | The minor ii-V-i | Love Me or Leave Me |
+| 5 | 24 to 30 | Song form and Rhythm Changes | Just You, Just Me; I Got Rhythm; What Is This Thing Called Love?; week 30: the passing diminished chord |
+| 6 | 31 to 34 | Altered dominants | What Is This Thing Called Love? and Love Me or Leave Me, their dominants with the ♭9 (and ♭13) |
+| 7 | 35 to 38 | The minor blues | Minor Study Blues, Black and Tan Fantasy |
+| 8 | 39 to 42 | Ballad and bossa | Embraceable You, 'S Wonderful, Tea for Two |
+| 9 | 43 to 45 | Modal playing | Modal Study |
+| Review | 46 | Each unit's last song in a new key, faster; a recording of a blues and a standard | |
+
+The units and weeks are numbered from the program (`numberWeeks`; `unitName`
+gives "Unit 5" from a unit's id): a step's id keeps the week it was first
+written in (`w23-embraceable2`, now in week 39), and a unit keeps its id
+(`u4` is now Unit 5), so the progress kept on the device stays when weeks are
+added; the weeks added later have ids of their own (`sub1-...` to `sub4-...`,
+`minor1-...`, `alt1-...`, `mblues1-...`).
 
 Nothing is locked: any step can be opened at any time. Each step ends with a
 concrete target ("90% right at 80 BPM") rather than "until you know it". On the
@@ -57,6 +71,9 @@ Sheet Sightreading, the band's piano muted so the left hand is heard:
 | Honeysuckle Rose | ragtime bass: the root and the 5th on 1 and 3, the chord on 2 and 4 (Winn) | `ragtime_bass` |
 | Just You, Just Me | Type A shells in the Charleston rhythm: the whole shell on 1, the 3rd and 7th on the "and" of 2 (Siskind) | `type_a_charleston` |
 | What Is This Thing Called Love? | rootless voicings in the Charleston rhythm, the 3rd or the 7th at the bottom, whichever moves least (Levine) | `rootless_charleston` |
+| Love Me or Leave Me (Unit 4) | Type A shells; over the ø7, the root, 3rd and ♭5 (Siskind) | `type_a_shells` |
+| Love Me or Leave Me (Unit 6), Minor Study Blues | rootless voicings in the Charleston rhythm, the dominants with the ♭9 and ♭13 written or played by the band | `rootless_charleston` |
+| Black and Tan Fantasy | walking bass | `walking_bass` |
 | Embraceable You | rootless voicings held for two beats (Levine) | `rootless_held` (Ballad) |
 | 'S Wonderful, Tea for Two | bossa bass | `bossa_bass` (Bossa Nova) |
 | Modal Study | fourth chords: three notes in 4ths from the 9th, held (Levine) | `fourths_from_ninth` |
@@ -66,7 +83,9 @@ are in the Piano pattern menu of the other screens too, under every style they
 suit. They follow three books: Jeremy Siskind, *Playing Solo Jazz Piano* (2022)
 for the bass notes and the Type A shells (the 3rd under the 7th, between C3
 and G4); Mark Levine, *The Jazz Piano Book* (1989) for the rootless left-hand
-voicings (chapter 7: four notes, the 3rd or the 7th at the bottom) and the
+voicings (chapter 7: four notes, the 3rd or the 7th at the bottom; chapter 8:
+the ♭9, ♯9 and ♭13 of a dominant written in its symbol take the place of the
+9th and 13th, as in the band's comping, one shared voicing table) and the
 fourth chords; and Edward R. Winn, *How to Play Ragtime* (1913, public domain)
 for the bass note and chord alternation, here with single bass notes instead of
 octaves.
@@ -80,20 +99,24 @@ Each unit brings one new scale idea and keeps the earlier ones:
 | 1 | the major pentatonic of the key over the whole song; the chord's own notes on beat 1 |
 | 2 | the key's minor pentatonic and blues scale over a whole blues; then each dominant 7th's Mixolydian |
 | 3 | a ii-V-I as one scale: Dorian, Mixolydian and major share the notes of the I's major scale; guide tones |
-| 4 | a V7 going to a minor chord takes Mixolydian ♭9 ♭13; the bebop dominant scale over a V7 going to major |
-| 5 | a pentatonic on each chord's root (minor over a minor chord), long notes and space |
-| 6 | Dorian over long minor chords; the minor pentatonic a 5th up |
+| 4 | the minor ii-V-i as the minor key's harmonic minor: Locrian ♮2 over the ø7, Mixolydian ♭9 ♭13 over the V7; the ♭9 falling to the 5th of the i |
+| 5 | a V7 going to a minor chord takes Mixolydian ♭9 ♭13; the bebop dominant scale over a V7 going to major |
+| 6 | the altered dominant: half-whole over a 7♭9 going to major, the altered scale, the ♭9 and ♭13 resolved by a half step |
+| 7 | the minor blues: the key's minor pentatonic and blues scale over every chord; Dorian over i−7 and iv−7 |
+| 8 | a pentatonic on each chord's root (minor over a minor chord), long notes and space |
+| 9 | Dorian over long minor chords; the minor pentatonic a 5th up |
 
 Each lesson song has a **scale map** (`studio/src/lessons/scaleMaps.ts`): its
 parts (bars), and for each part the scales to try, over which chords, and why,
 in a few words. The map is shown on the song's improvising steps (the **Scale
 ideas for this song** button, named in the key the step plays) and under the
-sheet of Free Improvisation, following the part being played. Where the song
+sheet of Free Improvisation, following the part being played; a tap on a
+chord there opens the chord helper, with the scales of that chord. Where the song
 moves to another key that its chart does not mark, the map lists the passage
 (`keys`), so the green notes of Free Improvisation take the scales of that key.
-A part's bar numbers are those of the sheet, where a pickup counts as bar 1. The idea order follows Kelly and
-Rasmussen (major, Dorian and Mixolydian first, chord tones as the best notes,
-the blues scale with the blues).
+A part's bar numbers are those of the sheet, where a pickup counts as bar 1.
+The idea order follows Kelly and Rasmussen (major, Dorian and Mixolydian first,
+chord tones as the best notes, the blues scale with the blues).
 
 ## Steps and their links
 
@@ -110,10 +133,14 @@ they were, unless you change one on the screen:
 | `song` | Lead Sheet and Exercises Sightreading, Free Improvisation | opens the first song or exercise whose title starts with it |
 | `key`, `bpm`, `style`, `pattern` | the same | the band for that song |
 | `check`, `leftHand` | Lead Sheet and Exercises Sightreading | Scoring > Check and Left hand |
+| `subs` | Lead Sheet and Exercises Sightreading, Free Improvisation | the chord substitutions the band plays, every chorus (`subs=addII`) |
 | `mute` | every screen with a band | parts muted in the Mixer at first |
 | `playlist`, `infinite` | Lick Sightreading | the lick playlist; an endless line |
 | `voicing`, `infinite` | Chord Sightreading | the voicing drill; an endless line |
 | `step`, `goal` (with `bpm`, `timing`) | Lead Sheet, Exercises, Lick and Chord Sightreading, Name the progression, Melodic Dictation | the step to tick, and its target |
+
+A step's address ends with `from=lessons`: the back button and the screen's
+title lead back to the Lessons tab, not to the screen's menu.
 
 Hands-together steps use Scoring > Check > **Melody, hands together**; voicing
 steps use Chord Sightreading's **Voicing** menu ([EXERCISES.md](EXERCISES.md)).
@@ -144,10 +171,12 @@ menu) clears everything the app keeps.
 ## Songs
 
 The lead sheets come from the shipped OpenEWLD set (published before 1931,
-public domain in the US), plus two study tunes written for the course
+public domain in the US; Love Me or Leave Me, 1928, and Black and Tan Fantasy,
+1927, among them), plus three study tunes written for the course
 (`studio/scripts/build-lesson-songs.mjs`, built into
 `studio/public/leadsheets/lessons.json` with `pnpm run lesson-songs`): **Study
-Blues** (a riff on chord tones over a blues in F) and **Modal Study** (AABA in D
+Blues** (a riff on chord tones over a blues in F), **Minor Study Blues** (the
+same idea over a minor blues in C minor) and **Modal Study** (AABA in D
 Dorian, the bridge a half step up), and the refrain of **What Is This Thing
 Called Love?** (1929): its melody is written out from the first edition's score
 ([IMSLP](https://imslp.org/wiki/What_Is_this_Thing_Called_Love%3F_(Porter,_Cole))),
@@ -157,6 +186,92 @@ edition's piano part.
 Summertime (1935) and Blue Moon (1934) are in the OpenEWLD set for extra
 practice.
 
+## Substitution weeks
+
+Units 1, 2, 3 and 5 end with a week on one chord substitution, once the unit's song is
+learnt with its pattern and improvised over: the band plays the substitute
+(drawn in blue on the sheet, `subs` in the step's link; see the players'
+Substitutions menu, [studio/README.md](../studio/README.md)).
+
+| Week | Substitution | Song | The change |
+|---|---|---|---|
+| 5 | Adding the ii before a long V7 | Avalon | 4 bars of C7 become 2 of G−7 and 2 of C7: a first ii-V, before Unit 3 |
+| 12 | Secondary dominant on the ii | Study Blues | the turnaround F7 D7 G−7 C7 becomes F7 D7 G7 C7 (the G−7 of bar 9 stays: the melody holds a B♭ over it) |
+| 19 | Tritone substitution | Honeysuckle Rose | C7 before F becomes G♭7 (the song already has A♭−7 D♭7 before G−7) |
+| 30 | Passing diminished chord | I Got Rhythm | B♭ B♭6 C−7 becomes B♭ B°7 C−7 in the A sections |
+
+Each week has the same steps: an exercise of guide tones over the new chords
+(both hands, Exercises Sightreading; written for these weeks, see
+[LICKS.md](LICKS.md)), hearing the song with the substitute, playing it with
+the song's pattern on the new chords, improvising over it, and ear training.
+The order follows the teaching sources: the ii-V before its substitutions,
+the tritone substitution after the ii-V-I (Mark Levine's *The Jazz Piano Book*
+puts it in chapter 6, after the major modes and the ii-V-I), and secondary
+dominants and passing diminished chords as embellishing chords (Open Music
+Theory's chapters on applied chords and on embellishing diminished chords,
+before its chapter on substitutions). A substitution is left out where it
+would clash with a long melody note.
+
+## Minor, altered and minor blues
+
+Three units bring the minor side of jazz harmony, each after what it needs:
+
+- **Unit 4, the minor ii-V-i** (after the ii-V-I, before What Is This Thing
+  Called Love?, whose A sections are minor ii-V-i): the ø7 chord and the
+  harmonic minor scale, then the minor ii-V-i's guide tones in all keys, the
+  Phrygian dominant (Mixolydian ♭9 ♭13) and Locrian ♮2 scales, and minor ii-V-i
+  licks from standards, around **Love Me or Leave Me** (Donaldson, 1928), whose
+  A sections are Bø7 E7 A−7 before turning to C major.
+- **Unit 6, altered dominants** (after the rootless voicings of Unit 5): the
+  band plays the Substitutions menu's **altered dominant** (`subs=altered`):
+  each dominant going down a 5th takes its ♭9, and its ♭13 too before a minor
+  chord, written G7♭9 or G7♭9♭13. The rootless voicings take those notes
+  (Levine, chapter 8), and the right hand plays them in new exercises
+  (ii-V7♭9-I and minor ii-V7♭9♭13-i in all keys), the half-whole and altered
+  scales, and lines that resolve them by a half step, over What Is This Thing
+  Called Love? and Love Me or Leave Me.
+- **Unit 7, the minor blues**: a study tune written for the course, **Minor
+  Study Blues** (C minor: i−7, iv−7, ♭VI7, V7♭9♭13, and the minor ii-V of the
+  turnaround) with rootless voicings, then **Black and Tan Fantasy** (Ellington
+  and Miley, 1927), a minor blues in B♭ minor followed by a strain in B♭ major,
+  with a walking bass; new guide-tone exercises over the minor blues, and a
+  recording to finish.
+
+## Intros and endings
+
+Intros and endings come back on seven songs, each step on your own (the band
+muted, the sheet keeping the tempo), so they are practised again and again
+rather than in one unit:
+
+| Week | Song | Intro | Ending |
+|---|---|---|---|
+| 4 | Avalon | the last 4 bars | the last chord with its 6th and 9th, slowing down |
+| 11 | Tin Roof Blues | the last 4 bars of the blues (the turnaround) | ♭II7 to I7 |
+| 18 | Honeysuckle Rose | a ii-V vamp on the first chord | the "three times" tag: the last ii-V three times |
+| 23 | Love Me or Leave Me | a minor ii-V vamp | i−6, the ii-V again, i−6 held |
+| 27 | I Got Rhythm | I-vi-ii-V twice | ♭VI7, ♭II7, I |
+| 34 | What Is This Thing Called Love? | an altered ii-V vamp on the first chord | the last ii-V three times |
+| 38 | Minor Study Blues | the last 4 bars | ♭VI7, V7, i−6 |
+| 40 | Embraceable You | the last 4 bars, rubato | slowing down to a held I^7 with its 9th |
+
+## Building a solo
+
+Each unit's improvising brings one tool to build a solo, kept afterwards (after
+Hal Crook's *How to Improvise*, one thing at a time, and Jamey Aebersold's
+*How to Play Jazz and Improvise*, developing creativity):
+
+| Unit | Tool |
+|---|---|
+| 1 | space: 2 bars played, 2 bars of rest; each phrase answers the one before (call and response) |
+| 2 | rhythm first: two notes, only the rhythm changing; a riff repeated as the chords change |
+| 3 | motifs: a 2-bar idea played again, then moved to fit the next ii-V-I |
+| 4 | lines that land on the i: the ♭9 of the V falling to the 5th of the i |
+| 5 | quoting the melody, then going your own way; approach notes |
+| 6 | tension and release: an altered note on each dominant, resolved by a half step |
+| 7 | a shape over 3 choruses: low and sparse, then higher and busier |
+| 8 | one double-time phrase among long notes |
+| 9 | a motif moved up a half step with the bridge, and back |
+
 ## Sources
 
 - The order of Units 1 to 4, the drills and the step lists for the blues and
@@ -165,8 +280,29 @@ practice.
   (Maricopa Open Digital Press, 2023, CC BY 4.0), in our own words.
 - ii-V-I and chord scales: [Open Music Theory](https://viva.pressbooks.pub/openmusictheory/part/jazz/)
   (CC BY-SA 4.0), ideas only.
-- The order of the voicings (bass, shells, rootless): jazz-piano method books
-  (Jeremy Siskind, *Jazz Piano Fundamentals*), pacing only, nothing copied.
+- The order of the voicings (bass, shells, rootless, fourths): jazz-piano
+  method books (Jeremy Siskind, *Jazz Piano Fundamentals*), pacing only,
+  nothing copied.
+- The left-hand patterns: Jeremy Siskind, *Playing Solo Jazz Piano* (2022:
+  bass notes with an open 5th, Type A shells), Mark Levine, *The Jazz Piano
+  Book* (Sher Music, 1989: the rootless left-hand voicings of chapter 7, fourth
+  chords) and Edward R. Winn, *How to Play Ragtime* (1913, public domain: bass
+  note and chord); the patterns are written in our own notes, nothing copied.
+- The minor ii-V-i and the altered dominants: Mark Levine, *The Jazz Piano
+  Book* (chapter 8, altering notes in left-hand voicings; chapter 9, melodic
+  minor and diminished scale harmony); Jeremy Siskind, *Jazz Piano
+  Fundamentals*, Book 1 (its units on altered dominants), pacing only.
+- The minor blues: Kerry Politzer, *Beginning Jazz Piano* (its minor blues
+  module), pacing only.
+- Building a solo: Hal Crook, *How to Improvise* (Advance Music, 1991), and
+  Jamey Aebersold, *How to Play Jazz and Improvise* (Volume 1), ideas only.
+- The substitutions: Mark Levine, *The Jazz Piano Book* (1989, chapter 6,
+  tritone substitution) and *The Jazz Theory Book* (1995, reharmonisation);
+  [Open Music Theory](https://viva.pressbooks.pub/openmusictheory/chapter/substitutions/),
+  "Substitutions"; ideas only.
+- Rhythm Changes (Unit 5) and Units 8 and 9 are added for the course; Kelly
+  and Rasmussen's Module 3 works on ii-V-I through "Solar", and their Module 4
+  on What Is This Thing Called Love?
 - The note colours of Free Improvisation follow
   [Impro-Visor](https://github.com/Impro-Visor/Impro-Visor) (GPL-2.0-or-later),
   ideas only.

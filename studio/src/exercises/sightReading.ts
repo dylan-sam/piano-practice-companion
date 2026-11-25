@@ -5,6 +5,7 @@ import { chordSlots } from './lickReading'
 import type { Progression } from './nameProgression'
 import { romanSymbol } from './nameProgression'
 import type { KeyCentre } from '../music/roman'
+import { substituteChart, substitutionOrder } from '../music/substitutions'
 
 export type Mistakes = Record<string, number>
 // Progressions joined into one infinite chunk (several minutes of music)
@@ -13,6 +14,7 @@ export type Transition = 'shared chord' | 'new tonic' | 'dominant resolution'
 
 export interface InfiniteStep {
   symbol: string
+  written?: string // the progression's chord, when a substitution plays `symbol` instead
   key: number
   progressionId: string
   transition: Transition
@@ -399,7 +401,7 @@ export function infiniteLine(
   const steps: InfiniteStep[] = previous ? [] : symbolsFor(firstPattern, firstKey, firstChords).map((symbol) => ({
     symbol, key: firstKey, progressionId: firstPattern.id, transition: 'new tonic',
   }))
-  let last = previous?.symbol ?? steps.at(-1)!.symbol
+  let last = previous ? previous.written ?? previous.symbol : steps.at(-1)!.symbol
   let lastKey = firstKey
   for (let index = 0; index < groups; index++) {
     const next = nextInfiniteSteps(last, eligible, mistakes, focus, random, sevenths)
@@ -407,6 +409,48 @@ export function infiniteLine(
     last = steps.at(-1)!.symbol
     lastKey = next.key
   }
+  return withSubstitutions(steps, firstKey, lastKey, random)
+}
+
+// How often each substitution is used in a line's sheet, and then how often at each place it fits
+const LINE_SUBSTITUTION_SHARE = 0.5
+
+/**
+ * A line's sheet from its chords, two to a bar, with chord substitutions added at random (not a
+ * setting: a part of the line): each substitution of the Substitutions menu is used on about half
+ * of the sheets, in a random order, at about one place in two where it fits. Only whole chords
+ * are replaced (no ii added, no chord split), so the chords stay two to a bar; the sheet's ends
+ * are left as written, as the line goes on to the next sheet. A substituted step keeps its chord
+ * in `written` (drawn in blue).
+ */
+function withSubstitutions(steps: InfiniteStep[], firstKey: number, lastKey: number, random: () => number): InfiniteLine {
+  const written = lineChart(steps, firstKey)
+  const ids = shuffled(substitutionOrder(undefined), random).filter(() => random() < LINE_SUBSTITUTION_SHARE)
+  const chart = substituteChart(written, { ids, when: { kind: 'random' }, seed: Math.floor(random() * 2 ** 31) }, 0, { piece: true })
+  const chords = chart.bars.flatMap((bar) => bar.chords)
+  if (chords.length !== steps.length) return { chart: written, steps, lastKey }
+  return {
+    chart,
+    steps: steps.map((step, i) => {
+      const { symbol, written: was } = chords[i]
+      return was && symbol ? { ...step, symbol, written: was } : step
+    }),
+    lastKey,
+  }
+}
+
+/** The list in a random order. */
+function shuffled<T>(items: T[], random: () => number): T[] {
+  const out = [...items]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+/** A line's chords as a chart, two to a bar. */
+function lineChart(steps: InfiniteStep[], key: number): Chart {
   const bars: ChartBar[] = []
   for (let index = 0; index < steps.length; index += 2) {
     const pair = steps.slice(index, index + 2)
@@ -416,9 +460,5 @@ export function infiniteLine(
       barline: index + 2 >= steps.length ? 'final' : undefined,
     })
   }
-  return {
-    chart: { format: 'openstand-chart', version: 1, title: 'Infinite chord progressions',
-      style: 'swing', key: firstKey, bpm: 100, time: [4, 4], bars },
-    steps, lastKey,
-  }
+  return { format: 'openstand-chart', version: 1, title: 'Infinite chord progressions', style: 'swing', key, bpm: 100, time: [4, 4], bars }
 }

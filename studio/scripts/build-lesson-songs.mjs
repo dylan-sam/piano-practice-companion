@@ -1,4 +1,4 @@
-// The tunes of the Lessons tab that are not in the shipped lead sheets (docs/LESSONS.md): two
+// The tunes of the Lessons tab that are not in the shipped lead sheets (docs/LESSONS.md): three
 // study tunes written for it and What Is This Thing Called Love?, as a bundled lead sheet file:
 // public/leadsheets/lessons.json. Run with `pnpm run lesson-songs` after changing a tune here.
 //
@@ -32,8 +32,8 @@ const length = (text) => {
   return Number(top) / Number(bottom)
 }
 
-/** A chart in the app's format from its bars (see above); every bar is 4/4. */
-export function chart({ title, composer, style, key, bpm, bars, source }) {
+/** A chart in the app's format from its bars (see above); every bar is 4/4. `minor`: a minor key. */
+export function chart({ title, composer, style, key, minor, bpm, bars, source }) {
   const notes = []
   let tied = null // a note tied over the bar line, waiting for its continuation
   const written = bars.map(([chords, melody], index) => {
@@ -54,7 +54,8 @@ export function chart({ title, composer, style, key, bpm, bars, source }) {
       ...(index % 4 === 0 ? { rowStart: true } : {}),
     }
   })
-  return { format: 'openstand-chart', version: 1, title, composer, style, key, bpm, time: [4, 4], bars: written, melody: { notes, source } }
+  return { format: 'openstand-chart', version: 1, title, composer, style, key, ...(minor ? { minor: true } : {}), bpm, time: [4, 4],
+    bars: written, melody: { notes, source } }
 }
 
 const SOURCE = 'Written for the Lessons tab (CC BY 4.0)'
@@ -69,6 +70,20 @@ const STUDY_BLUES = chart({
     ['F7', 'A4:1 C5:1 Eb5:1 C5:1'], ['D7', 'C5:1 A4:1 F#4:2'],
     ['G-7', 'G4:1 Bb4:1 D5:1 F5:1'], ['C7', 'E5:2 Bb4:2'],
     ['F7 D7', 'A4:2 F#4:2'], ['G-7 C7', 'G4:2 E4:2'],
+  ],
+})
+
+// The minor blues unit: a 12-bar blues in C minor (i-7, iv-7, bVI7, V7b9b13, and the minor
+// ii-V of the turnaround), a riff on chord tones answered a 4th up, as the Study Blues does
+const MINOR_STUDY_BLUES = chart({
+  title: 'Minor Study Blues', composer: 'Lessons tab', style: 'swing', key: 0, minor: true, bpm: 100, source: SOURCE,
+  bars: [
+    ['C-7', 'G4:1 Bb4:1 C5:1.5 Eb5:.5'], ['F-7', 'C5:2 r:2'],
+    ['C-7', 'G4:1 Bb4:1 Eb5:1 D5:1'], ['C-7', 'C5:2 r:2'],
+    ['F-7', 'C5:1 Eb5:1 F5:1.5 Ab5:.5'], ['F-7', 'F5:2 r:2'],
+    ['C-7', 'G4:1 Bb4:1 C5:1 Eb5:1'], ['C-7', 'D5:1 C5:1 G4:2'],
+    ['Ab7', 'C5:1 Eb5:1 Gb5:2'], ['G7b9b13', 'F5:1 Eb5:1 B4:2'],
+    ['C-7', 'C5:2 G4:2'], ['Dh7 G7b9b13', 'Ab4:2 B4:2'],
   ],
 })
 
@@ -108,10 +123,10 @@ const THIS_THING = chart({
 
 const FILE = {
   format: 'ear-training-studio-playlists', version: 1,
-  playlists: [{ name: 'Lessons study tunes', charts: [STUDY_BLUES, MODAL_STUDY, THIS_THING] }],
+  playlists: [{ name: 'Lessons study tunes', charts: [STUDY_BLUES, MINOR_STUDY_BLUES, MODAL_STUDY, THIS_THING] }],
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(new URL('../public/leadsheets/lessons.json', import.meta.url), `${JSON.stringify(FILE)}\n`)
-  console.log('public/leadsheets/lessons.json: 3 tunes')
+  console.log(`public/leadsheets/lessons.json: ${FILE.playlists[0].charts.length} tunes`)
 }

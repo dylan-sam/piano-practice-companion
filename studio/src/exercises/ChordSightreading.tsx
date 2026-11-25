@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import type { Player } from '../audio/player'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
 import { useMixer } from '../audio/useMixer'
-import { useHeardBeat, usePlayer } from '../audio/usePlayer'
+import { useHeardBeat, usePausedAt, usePlayer } from '../audio/usePlayer'
 import { arrange, BASE_BPM, type Arrangement } from '../engine/arrange'
 import { BASS_PATTERNS, defaultBassPatternForStyle, type BassPatternId } from '../engine/bassPatterns'
-import { barAtBeat, slotAtBeat, chorusTranspose, type Slot, type Timeline } from '../engine/timeline'
+import { barAtBeat, slotAtBeat, chorusKeyOffset, type Slot, type Timeline } from '../engine/timeline'
 import { warmUpMidi } from '../engine/warmup'
 import { reportError } from '../errorReports'
 import { loadTunes } from '../library/db'
 import { CHORD_SOURCES } from '../library/importTunes'
 import { loadJson, saveJson } from '../library/storage'
 import type { Chart as ChartData } from '../music/chart'
-import { applyPracticeChange, NO_PRACTICE, rampedBpm, type PracticeSettings } from '../music/practice'
+import { BPM_RANGE, applyPracticeChange, NO_PRACTICE, practiceOptions, rampedBpm, type PracticeSettings } from '../music/practice'
 import { getStyle, STYLES } from '../styles'
 import { Wordmark } from '../ui/AppLink'
 import { Chart } from '../ui/Chart'
@@ -21,6 +21,8 @@ import { displayText, useDisplay } from '../ui/display'
 import { ImportDialog } from '../ui/ImportDialog'
 import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
+import { Substitutions } from '../ui/Substitutions'
+import { useSubstitutedChart } from '../ui/useSubstitutedChart'
 import { Transport } from '../ui/Transport'
 import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from './ExerciseControls'
@@ -42,7 +44,6 @@ const SEVENTHS_KEY = 'eartraining:sightreading:sevenths' // percent of 7th-chord
 const VOICING_KEY = 'eartraining:sightreading:voicing' // how chords must be voiced (voicing drills)
 const INFINITE_GOAL_CHORDS = 16 // a line reaches a lesson's target after this many chords judged
 const MIDI_PARTS = ['bass', 'drums'] as const
-const BPM_RANGE: [number, number] = [40, 300]
 // The three sources of chords
 const SOURCES: { id: SourceMode; text: string }[] = [
   { id: 'pick', text: 'Pick a song' }, { id: 'random', text: 'Random song' }, { id: 'infinite', text: 'Infinite progressions' },
@@ -60,7 +61,7 @@ interface PreparedChunk {
 function arrangeForReading(chart: ChartData, styleId: string, patternId: BassPatternId, transpose: number,
   choruses: number, practice: PracticeSettings, countIn: boolean): Arrangement {
   return arrange(chart, getStyle(styleId), transpose, choruses,
-    { loop: practice.loop, keyStep: practice.keyStep, ending: false, countIn },
+    { ...practiceOptions(practice), ending: false, countIn },
     null, { comp: false, bassPatternId: patternId })
 }
 
@@ -75,6 +76,8 @@ function feedbackKey(slot: Slot): string {
 /** Practice reading song chords or an endless stream using a MIDI keyboard. */
 export function ChordSightreading() {
   const playerRef = useRef<Player | null>(null)
+  // Where the band was paused: Play goes on from there, the chords before it judged already
+  const { pausedAt, hold: holdPause, forget: forgetPause } = usePausedAt(playerRef)
   const judgeRef = useRef<ChordJudge | null>(null)
   const scoringRef = useRef(false)
   const infiniteRef = useRef<InfiniteLine | null>(null)
@@ -123,8 +126,9 @@ export function ChordSightreading() {
   const style = getStyle(styleId)
   const position = timeline ? barAtBeat(timeline, beat) : null
   const currentChorus = playing && timeline ? slotAtBeat(timeline, beat)?.chorus ?? 0 : 0
-  const shownTranspose = playing ? chorusTranspose(transpose, practice.keyStep, currentChorus) : transpose
+  const shownTranspose = playing ? chorusKeyOffset(practice, currentChorus, transpose) : transpose
   const liveBpm = rampedBpm(bpm, practice, Math.min(currentChorus, choruses - 1), BPM_RANGE)
+  const shownChart = useSubstitutedChart(tune?.chart, practice.subs, playing, currentChorus)
   const liveBpmRef = useRef(liveBpm)
   useEffect(() => { liveBpmRef.current = liveBpm }, [liveBpm])
 
@@ -187,6 +191,7 @@ export function ChordSightreading() {
       judgeRef.current = judge
       endless.started(arrangement.timeline.totalBeats, countIn)
       setTimeline(arrangement.timeline)
+      forgetPause()
       await player.play(arrangement.midi, fromSeconds)
       player.setRate(bpm / BASE_BPM)
       setPlaying(true)
@@ -194,7 +199,7 @@ export function ChordSightreading() {
       setError(String(cause))
       reportError(cause, 'sight-reading playback')
     }
-  }, [styleId, patternId, transpose, choruses, practice, bpm, endless])
+  }, [styleId, patternId, transpose, choruses, practice, bpm, endless, forgetPause])
 
   /** Generate and arrange the chunk after the playing one, while the band plays. */
   const prepareNext = useCallback((after: InfiniteLine, nextStyle: string, nextPattern: BassPatternId) => {
@@ -245,6 +250,7 @@ export function ChordSightreading() {
   const readiness = usePlayer(playerRef, () => {
     finalizeThrough(Infinity)
     setPlaying(false)
+    forgetPause()
     // Normally the next chunk starts just before this one ends; this covers a missed switch
     if (endless.missed()) void switchToNext()
   }, () => STYLES.map(warmUpMidi))
@@ -271,12 +277,28 @@ export function ChordSightreading() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** Stop the band and cancel automatic continuation of infinite practice. */
+  /** Stop the band and cancel automatic continuation of infinite practice; the next Play starts over. */
   function stop() {
+    pauseBand()
+    forgetPause()
+  }
+
+  /** Pause the band where it is (an infinite line waits): the chords already due are judged, and Play goes on from there. */
+  function pauseBand() {
+    holdPause()
     endless.stop()
     finalizeThrough((playerRef.current?.heardPosition ?? 0) * BASE_BPM / 60)
     playerRef.current?.stop()
     setPlaying(false)
+  }
+
+  /** Go on from where the band was paused: the song, or the infinite line's chunk on the stand, after which the line goes on. */
+  function goOnFrom(from: number) {
+    if (!chart) return
+    if (mode === 'infinite') endless.goesOn.current = true
+    void startPlayback(chart, styleId, patternId, transpose, choruses, practice, endless.countIn.current, from).then(() => {
+      if (mode === 'infinite' && line) prepareNext(line, styleId, patternId)
+    })
   }
 
   /** Stop and forget the judged chords and the timeline (another song or line goes on the stand). */
@@ -308,16 +330,18 @@ export function ChordSightreading() {
   }
 
   /**
-   * Arrange again when a sound-affecting control changes: a new style or bass pattern goes on from
-   * where the band is, other changes start the chart again.
+   * Arrange again when a sound-affecting control changes: a new style, bass pattern or number of
+   * choruses goes on from where the band is, other changes start the chart again.
    */
   function changeArrangement(nextStyle: string, nextPattern: BassPatternId, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice) {
     band.set({ styleId: nextStyle, patternId: nextPattern, transpose: nextTranspose, choruses: nextChoruses, practice: nextPractice })
     const player = playerRef.current
+    // A new number of choruses goes on too, as a new style does
+    const soundOnly = nextTranspose === transpose && nextPractice === practice
+    if (!soundOnly && !playing) forgetPause() // a paused band starts a changed sheet from its beginning
     if (playing && chart && player) {
       // A new style or bass pattern goes on from where the band is, with the chunk's own count-in
-      const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice
       if (soundOnly) finalizeThrough(player.heardPosition * BASE_BPM / 60)
       void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice,
         soundOnly ? endless.countIn.current : true, soundOnly ? player.position : 0)
@@ -441,7 +465,7 @@ export function ChordSightreading() {
                 const index = visibleStart + offset
                 const result = feedback[`${Math.floor(index / 2)}:${index % 2}`]
                 return (
-                  <div key={index} className={`sight-card${index === activeIndex && playing ? ' sight-card-active' : ''}${
+                  <div key={index} className={`sight-card${step.written ? ' sight-card-sub' : ''}${index === activeIndex && playing ? ' sight-card-active' : ''}${
                     result === 'correct' ? ' sight-card-correct' : result === 'missed' ? ' sight-card-missed' : ''}`}>
                     <strong>{displayText(step.symbol, display, line.chart.key)}</strong>
                   </div>
@@ -449,7 +473,7 @@ export function ChordSightreading() {
               })}
             </div>
           </section>}
-          {mode !== 'infinite' && tune && <Chart chart={tune.chart} style={style}
+          {mode !== 'infinite' && shownChart && <Chart chart={shownChart} style={style}
             transpose={shownTranspose} activeMeasure={position?.measure ?? null}
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4}
             chordFeedback={feedback} selectedBar={loopPicking.firstBar}
@@ -461,7 +485,9 @@ export function ChordSightreading() {
       </SongWorkspace>
 
       {chart && <Transport readiness={readiness} playing={playing}
-        onToggle={() => playing ? stop() : mode === 'infinite' ? void startInfinite() : void startPlayback(chart)}
+        onToggle={() => playing ? pauseBand() : pausedAt !== null ? goOnFrom(pausedAt)
+          : mode === 'infinite' ? void startInfinite() : void startPlayback(chart)}
+        paused={pausedAt !== null} onRestart={() => mode === 'infinite' ? void startInfinite() : void startPlayback(chart)}
         position={positionLabel} styleId={styleId}
         onStyle={(id) => changeArrangement(id, defaultBassPatternForStyle(id), transpose)}
         pianoPatternId={patternId} pianoPatterns={BASS_PATTERNS}
@@ -477,6 +503,7 @@ export function ChordSightreading() {
         {mode !== 'infinite' && <Practice chart={chart} settings={practice}
           onChange={changePractice}
           onPickLoop={loopPicking.start} />}
+        {mode !== 'infinite' && <Substitutions practice={practice} onChange={changePractice} />}
         <Mixer {...mixerProps} parts={[...MIDI_PARTS]} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}

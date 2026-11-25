@@ -18,8 +18,8 @@ interface MenuPage {
 // The main menu leads to the areas; each area's menu leads to its screens (routes in Root)
 const MENUS: Record<string, MenuPage> = {
   [ROUTES.home]: {
-    title: 'Ear Training',
-    description: 'Hear chord progressions, then play them with a band.',
+    title: 'Piano Practice Companion',
+    description: 'Play along with a band, train your ear, sightread and improvise on a MIDI keyboard, and follow a 46-week jazz piano program.',
     items: [
       {
         title: 'Play along',
@@ -43,7 +43,7 @@ const MENUS: Record<string, MenuPage> = {
       },
       {
         title: 'Lessons',
-        description: 'A 30-week jazz piano program, 20 to 30 minutes a day: both hands and improvising from the first week, one song and one left-hand pattern at a time. Each step opens the exercise it needs, already set up. Nothing is locked.',
+        description: 'A 46-week jazz piano program, 20 to 30 minutes a day: both hands and improvising from the first week, one song and one left-hand pattern at a time. Each step opens the exercise it needs, already set up. Nothing is locked.',
         path: ROUTES.lessons,
       },
     ],

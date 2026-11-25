@@ -305,7 +305,36 @@ export function closeVoicingTones(chord: Chord): number[] {
   return tones
 }
 
-const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
+// The major scale's steps; on C they are the natural notes, letter by letter
+export const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
+
+/** The tensions that alter a dominant 7th (written b9, #9, alt, #5, b5, #11, b13). */
+export const ALTERATIONS = ['b9', '#9', 'alt', '#5', 'b5', '#11', 'b13']
+
+/** Whether a chord has an altered tension written. */
+export const isAlteredChord = (chord: Chord): boolean => chord.tensions.some((t) => ALTERATIONS.includes(t))
+export const NOTE_LETTERS = 'CDEFGAB'
+
+/** The pitch class of a note name: 'C' -> 0, 'Eb' -> 3, 'F#' -> 6, 'Bbb' -> 9. */
+export function pitchClassOf(name: string): number {
+  const shift = [...name.slice(1)].reduce((sum, sign) => sum + (sign === 'b' ? -1 : sign === '#' ? 1 : 0), 0)
+  return (LETTERS[name[0]] + shift + 12) % 12
+}
+
+/** The accidentals that raise or lower a note by some semitones: -1 -> 'b', 2 -> '##'. */
+export function accidentals(shift: number): string {
+  return shift < 0 ? 'b'.repeat(-shift) : '#'.repeat(shift)
+}
+
+/** How far a pitch class lies from a reference one, the short way: -6 to 5 semitones. */
+export function semitonesFrom(pc: number, reference: number): number {
+  return ((((pc - reference) % 12) + 18) % 12) - 6
+}
+
+/** A pitch class written on a letter, with the accidentals it needs: (8, 'A') -> 'Ab', (8, 'G') -> 'G#'. */
+export function spellOnLetter(pc: number, letter: string): string {
+  return letter + accidentals(semitonesFrom(pc, LETTERS[letter]))
+}
 
 // Spells a chord root in the context of a key: notes of the key's major scale follow the
 // key signature, chromatic notes default to flats (Bb7 in C, not A#7)

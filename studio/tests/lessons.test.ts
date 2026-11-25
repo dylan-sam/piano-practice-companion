@@ -20,6 +20,7 @@ describe('lesson links', () => {
     const link = { route: ROUTES.leadSheetSightreading, song: "'S Wonderful", key: 5, bpm: 90, check: 'both' as const, leftHand: 'pattern' as const, mute: ['comp' as const] }
     const url = lessonUrl(link)
     expect(url.startsWith('/sightreading/lead-sheets?')).toBe(true)
+    expect(url.endsWith('&from=lessons')).toBe(true) // the back button leads to the Lessons tab
     expect(readLessonLink(url.slice(url.indexOf('?')))).toMatchObject({ song: "'S Wonderful", key: 5, bpm: 90, check: 'both', leftHand: 'pattern', mute: ['comp'] })
   })
 
@@ -37,8 +38,8 @@ describe('lesson links', () => {
 })
 
 describe('the program', () => {
-  test('30 weeks in order, with unique step ids', () => {
-    expect(PROGRAM.flatMap((unit) => unit.weekList.map((week) => week.week))).toEqual(Array.from({ length: 30 }, (_, i) => i + 1))
+  test('46 weeks in order, with unique step ids', () => {
+    expect(PROGRAM.flatMap((unit) => unit.weekList.map((week) => week.week))).toEqual(Array.from({ length: 46 }, (_, i) => i + 1))
     expect(new Set(ALL_STEPS.map((item) => item.id)).size).toBe(ALL_STEPS.length)
   })
 
@@ -57,8 +58,19 @@ describe('the program', () => {
     }
   })
 
+  test('units 1 to 3 and 5 end with a substitution week, its steps keeping ids of their own', () => {
+    const ending = (id: string) => PROGRAM.find((unit) => unit.id === id)!.weekList.at(-1)!.steps.every((item) => item.id.startsWith('sub'))
+    expect(['u1', 'u2', 'u3', 'u4'].map(ending)).toEqual([true, true, true, true])
+    expect(PROGRAM.map((unit) => `${unit.number} ${unit.weeks}`)).toEqual(['1 Weeks 1 to 5', '2 Weeks 6 to 12', '3 Weeks 13 to 19',
+      '4 Weeks 20 to 23', '5 Weeks 24 to 30', '6 Weeks 31 to 34', '7 Weeks 35 to 38', '8 Weeks 39 to 42', '9 Weeks 43 to 45', '0 Week 46'])
+    // Steps written before keep their ids (the progress kept by id stays)
+    expect(ALL_STEPS.some((item) => item.id === 'w23-embraceable2')).toBe(true)
+    const avalon = ALL_STEPS.find((item) => item.id === 'sub1-avalon3')!
+    expect(avalon.link).toMatchObject({ song: 'Avalon', subs: ['addII'], pattern: 'open_fifths' })
+  })
+
   test('every week has the four parts of a session', () => {
-    for (const unit of PROGRAM.slice(0, 6)) {
+    for (const unit of PROGRAM.filter((u) => u.number)) {
       for (const week of unit.weekList) {
         const kinds = new Set(week.steps.map((item) => item.kind))
         expect(kinds.has('hands') && kinds.has('ear') && (kinds.has('song') || kinds.has('improvise')), `week ${week.week}`).toBe(true)
@@ -117,5 +129,21 @@ describe('the lesson tunes', () => {
     expect(tune.bars[1].chords[0].symbol).toBe('Gh7')
     expect(tune.melody.notes[0]).toMatchObject({ bar: 0, at: 3, pitch: 70 }) // the pickup Bb
   })
-})
 
+  test('the minor ii-V-i, altered dominants and minor blues units, their songs and exercises', () => {
+    expect(PROGRAM.map((unit) => unit.id)).toEqual(['u1', 'u2', 'u3', 'uMinor', 'u4', 'uAltered', 'uMinorBlues', 'u5', 'u6', 'review'])
+    const songs = (id: string) => new Set(PROGRAM.find((unit) => unit.id === id)!.weekList.flatMap((week) => week.steps)
+      .map((item) => item.link?.song).filter(Boolean))
+    expect(songs('uMinor').has('Love Me Or Leave Me')).toBe(true)
+    expect(songs('uMinorBlues')).toEqual(new Set(['Minor blues: guide tones, one per chord, from the 3rd', 'Minor Study Blues',
+      'Minor blues: guide tones, two per chord', 'Minor blues: chord scales in eighth notes', 'Black And Tan Fantasy',
+      'Minor blues: guide tones, one per chord, from the 7th']))
+    // The altered unit's songs play the altered dominant substitution
+    const altered = PROGRAM.find((unit) => unit.id === 'uAltered')!.weekList.flatMap((week) => week.steps)
+    expect(altered.filter((item) => item.kind === 'song').every((item) => item.link?.subs?.includes('altered'))).toBe(true)
+    // Intros and endings on several songs, the band muted
+    const intros = ALL_STEPS.filter((item) => item.id.includes('-intro-'))
+    expect(new Set(intros.map((item) => item.link?.song)).size).toBeGreaterThanOrEqual(6)
+    expect(intros.every((item) => item.link?.mute?.length === 3)).toBe(true)
+  })
+})

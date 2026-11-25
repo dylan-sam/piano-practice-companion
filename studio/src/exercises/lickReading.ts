@@ -9,11 +9,8 @@
 // octave closest to the note before, so the line stays smooth.
 
 import { barMeters, type Chart } from '../music/chart'
-import { chordTones, parseChord, type Chord } from '../music/chords'
+import { chordTones, isAlteredChord, parseChord, type Chord } from '../music/chords'
 import type { MelodyNote } from '../music/melody'
-
-// Written alterations choose the scale of a dominant chord themselves
-const ALTERED = ['b9', '#9', 'alt', '#5', 'b5', '#11', 'b13']
 
 /**
  * Whether a chord is a V going to the chord after it: a major triad or a dominant 7th with no
@@ -22,10 +19,15 @@ const ALTERED = ['b9', '#9', 'alt', '#5', 'b5', '#11', 'b13']
  *   G7 -> Cm: 'minor'      G -> C: 'major'      G -> D: null      G7b9 -> C: null (as written)
  */
 export function resolvesAsV(chord: Chord, next?: Chord | null): 'minor' | 'major' | null {
-  if ((chord.quality !== 'maj' && chord.quality !== 'dom7') || ALTERED.some((t) => chord.tensions.includes(t))) return null
+  if ((chord.quality !== 'maj' && chord.quality !== 'dom7') || isAlteredChord(chord)) return null
   if (!next || (next.root - chord.root + 12) % 12 !== 5) return null
   const third = chordTones(next)[1]
   return third === 3 ? 'minor' : third === 4 ? 'major' : null
+}
+
+/** Whether a dominant 7th takes the altered scale: written alt, #5 or #9. */
+export function isAltered(chord: Chord): boolean {
+  return chord.quality === 'dom7' && ['alt', '#5', '#9'].some((tension) => chord.tensions.includes(tension))
 }
 
 /**
@@ -61,7 +63,7 @@ export function chordSlots(chord: Chord, next?: Chord | null): number[] {
       return [0, 2, 5, 5, 7, 9, 10]
     case 'dom7':
       // Altered: b9, #5 and b13 (the same note); a b9 alone: Phrygian dominant; #11: Lydian dominant
-      if (t.includes('alt') || t.includes('#5') || t.includes('#9')) return [0, 1, 4, 6, 8, 8, 10]
+      if (isAltered(chord)) return [0, 1, 4, 6, 8, 8, 10]
       if (t.includes('b9')) return [0, 1, 4, 5, 7, 8, 10]
       if (t.includes('b5')) return [0, 2, 4, 5, 6, 9, 10]
       return [0, 2, 4, t.includes('#11') ? 6 : 5, 7, t.includes('b13') ? 8 : 9, 10]

@@ -117,7 +117,7 @@ describe('melody playback', () => {
   test('notes follow repeats and choruses, swung, in each chorus\'s key', () => {
     const c = chart([note(0, 0.5, 0.5, 60)], [{ repeatStart: true }, { repeatEnd: true }])
     const timeline = buildTimeline(c, 0, 2, { keyStep: 5 })
-    const events = melodyEvents(c, timeline, 3, 0.66, 0, 5)
+    const events = melodyEvents(c, timeline, 3, 0.66, 0, { keyStep: 5 })
     expect(events).toHaveLength(4) // two passes through the repeat, two choruses
     const first = timeline.bars.find((b) => b.measure === 0)!
     expect(events[0].tick).toBe(Math.round((first.start + 0.66) * PPQ))

@@ -5,7 +5,8 @@
 import { barMeters, type Chart } from '../music/chart'
 import { notesByBar } from '../music/melody'
 import { onSixteenth, place, toTicks, type NoteEvent } from './events'
-import { chorusTranspose, type Timeline } from './timeline'
+import { chorusKeyOffset, type KeyPlan } from './keyOrder'
+import type { Timeline } from './timeline'
 
 const VELOCITY = 92 // a little under the band's accents, so the melody sings without covering it
 const LEGATO = 0.92 // share of its written length a note sounds
@@ -40,12 +41,12 @@ export function straightBeats(chart: Chart): Set<number> {
 }
 
 /**
- * Every melody note as it sounds along a timeline, in time order. `transpose` and `keyStep` are
+ * Every melody note as it sounds along a timeline, in time order. `transpose` and `keys` are
  * the ones the timeline was built with, so the melody stays in the band's key, chorus after
  * chorus. The band plays these notes, and the melody sightreader expects them.
  */
 export function melodyOccurrences(chart: Chart, timeline: Timeline, swing: number,
-  transpose = 0, keyStep = 0): MelodyOccurrence[] {
+  transpose = 0, keys: KeyPlan = {}): MelodyOccurrence[] {
   if (!chart.melody?.notes.length) return []
   const meters = barMeters(chart)
   const byBar = notesByBar(chart.melody)
@@ -56,7 +57,7 @@ export function melodyOccurrences(chart: Chart, timeline: Timeline, swing: numbe
   const out: MelodyOccurrence[] = []
   for (const bar of timeline.bars) {
     if (bar.measure < 0) continue
-    const semitones = chorusTranspose(transpose, keyStep, bar.chorus)
+    const semitones = chorusKeyOffset(keys, bar.chorus, transpose)
     for (const note of byBar.get(bar.measure) ?? []) {
       if (note.at >= meters[bar.measure].beats) continue
       const pitch = note.pitch + semitones
@@ -75,8 +76,8 @@ export function melodyOccurrences(chart: Chart, timeline: Timeline, swing: numbe
 
 /** The melody's note events for a timeline (see melodyOccurrences). */
 export function melodyEvents(chart: Chart, timeline: Timeline, channel: number, swing: number,
-  transpose = 0, keyStep = 0): NoteEvent[] {
-  return melodyOccurrences(chart, timeline, swing, transpose, keyStep).map((note) => ({
+  transpose = 0, keys: KeyPlan = {}): NoteEvent[] {
+  return melodyOccurrences(chart, timeline, swing, transpose, keys).map((note) => ({
     tick: toTicks(note.start), channel, note: note.pitch, velocity: VELOCITY,
     duration: Math.max(1, toTicks((note.end - note.start) * LEGATO)),
   }))

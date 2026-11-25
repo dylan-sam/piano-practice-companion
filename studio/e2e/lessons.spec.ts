@@ -7,7 +7,7 @@ import { collectErrors } from './helpers'
 test('a lesson step opens Lead Sheet Sightreading with its song and left-hand stage', async ({ page }) => {
   const errors = collectErrors(page)
   await page.goto('/lessons')
-  await expect(page.getByRole('heading', { name: 'Jazz piano in 30 weeks' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Jazz piano in 46 weeks' })).toBeVisible()
   // Units start closed; a unit shows one week at a time
   await expect(page.locator('details.lesson-unit[open]')).toHaveCount(0)
   await page.getByText('Unit 1. Time, chords and the first song').click()
@@ -36,6 +36,8 @@ test('a lesson step opens Lead Sheet Sightreading with its song and left-hand st
   await expect(page.getByLabel('Check')).toHaveValue('both')
   await expect(page.getByLabel('Left hand')).toHaveValue('bass')
   await expect(page).toHaveURL(/step=w1-avalon1&goal=90/)
+  // The screen's title leads back to the Lessons tab, not to the Sightreading menu
+  await expect(page.locator('.wordmark')).toHaveAttribute('aria-label', 'Back to Lessons')
 
   // The lesson's checking was for that visit only
   await page.goto('/sightreading/lead-sheets')
@@ -62,17 +64,19 @@ test('Free Improvisation writes out and colours the keys played', async ({ page 
   }
   await expect.poll(() => page.locator('[class*="tone-note-"], .abcjs-note').count()).toBeGreaterThan(0)
   await expect(page.getByRole('status', { name: 'Note colours' })).toContainText('chord tones')
-  // The scales under the sheet: the chord sounding, and Avalon's ideas for the part playing (or all of them)
-  const scales = page.getByRole('region', { name: 'Scales' })
-  await expect(scales).toContainText('Now:')
-  await expect(scales).toContainText('Scale ideas for this song')
-  await expect(scales).not.toContainText('In the key')
-  await scales.getByRole('button', { name: 'Show all' }).click()
-  await expect(scales).toContainText('B (bars 18 to 25)')
-  // In view, the panel sits right on top of the bottom bar, with no gap
-  const panelBottom = await scales.evaluate((el) => el.getBoundingClientRect().bottom)
-  const barTop = await page.locator('.transport').evaluate((el) => el.getBoundingClientRect().top)
-  expect(Math.abs(barTop - panelBottom)).toBeLessThan(2)
+  // Avalon's scale ideas, under the sheet, for the part playing (or all of them)
+  const ideas = page.getByRole('region', { name: 'Scale ideas for this song' })
+  await expect(ideas).toBeVisible()
+  await expect(ideas).not.toContainText('Now:')
+  await ideas.getByRole('button', { name: 'Show all' }).click()
+  await expect(ideas).toContainText('B (bars 18 to 25)')
+  // Tapping a bar opens the chord helper, with the chord's scale first
+  await page.locator('.lead-score .abcjs-staff').first().click()
+  const helper = page.getByRole('complementary', { name: 'Chord helper' })
+  await expect(helper).toBeVisible()
+  await expect(helper.getByText('First choice')).toBeVisible()
+  await helper.getByRole('button', { name: 'Close the chord helper' }).click()
+  await expect(helper).toHaveCount(0)
 })
 
 test('Delete all my data asks once more, then forgets everything', async ({ page }) => {
@@ -93,4 +97,29 @@ test('Delete all my data asks once more, then forgets everything', async ({ page
   await expect(page.getByRole('button', { name: 'Delete all my data' })).toBeVisible()
   expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith('eartraining')))).toEqual([])
   expect(await page.evaluate(() => localStorage.getItem('other-site'))).toBe('kept')
+})
+
+test('a substitution week: the song opens with the band playing the substitute, drawn in blue', async ({ page }) => {
+  const errors = collectErrors(page)
+  await page.goto('/lessons')
+  await page.getByText('Unit 1. Time, chords and the first song').click()
+  await page.getByRole('tab', { name: 'Week 5' }).click()
+  await page.locator('#sub1-avalon3').getByRole('button', { name: 'Start' }).click()
+  await expect(page).toHaveURL(/subs=addII/)
+  await expect(page.locator('text.lead-chord-sub').first()).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('text.lead-chord-sub').first()).toHaveText(/G/)
+  // The screen's Substitutions menu shows the lesson's substitution ticked
+  await page.getByRole('button', { name: 'Substitutions' }).click()
+  await expect(page.getByRole('checkbox', { name: /Add the ii before a long V7/ })).toBeChecked()
+  await page.keyboard.press('Escape')
+  // Free Improvisation: the same, with its own menu
+  await page.goto('/lessons')
+  // The unit opened above stays open
+  await page.getByRole('tab', { name: 'Week 5' }).click()
+  await page.locator('#sub1-improvise-avalon').getByRole('button', { name: 'Start' }).click()
+  await expect(page).toHaveURL(/improvisation.*subs=addII/)
+  await expect(page.locator('.lead-chord-sub, .chord-sub').first()).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: 'Substitutions' }).click()
+  await expect(page.getByRole('checkbox', { name: /Add the ii before a long V7/ })).toBeChecked()
+  expect(errors).toEqual([])
 })

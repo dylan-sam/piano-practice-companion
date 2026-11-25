@@ -8,7 +8,7 @@
 import { arrange, type Arrangement } from '../engine/arrange'
 import { melodyOccurrences, type MelodyOccurrence } from '../engine/melody'
 import type { Chart } from '../music/chart'
-import type { PracticeSettings } from '../music/practice'
+import { practiceOptions, type PracticeSettings } from '../music/practice'
 import { getStyle } from '../styles'
 
 export type NoteResult = 'correct' | 'wrong' | 'missed'
@@ -186,7 +186,7 @@ export interface MelodyArrangement {
 export function arrangeMelody(chart: Chart, styleId: string, patternId: string | null, transpose: number, choruses: number,
   practice: PracticeSettings, chunk?: { countIn: boolean }): MelodyArrangement {
   const style = getStyle(styleId)
-  const options = { loop: practice.loop, keyStep: practice.keyStep, ...(chunk ? { ending: false, countIn: chunk.countIn } : {}) }
+  const options = { ...practiceOptions(practice), ...(chunk ? { ending: false, countIn: chunk.countIn } : {}) }
   const arrangement = arrange(chart, style, transpose, choruses, options, patternId)
-  return { arrangement, notes: melodyOccurrences(chart, arrangement.timeline, style.swing, transpose, practice.keyStep) }
+  return { arrangement, notes: melodyOccurrences(chart, arrangement.timeline, style.swing, transpose, options) }
 }

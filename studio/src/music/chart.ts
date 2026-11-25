@@ -13,6 +13,7 @@ export interface BarChord {
   symbol: string | null // null = N.C. (no chord)
   beats: number
   hidden?: boolean // an exercise answer: drawn as a blank until revealed
+  written?: string | null // a substitute (music/substitutions.ts): the chord written in the chart, drawn in a colour
 }
 
 // A change of key at a point of a bar: from `beats` beats into the bar (0 = the downbeat)

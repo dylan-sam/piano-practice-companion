@@ -1,23 +1,35 @@
 // How chord charts are drawn, chosen in the Display menu and kept between visits. The same
 // settings apply to every chart (Chord Player, Chord Sightreading, Name the progression).
 
-import { useSyncExternalStore } from 'react'
+import { useSyncExternalStore, type CSSProperties } from 'react'
 import { loadJson, saveJson } from '../library/storage'
 import { parseChord } from '../music/chords'
 import { romanRoot } from '../music/roman'
-
-/** Where Free Improvisation shows its scale ideas: in view at the bottom while the sheet scrolls, or after the sheet. */
-export type ScalePanelPlace = 'fixed' | 'under'
 
 export interface DisplaySettings {
   roman: boolean // chords as Roman numerals of the key in force (II-7 V7 I^7)
   minor: '-' | 'm' // how minor is written: C- or Cm
   repeatSign: boolean // a bar with the same chords as the bar before is drawn as a % sign
   autoScroll: boolean // a playing sheet scrolls to keep the highlighted bar mid-screen (player and sightreader)
-  scalePanel: ScalePanelPlace // Free Improvisation: where the scale ideas show
+  sheetScale: number // the size of the sheet in percent (A- / A+), one of SHEET_SCALES
 }
 
-export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false, autoScroll: true, scalePanel: 'fixed' }
+export const DEFAULT_DISPLAY: DisplaySettings = { roman: false, minor: '-', repeatSign: false, autoScroll: true, sheetScale: 100 }
+
+// The sheet sizes A- and A+ step through, in percent (idea from OpenStand #80)
+export const SHEET_SCALES = [70, 80, 90, 100, 115, 130, 150, 175]
+
+/** The style that sizes a sheet's title and bars (index.css: .sheet > .rows, .sheet > .sheet-head). */
+export function sheetScaleStyle(percent: number): CSSProperties {
+  return { '--sheet-scale': percent / 100 } as CSSProperties
+}
+
+/** The sheet size one step smaller (delta -1) or larger (+1), within SHEET_SCALES. */
+export function stepSheetScale(current: number, delta: -1 | 1): number {
+  const at = SHEET_SCALES.indexOf(current)
+  const from = at >= 0 ? at : SHEET_SCALES.indexOf(DEFAULT_DISPLAY.sheetScale)
+  return SHEET_SCALES[Math.max(0, Math.min(SHEET_SCALES.length - 1, from + delta))]
+}
 const STORAGE_KEY = 'openstand.display'
 
 /** Check a stored value before using it as display settings (settings saved before auto-scroll existed lack it). */
@@ -25,13 +37,13 @@ function isDisplay(value: unknown): value is Partial<DisplaySettings> {
   const v = value as Partial<DisplaySettings> | null
   return !!v && typeof v.roman === 'boolean' && (v.minor === '-' || v.minor === 'm') && typeof v.repeatSign === 'boolean'
     && (v.autoScroll === undefined || typeof v.autoScroll === 'boolean')
-    && (v.scalePanel === undefined || typeof v.scalePanel === 'string')
+    && (v.sheetScale === undefined || typeof v.sheetScale === 'number')
 }
 
 // Missing settings take their default (and so does a place of the scale ideas this version does not know)
 const stored = loadJson<Partial<DisplaySettings>>(STORAGE_KEY, DEFAULT_DISPLAY, isDisplay)
 let current: DisplaySettings = { ...DEFAULT_DISPLAY, ...stored,
-  scalePanel: stored.scalePanel === 'under' ? 'under' : DEFAULT_DISPLAY.scalePanel }
+  sheetScale: SHEET_SCALES.includes(stored.sheetScale ?? 0) ? stored.sheetScale! : DEFAULT_DISPLAY.sheetScale }
 const listeners = new Set<() => void>()
 
 /** Change some display settings, save them and redraw every chart. */
@@ -53,10 +65,10 @@ export function useDisplay(): DisplaySettings {
 }
 
 /** Whether any display option shown on this screen differs from the default (lights the Display button). */
-export function useDisplayChanged(roman = true, autoScroll = false, scalePanel = false): boolean {
+export function useDisplayChanged(roman = true, autoScroll = false): boolean {
   const display = useDisplay()
   return (roman && display.roman) || display.minor === 'm' || display.repeatSign || (autoScroll && !display.autoScroll) ||
-    (scalePanel && display.scalePanel === 'under')
+    display.sheetScale !== DEFAULT_DISPLAY.sheetScale
 }
 
 /**

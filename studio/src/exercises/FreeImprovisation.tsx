@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
 import { BAND_PARTS, useMixer } from '../audio/useMixer'
 import { useMidiKeyboard } from '../audio/useMidiKeyboard'
-import { useHeardBeat, usePlayer } from '../audio/usePlayer'
+import { useHeardBeat, usePausedAt, usePlayer } from '../audio/usePlayer'
 import { BASE_BPM, type Arrangement } from '../engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from '../engine/pianoPatterns'
 import { barAtBeat, type Timeline } from '../engine/timeline'
@@ -18,9 +18,10 @@ import { loadTunes } from '../library/db'
 import { useLessonLink } from '../lessons/lessonLink'
 import { useLessonSong } from '../lessons/useLessonSong'
 import { CHORD_SOURCES } from '../library/importTunes'
-import { hasMelody, type Chart as ChartData } from '../music/chart'
-import { barKeyCentres, spellingKey } from '../music/roman'
-import { NO_PRACTICE } from '../music/practice'
+import { hasMelody, withoutMelody, type Chart as ChartData } from '../music/chart'
+import { barKeyCentres } from '../music/roman'
+import { BPM_RANGE, NO_PRACTICE, applyPracticeChange, type PracticeSettings } from '../music/practice'
+import { substituteChart } from '../music/substitutions'
 import { getStyle, STYLES } from '../styles'
 import { Wordmark } from '../ui/AppLink'
 import { DisplayMenu } from '../ui/DisplayMenu'
@@ -29,8 +30,12 @@ import { LeadSheet } from '../ui/LeadSheet'
 import { Mixer } from '../ui/Mixer'
 import { Transport } from '../ui/Transport'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl, RandomSongPicker } from './ExerciseControls'
-import { chordAfter, chordSlotAt, writeLine, type PlayedKey } from './improvisation'
-import { ScalePanel } from '../lessons/ScaleMap'
+import { writeLine, type PlayedKey } from './improvisation'
+import { SongScaleIdeas } from '../lessons/ScaleMap'
+import { ChordHelperButton, ChordHelperPanel } from '../ui/ChordHelper'
+import { Substitutions } from '../ui/Substitutions'
+import { useChordHelper } from '../ui/useChordHelper'
+import { useHear } from '../audio/hear'
 import { keysWithPassages, scaleMapFor } from '../lessons/scaleMaps'
 import { arrangeMelody } from './melodyReading'
 import { transposeFor, type KeyChoice } from './nameProgression'
@@ -42,7 +47,6 @@ import { useBand } from './useBand'
 import { useEndlessLine } from './useEndlessLine'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
 
-const BPM_RANGE: [number, number] = [40, 300]
 const CHUNK_GROUPS = 12 // progressions in each sheet of an infinite line
 const SOURCES: { id: SourceMode; text: string }[] = [
   { id: 'pick', text: 'Pick a song' }, { id: 'random', text: 'Random song' }, { id: 'infinite', text: 'Infinite progressions' },
@@ -59,16 +63,18 @@ interface Prepared {
   countIn?: boolean
 }
 
-/** Arrange a chord chart for the band alone. */
+/** Arrange a chord chart for the band alone (with a lesson's substitutions, if any). */
 function prepare(chart: ChartData, styleId: string, patternId: string | null, transpose: number, choruses: number,
-  chunk?: { countIn: boolean }): Prepared {
+  chunk?: { countIn: boolean }, practice: PracticeSettings = NO_PRACTICE): Prepared {
   const { melody: _melody, ...chords } = chart
-  return { chart: chords, arrangement: arrangeMelody(chords, styleId, patternId, transpose, choruses, NO_PRACTICE, chunk).arrangement }
+  return { chart: chords, arrangement: arrangeMelody(chords, styleId, patternId, transpose, choruses, practice, chunk).arrangement }
 }
 
 /** Improvise freely over a chord chart with the band; every key is written out and coloured. */
 export function FreeImprovisation() {
   const playerRef = useRef<Player | null>(null)
+  // Where the band was paused: Play goes on from there, the page kept
+  const { pausedAt, hold: holdPause, forget: forgetPause } = usePausedAt(playerRef)
   const lineRef = useRef<InfiniteLine | null>(null)
   const endless = useEndlessLine<Prepared>(playerRef)
   const [line, setLine] = useState<InfiniteLine | null>(null)
@@ -79,7 +85,7 @@ export function FreeImprovisation() {
   const [timeline, setTimeline] = useState<Timeline | null>(null)
   const [keys, setKeys] = useState<PlayedKey[]>([])
   const band = useBand<string | null>(defaultPatternForStyle, BPM_RANGE)
-  const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses } = band
+  const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses, practice } = band
   const source = useSongSource({
     playing, onError: setError, onLeave: clearStand,
     onOpen: (next) => {
@@ -121,6 +127,7 @@ export function FreeImprovisation() {
   const startPrepared = useCallback(async (prepared: Prepared, fromSeconds = 0) => {
     const player = playerRef.current
     if (!player) return
+    forgetPause()
     if (fromSeconds === 0) {
       setKeys([])
       setBeat(0)
@@ -131,18 +138,18 @@ export function FreeImprovisation() {
     else await endless.play(prepared)
     player.setRate(bpm / BASE_BPM)
     setPlaying(true)
-  }, [endless, bpm])
+  }, [endless, bpm, forgetPause])
 
-  /** Arrange and play a song. */
+  /** Arrange and play a song (with the substitutions of `nextPractice`). */
   const startPlayback = useCallback(async (chart: ChartData, nextStyle = styleId, nextPattern = patternId,
-    nextTranspose = transpose, nextChoruses = choruses, fromSeconds = 0) => {
+    nextTranspose = transpose, nextChoruses = choruses, fromSeconds = 0, nextPractice = practice) => {
     try {
-      await startPrepared(prepare(chart, nextStyle, nextPattern, nextTranspose, nextChoruses), fromSeconds)
+      await startPrepared(prepare(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, undefined, nextPractice), fromSeconds)
     } catch (cause) {
       setError(String(cause))
       reportError(cause, 'free improvisation playback')
     }
-  }, [styleId, patternId, transpose, choruses, startPrepared])
+  }, [styleId, patternId, transpose, choruses, practice, startPrepared])
 
   /** The next sheet of an infinite line. */
   const nextChunk = useCallback((after: InfiniteLine | null, countIn: boolean, nextStyle = styleId, nextPattern = patternId): Prepared | null => {
@@ -176,6 +183,7 @@ export function FreeImprovisation() {
 
   const readiness = usePlayer(playerRef, () => {
     setPlaying(false)
+    forgetPause()
     if (endless.missed()) void switchToNext()
   }, () => STYLES.map(warmUpMidi))
   const mixer = useMixer(playerRef, readiness, lesson?.mute)
@@ -203,11 +211,34 @@ export function FreeImprovisation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** Stop the band (an infinite line stops going on). */
+  /** Stop the band (an infinite line stops going on); the next Play starts over. */
   function stop() {
+    pauseBand()
+    forgetPause()
+  }
+
+  /** Pause the band where it is (an infinite line waits): the page stays, and Play goes on from there. */
+  function pauseBand() {
+    holdPause()
     endless.stop()
     playerRef.current?.stop()
     setPlaying(false)
+  }
+
+  /**
+   * Arrange the band again and go on from `from` (MIDI time), the page kept: the song, or the
+   * infinite line's sheet on the stand, after which the line goes on (a new style while playing,
+   * or Play after a pause).
+   */
+  function goOnFrom(from: number, nextStyle = styleId, nextPattern = patternId, nextChoruses = choruses) {
+    if (!chords) return
+    if (mode !== 'infinite') return void startPlayback(chords, nextStyle, nextPattern, transpose, nextChoruses, from)
+    // The sheet on the stand is arranged again; the next one is prepared again
+    endless.prepare(null)
+    endless.goesOn.current = true
+    const countIn = endless.countIn.current
+    void startPrepared({ ...prepare(chords, nextStyle, nextPattern, 0, 1, { countIn }), line: lineRef.current ?? undefined, countIn },
+      from).then(() => { if (lineRef.current) prepareAfter(lineRef.current, nextStyle, nextPattern) })
   }
 
   /** Stop and wipe the page (another song or line goes on the stand). */
@@ -236,21 +267,36 @@ export function FreeImprovisation() {
   }
 
   /**
-   * Change what the band plays: a new style or piano pattern goes on from where the band is (the
-   * page stays); a new key or number of choruses starts the song again.
+   * Change what the band plays: a new style, piano pattern or number of choruses goes on from where
+   * the band is (the page stays); a new key starts the song again.
    */
   function changeArrangement(nextStyle: string, nextPattern: string | null, nextTranspose: number, nextChoruses = choruses) {
     band.set({ styleId: nextStyle, patternId: nextPattern, transpose: nextTranspose, choruses: nextChoruses })
     const player = playerRef.current
+    // A new number of choruses goes on too, as a new style does
+    const soundOnly = nextTranspose === transpose
+    if (!soundOnly && !playing) forgetPause() // a paused band starts a changed sheet from its beginning
     if (!playing || !chords || !player) return
-    const soundOnly = nextTranspose === transpose && nextChoruses === choruses
-    if (mode === 'infinite') {
-      if (!soundOnly) return void startInfinite()
-      endless.prepare(null)
-      const countIn = endless.countIn.current
-      void startPrepared({ ...prepare(chords, nextStyle, nextPattern, 0, 1, { countIn }), line: lineRef.current ?? undefined, countIn },
-        player.position).then(() => { if (lineRef.current) prepareAfter(lineRef.current, nextStyle, nextPattern) })
-    } else void startPlayback(chords, nextStyle, nextPattern, nextTranspose, nextChoruses, soundOnly ? player.position : 0)
+    if (soundOnly) goOnFrom(player.position, nextStyle, nextPattern, nextChoruses)
+    else if (mode === 'infinite') void startInfinite()
+    else void startPlayback(chords, nextStyle, nextPattern, nextTranspose, nextChoruses)
+  }
+
+  /**
+   * Change the substitutions (the Substitutions menu, songs only): a playing song goes on from where
+   * the band is, the page kept.
+   */
+  const changePractice = (next: PracticeSettings) => {
+    const player = playerRef.current
+    const goOn = (changed: PracticeSettings, count: number, from: number) => {
+      band.set({ practice: changed, choruses: count })
+      void startPlayback(chords!, styleId, patternId, transpose, count, from, changed)
+    }
+    applyPracticeChange(practice, next, choruses, playing && !!chords && !!player && mode !== 'infinite', {
+      restart: (changed, count) => goOn(changed, count, 0),
+      goOn: (changed, count) => goOn(changed, count, player!.position),
+      keep: (changed, count) => band.set({ practice: changed, choruses: count }),
+    })
   }
 
   /** Choose the key for this song and the next ones. */
@@ -263,16 +309,25 @@ export function FreeImprovisation() {
   // with the band, a sixteenth at a time (the sheet is drawn again only when it changes)
   const held = keys.some((key) => key.end === null)
   const now = held ? Math.floor(beat * 4) / 4 : 0
-  // The scale ideas under the sheet: the chord sounding (written or carried over), and a lesson
-  // song's map, whose key passages also set the key's scales of the colours
+  // A lesson song's scale ideas, under the sheet; its key passages also set the key's scales of the colours
   const scaleMap = mode === 'infinite' ? undefined : scaleMapFor(tune?.chart.title)
   // An infinite line takes the key of each progression in turn
   const keysOfBars = useMemo(() => !chords ? [] : mode === 'infinite' && line && bank ? lineKeys(line, bank.progressions) :
     keysWithPassages(barKeyCentres(chords), scaleMap), [chords, scaleMap, mode, line, bank])
-  const playingSlot = playing && timeline ? chordSlotAt(timeline, beat) : undefined
+  // The chords as the band plays them: without the song's melody (the band does not play it, so
+  // no substitution is held back for it), with the Substitutions menu's
+  const bandChart = useMemo(() => chords && withoutMelody(chords), [chords])
+  // An infinite line plays no substitutions (the menu is for songs)
+  const subs = mode === 'infinite' ? undefined : practice.subs
+  const keyPlan = useMemo(() => ({ subs }), [subs])
+  // The chord helper (tap a bar): its chords and the bar's key, with a lesson map's key passages
+  const chordHelper = useChordHelper({ chart: bandChart, transpose, keys: keysOfBars, keyPlan, chorus,
+    sounding: position && position.measure >= 0 ? { measure: position.measure, beatInBar: beat - position.start } : null })
+  const hear = useHear(playerRef, readiness.kind === 'ready')
   const written = useMemo(() => (timeline ? writeLine(keys, timeline, chorus, transpose, style.swing, now, keysOfBars) : null),
     [keys, timeline, chorus, transpose, style.swing, now, keysOfBars])
-  const sheet = useMemo(() => (chords ? { ...chords, melody: { notes: written?.notes ?? [] } } : null), [chords, written])
+  const sheet = useMemo(() => (bandChart ? { ...substituteChart(bandChart, subs, chorus), melody: { notes: written?.notes ?? [] } } : null),
+    [bandChart, subs, chorus, written])
   const noteClasses = useMemo(() => Object.fromEntries((written?.colors ?? []).map((color, index) => [index, `tone-note-${color}`])),
     [written])
 
@@ -287,7 +342,7 @@ export function FreeImprovisation() {
       <header className="topbar">
         <Wordmark>Free Improvisation</Wordmark>
         <span className="topbar-spacer" />
-        <DisplayMenu autoScroll scalePanel />
+        <DisplayMenu autoScroll />
         <MidiButton keyboard={keyboard} />
         <SongsToggle source={source} />
       </header>
@@ -303,12 +358,10 @@ export function FreeImprovisation() {
           <LeadSheet chart={sheet} style={style} transpose={transpose}
             activeMeasure={position && position.measure >= 0 ? position.measure : null}
             beatInBar={position ? beat - position.start : 0} barBeats={position?.beats ?? 4} autoScroll={playing}
-            noteClasses={noteClasses} />
+            noteClasses={noteClasses} onBarClick={chordHelper.open} />
           <ToneColorsLine tones={written?.counts ?? { chord: 0, color: 0, approach: 0, outside: 0 }} />
-          <ScalePanel map={scaleMap} mapKey={scaleMap ? (scaleMap.tonic + transpose + 12) % 12 : 0}
-            songKey={(spellingKey(keysOfBars[position?.measure ?? 0] ?? { tonic: chords!.key, minor: !!chords!.minor }) + transpose + 12) % 12}
-            bar={playing && position && position.measure >= 0 ? position.measure : null}
-            chord={playingSlot?.chord ?? null} next={playingSlot && timeline ? chordAfter(timeline, playingSlot) : null} />
+          {scaleMap && <SongScaleIdeas map={scaleMap} mapKey={(scaleMap.tonic + transpose + 12) % 12}
+            bar={playing && position && position.measure >= 0 ? position.measure : null} />}
           <p className="sight-hint">{HINT}</p>
           <p className="sight-hint tone-legend">
             {TONE_COLORS.map((kind) => <span key={kind.id}><strong className={`tone-${kind.id}`}>{kind.label}</strong>: {kind.help}</span>)}
@@ -318,9 +371,12 @@ export function FreeImprovisation() {
         {!chords && mode === 'pick' && <p className="sight-hint">Choose a song (the shipped lead sheets, the ChoCo catalog, or your own imported charts), press play and improvise: every key you play is written out over the chords.</p>}
         <HeldNotes held={keyboard.held} keyPc={keyPc} />
       </SongWorkspace>
+      <ChordHelperPanel helper={chordHelper} onHear={hear} />
 
       {chords && <Transport readiness={readiness} playing={playing}
-        onToggle={() => playing ? stop() : mode === 'infinite' ? void startInfinite() : void startPlayback(chords)}
+        onToggle={() => playing ? pauseBand() : pausedAt !== null ? goOnFrom(pausedAt)
+          : mode === 'infinite' ? void startInfinite() : void startPlayback(chords)}
+        paused={pausedAt !== null} onRestart={() => mode === 'infinite' ? void startInfinite() : void startPlayback(chords)}
         position={positionLabel} styleId={styleId}
         onStyle={(id) => changeArrangement(id, defaultPatternForStyle(id), transpose)}
         pianoPatternId={patternId} pianoPatterns={patterns}
@@ -331,6 +387,8 @@ export function FreeImprovisation() {
         bpm={bpm} bpmRange={BPM_RANGE} onBpm={setBpm}
         choruses={mode === 'infinite' ? 1 : choruses} maxChoruses={mode === 'infinite' ? 1 : 24}
         onChoruses={(count) => changeArrangement(styleId, patternId, transpose, count)}>
+        <ChordHelperButton helper={chordHelper} />
+        {mode !== 'infinite' && <Substitutions practice={practice} onChange={changePractice} />}
         <Mixer {...mixer(style.comp.program)} parts={BAND_PARTS} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}

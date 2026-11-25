@@ -22,7 +22,7 @@ export default defineConfig({
     // The band may start without a tap, as after a first touch on a phone
     launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 860 } } }],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1760, height: 860 } } }],
   webServer: external ? undefined : {
     command: 'npx vite build && npx vite preview --port 4173 --strictPort',
     env: { VITE_BUNDLED_CATALOG: '1' },

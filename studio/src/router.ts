@@ -26,6 +26,18 @@ export function parentRoute(path: string): string {
   return parts.length > 1 ? `/${parts[0]}` : ROUTES.home
 }
 
+/** The query value that marks a screen opened from the Lessons tab (lessonLink.ts adds it). */
+export const FROM_LESSONS = 'lessons'
+
+/**
+ * Where the back button and the top-bar title lead from a route: the Lessons tab for a screen
+ * opened from a lesson step (`?from=lessons`), else the menu one level up (parentRoute).
+ */
+export function backRoute(path: string, search = ''): string {
+  return new URLSearchParams(search).get('from') === FROM_LESSONS && normalizePath(path) !== ROUTES.lessons
+    ? ROUTES.lessons : parentRoute(path)
+}
+
 const NAVIGATE = 'eartraining:navigate'
 // The folder the app is served from: '' at the root of a site, '/piano-practice-companion' on GitHub Pages
 const ROOT = import.meta.env.BASE_URL.replace(/\/$/, '')

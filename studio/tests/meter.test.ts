@@ -250,3 +250,20 @@ describe('smooth chord changes', () => {
     expect(total / changes).toBeLessThan(3)
   })
 })
+
+describe('comping in 3/4', () => {
+  test("every style's chord hits stay inside the 3/4 bar of their chord", () => {
+    const chart = chartFromMeasures({ title: 'Waltz', style: 'swing', key: 0, bpm: 120, time: [3, 4] }, [['C'], ['F'], ['G'], ['C']])
+    const timeline = buildTimeline(chart, 0, 1, { countIn: false, ending: false })
+    for (const style of STYLES) {
+      for (let run = 0; run < 20; run++) {
+        const events = generateComp(timeline.slots, style.comp, 0.5, 0)
+        for (const event of events) {
+          const beat = event.tick / PPQ
+          const slot = timeline.slots.find((s) => beat >= s.start - 0.6 && beat < s.start + s.beats - 0.02)
+          expect(slot, `${style.id}: a hit at beat ${beat}`).toBeDefined()
+        }
+      }
+    }
+  })
+})

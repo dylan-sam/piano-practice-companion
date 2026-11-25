@@ -1,6 +1,6 @@
 # Licks and exercises
 
-A database of **646 licks and improvisation exercises** for Exercises
+A database of **677 licks and improvisation exercises** for Exercises
 Sightreading and Lick Sightreading: phrases to play over one chord or a chord
 progression, and drills (arpeggios, guide tones, scales, enclosures, intervals,
 rhythm) to build the vocabulary used when improvising.
@@ -10,7 +10,6 @@ rhythm) to build the vocabulary used when improvising.
 - [Exercises](#exercises)
 - [Vocabulary licks](#vocabulary-licks)
 - [Licks mined from melodies](#licks-mined-from-melodies)
-- [One-chord licks, by idea](#one-chord-licks-by-idea)
 - [Common patterns](#common-patterns)
 - [The format](#the-format)
 - [Rebuilding](#rebuilding)
@@ -24,10 +23,9 @@ listed in its own playlist:
 
 | File | Playlists | Charts | License |
 |---|---|---|---|
-| `studio/public/licks/licks.json` | Exercises: triads, seventh chords, guide tones and chord-tone lines, scales and scale patterns, approach notes and enclosures, intervals, rhythm | 222 | CC BY 4.0 |
-| | Licks: vocabulary over progressions | 12 | CC BY 4.0 |
-| | One-chord licks, by idea: Arpeggios, Scale lines, Neighbours and turns, Approach notes, Colours, Blues ([how](#one-chord-licks-by-idea)) | 133: 12 written, 121 from standards | CC BY 4.0 and public domain |
-| | Licks from standards (OpenEWLD melodies) over progressions, by context | 180 | public domain |
+| `studio/public/licks/licks.json` | Exercises: triads, seventh chords, guide tones and chord-tone lines, scales and scale patterns, approach notes and enclosures, intervals, rhythm | 253 | CC BY 4.0 |
+| | Licks: vocabulary | 24 | CC BY 4.0 |
+| | Licks from standards (OpenEWLD melodies), by context | 301 | public domain |
 | | Licks from folk tunes (Nottingham Music Database), by context | 99 | CC BY 4.0 |
 | `weimar/licks_weimar.json` (not shipped, not in git) | Weimar licks, by context | 704 | ODbL 1.0 |
 | | Weimar licks: common patterns | 120 | ODbL 1.0 |
@@ -51,7 +49,7 @@ The contexts, for every mined collection:
 
 **Exercises Sightreading** lists them; the players and Lead Sheet
 Sightreading, which list songs, do not. **Lick Sightreading** writes any of the 133 one-chord
-licks (written vocabulary and standards, listed by idea) over every chord of a chord chart or of an
+licks (vocabulary and standards) over every chord of a chord chart or of an
 endless line of progressions ([how](EXERCISES.md#lick-sightreading)).
 
 ## The rhythm rule
@@ -76,7 +74,7 @@ keys end on the first chord again.
 |---|---|---|
 | Triads (33) | major and minor triads in half steps, whole steps and fourths: 1-3-5-8 up, 8-5-3-1 down, up one and down the next, 1-3-5-8-5-3 in triplets; diminished, augmented and sus4 triads; the diatonic triads of C in root position and both inversions | the 1-3-5 drills of Kelly and Rasmussen's Module 1 |
 | Seventh chords (39) | major 7th, minor 7th, dominant 7th, half-diminished, diminished 7th and minor-major 7th chords through the cycle of fourths: 1-3-5-7, 7-5-3-1, 1-3-5-7-8-7-5-3, **without the fifth** (1-3-7-8, and 1-3-7-8-7-3 in triplets), and the upper structure 3-5-7-9; the diatonic seventh chords of C | arpeggios with and without the fifth |
-| Guide tones and chord-tone lines (40) | over nine progressions (ii-V-I in all keys, minor ii-V-i in all keys, I-vi-ii-V, iii-VI-ii-V, jazz blues, rhythm changes A section, the diatonic cycle ii-V-I-IV-vii-III-vi, the cycle of dominants, the Coltrane cycle): guide tones one per chord from the 3rd and from the 7th, two per chord, a line of chord tones in eighth notes, and (four progressions) a line of the chord scales in eighth notes | voice leading through the changes |
+| Guide tones and chord-tone lines (71) | over sixteen progressions (ii-V-I in all keys, minor ii-V-i in all keys, I-vi-ii-V, iii-VI-ii-V, jazz blues, rhythm changes A section, the diatonic cycle ii-V-I-IV-vii-III-vi, the cycle of dominants, the Coltrane cycle, and the four substitutions of the Lessons tab: a V7 with its ii added in F and C, I-VI-II-V with secondary dominants, ii-bII7-I in all keys, I-#Io7-ii-V; and for its altered dominant and minor blues units, ii-V7b9-I and minor ii-V7b9b13-i in all keys, and a minor blues in C): guide tones one per chord from the 3rd and from the 7th, two per chord, a line of chord tones in eighth notes, and (seven progressions) a line of the chord scales in eighth notes | voice leading through the changes |
 | Scales and scale patterns (55) | 25 scales up and down over their chord: the 7 modes of the major scale, the 7 modes of melodic minor, harmonic minor, phrygian dominant, the bebop dominant, major and dorian scales, major and minor pentatonic, blues, whole tone and both diminished scales; on Ionian, Dorian, Mixolydian, bebop dominant, melodic minor and altered: thirds, 1-2-3-5, groups of four, triads on every step in triplets, up and down in triplets | chord scales |
 | Approach notes and enclosures (20) | into 1, 3, 5, 7 and 8 of C^7, C-7 and C7: chromatic approach from below, scale approach from above, double chromatic approach, three enclosures; and every 3rd enclosed through the ii-V-I chain and the blues | bebop chromaticism |
 | Intervals (27) | minor 3rds to major 7ths moved up in half steps: lower note first, upper note first, up one and down the next (no chords) | Kelly and Rasmussen's interval drills |
@@ -93,7 +91,7 @@ How the lines are made:
   nearest tone of the next chord when the chord changes.
 - **Chord scales** (`chordScale`): major 7th Ionian (Lydian with a #11), minor
   7th Dorian, minor 6th and minor-major Melodic minor, half-diminished
-  Locrian natural 2 (the jazz choice: a natural 9th), diminished whole-half, dominant Mixolydian, with a b9 Phrygian
+  Locrian, diminished whole-half, dominant Mixolydian, with a b9 Phrygian
   dominant, with #11 Lydian dominant, altered (alt, #5, #9) the altered scale.
 
 ## Vocabulary licks
@@ -102,13 +100,9 @@ How the lines are made:
 `lickExercises.ts`), each showing one device: "The Lick" (a traditional figure),
 3-to-9 arpeggios, 1-2-3-5 cells, bebop scale lines, enclosures, triplet
 arpeggios, b9 diminished arpeggios, the altered scale, the blue third, the blues
-scale, upper-structure arpeggios (3-5-7-9-11), 1-2-3-5 climbs, and turnaround arpeggios.
+scale, Lydian and Dorian colours, minor 9th arpeggios, and turnaround arpeggios.
 A test checks that every note on a beat belongs to the chord's scale (or is the
 blue third over a dominant).
-
-The 12 over one chord are listed with the licks from standards, by idea
-([below](#one-chord-licks-by-idea)); the 12 over a progression in **Licks: vocabulary over
-progressions**.
 
 ## Licks mined from melodies
 
@@ -149,34 +143,9 @@ For each song:
    motion, starting a phrase, between 1.5 and 3.5 notes a beat, and varied note
    lengths. Duplicates (the same notes at the same times) are left out.
 
-In each playlist of licks from standards, the licks come by how common their opening is: in how many of the shipped lead sheet melodies (standards and folk tunes) their first four notes appear, by their intervals, so in any key and any rhythm; ties by level, then by rank. `data/licks.log` gives the range for each playlist. In the other playlists the licks are ordered by level, then by rank. The level is 1
+Within a playlist the licks are ordered by level, then by rank. The level is 1
 for fewer than 1.25 notes a beat, 2 below 2.25, else 3, one more (up to 3)
 with triplets or sixteenths.
-
-## One-chord licks, by idea
-
-The licks over one chord (the 12 written ones and the 121 from standards) are listed by the
-idea they practise, not by where they come from (`studio/scripts/lickNaming.ts`). Lick
-Sightreading plays them over any chord, so each is read as it does (`lickShape`): every note is
-a degree, 1 to 7, of the chord's scale (Locrian natural 2 for a half-diminished chord, the
-whole-half diminished scale for a diminished one), or a chromatic note a half step under (b) or
-over (#) a degree. Over C7, E is the 3 and Bb the 7; over CΔ7, B is the 7. Then:
-
-| Group | When |
-|---|---|
-| Blues | over a major or dominant chord, it plays the blue third (b3, a half step under the 3) |
-| Approach notes | a chromatic note moves by a half step to a chord tone |
-| Colours | other chromatic notes |
-| Arpeggios | at least half the moves are leaps and most notes are chord tones |
-| Scale lines | most moves are steps, with at most one change of direction |
-| Neighbours and turns | the rest: steps that turn around chord tones |
-
-The written licks name their group, and their names hold over any chord too ("Arpeggio
-1-3-5-7, scale down to the 9"). A lick from standards is renamed after what it does, with its
-degrees: "Arpeggio down 1-7-5-3", "Approach into the 5: b6-5-3-1"; its tune goes to the line
-under the title ("La Cumparsita, bar 1"), and a title used twice in a group gets "(2)". In a group, the licks go from easy to hard: by level,
-the written ones first, then fewer notes, then how common their opening is. Lick Sightreading
-shows the level as dots in the Lick menu.
 
 `data/licks.log` lists, for every collection, how many windows were turned
 down and why, and how many licks each context kept.
@@ -249,7 +218,6 @@ sheets (`studio/public/leadsheets/catalog.json`), so rebuild those first
 | `studio/scripts/lickCharts.ts` | chords into bars, note lines, the text notation of the vocabulary (`D4:8 F4:8t A4:4.`), transposition |
 | `studio/scripts/lickExercises.ts` | the exercises and the vocabulary |
 | `studio/scripts/lickMining.ts` | contexts, windows, grid snapping, ranking, common patterns |
-| `studio/scripts/lickNaming.ts` | the one-chord licks: chord degrees, groups, titles, order |
 | `studio/scripts/lickCatalog.ts` | builds and checks the files, writes the log |
 | `studio/tests/licks.test.ts` | tests, including both shipped files |
 

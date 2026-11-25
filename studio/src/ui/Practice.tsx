@@ -1,5 +1,6 @@
 import type { Chart } from '../music/chart'
-import { KEY_STEPS, sections, type PracticeSettings } from '../music/practice'
+import { newRandomKeySeed } from '../engine/keyOrder'
+import { changesKeys, KEY_STEPS, RANDOM_KEYS, sections, type PracticeSettings } from '../music/practice'
 import { Popover } from './Popover'
 
 // Label of a loop's bar range
@@ -14,7 +15,7 @@ interface PracticeProps {
 
 // The Practice panel: loop, going round the keys and tempo ramp
 export function Practice({ chart, settings, onChange, onPickLoop }: PracticeProps) {
-  const active = settings.loop !== null || settings.keyStep !== 0 || settings.ramp !== 0
+  const active = settings.loop !== null || changesKeys(settings) || settings.ramp !== 0
   const marks = sections(chart)
 
   return (
@@ -82,11 +83,13 @@ export function Practice({ chart, settings, onChange, onPickLoop }: PracticeProp
             <span className="label">Keys</span>
             <select
               className="select"
-              value={settings.keyStep}
-              onChange={(e) => onChange({ ...settings, keyStep: Number(e.target.value) })}
+              value={settings.randomKeys ? RANDOM_KEYS : String(settings.keyStep)}
+              onChange={(e) => onChange(e.target.value === RANDOM_KEYS
+                ? { ...settings, keyStep: 0, randomKeys: { seed: newRandomKeySeed() } } // a new order each time
+                : { ...settings, keyStep: Number(e.target.value), randomKeys: undefined })}
             >
               {KEY_STEPS.map((k) => (
-                <option key={k.step} value={k.step}>
+                <option key={k.step} value={String(k.step)}>
                   {k.label}
                 </option>
               ))}

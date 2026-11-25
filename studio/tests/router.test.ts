@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePath, parentRoute, ROUTES } from '../src/router'
+import { backRoute, normalizePath, parentRoute, ROUTES } from '../src/router'
 
 describe('app routes', () => {
   it('treats trailing slashes as the same route', () => {
@@ -13,5 +13,10 @@ describe('app routes', () => {
     expect(parentRoute(ROUTES.chordPlayer)).toBe(ROUTES.playAlong)
     expect(parentRoute(ROUTES.earTraining)).toBe(ROUTES.home)
     expect(parentRoute(ROUTES.home)).toBe(ROUTES.home)
+  })
+  it('goes back to the Lessons tab from a screen a lesson step opened', () => {
+    expect(backRoute(ROUTES.leadSheetSightreading, '?song=Avalon&bpm=70&from=lessons')).toBe(ROUTES.lessons)
+    expect(backRoute(ROUTES.leadSheetSightreading, '?song=Avalon')).toBe(ROUTES.sightreading)
+    expect(backRoute(ROUTES.lessons, '?from=lessons')).toBe(ROUTES.home)
   })
 })

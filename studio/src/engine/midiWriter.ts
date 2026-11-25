@@ -8,6 +8,7 @@ export interface TrackSpec {
   program: number
   pan?: number
   reverb?: number
+  drums?: boolean // a percussion part on a channel other than 10 (the metronome)
   events: NoteEvent[]
   pedal?: { tick: number; value: number }[] // sustain pedal (CC 64)
 }
@@ -70,18 +71,51 @@ function noteEvents(spec: TrackSpec): RawEvent[] {
   return out
 }
 
-// Write a standard MIDI file (format 1) with a tempo and the tracks
-export function writeMidi(bpm: number, tracks: TrackSpec[]): Uint8Array {
+/**
+ * The Roland GS message that makes a channel other than 10 a percussion part ("use for rhythm
+ * part", drum map 1). GS numbers its parts from channel 10: channel 10 is part 0, channels 1 to 9
+ * are parts 1 to 9, channels 11 to 16 keep their number.
+ */
+export function gsRhythmPart(channel: number): number[] {
+  const part = channel === 9 ? 0 : channel < 9 ? channel + 1 : channel
+  const body = [0x40, 0x10 + part, 0x15, 0x01]
+  const checksum = (128 - (body.reduce((sum, byte) => sum + byte, 0) & 0x7f)) & 0x7f
+  const data = [0x41, 0x10, 0x42, 0x12, ...body, checksum, 0xf7]
+  return [0xf0, ...varLen(data.length), ...data]
+}
+
+/**
+ * The tempo and meter changes of a MIDI file (its first track). The app plays its files at one
+ * tempo and sets the speed itself; a downloaded file carries the real tempo, its speed-ups and
+ * its time signatures, for other programs.
+ */
+export interface Conductor {
+  tempos: { tick: number; bpm: number }[]
+  meters: { tick: number; numerator: number; denominator: 4 | 8 }[]
+}
+
+/** The tempo meta event (microseconds per quarter note). */
+function tempoEvent(tick: number, bpm: number): RawEvent {
   const mpqn = Math.round(60_000_000 / bpm)
-  const tempoTrack = encodeTrack([
-    { tick: 0, order: 0, bytes: [0xff, 0x51, 3, (mpqn >> 16) & 0xff, (mpqn >> 8) & 0xff, mpqn & 0xff] },
-    { tick: 0, order: 0, bytes: [0xff, 0x58, 4, 4, 2, 24, 8] }, // 4/4
-  ])
+  return { tick, order: 0, bytes: [0xff, 0x51, 3, (mpqn >> 16) & 0xff, (mpqn >> 8) & 0xff, mpqn & 0xff] }
+}
+
+/** The time signature meta event (24 MIDI clocks a click, 8 thirty-seconds a quarter). */
+function meterEvent(tick: number, numerator: number, denominator: 4 | 8): RawEvent {
+  return { tick, order: 0, bytes: [0xff, 0x58, 4, numerator, denominator === 8 ? 3 : 2, 24, 8] }
+}
+
+// Write a standard MIDI file (format 1) with a tempo (or a conductor's tempo and meter changes) and the tracks
+export function writeMidi(bpm: number, tracks: TrackSpec[], conductor?: Conductor): Uint8Array {
+  const tempoTrack = encodeTrack(conductor
+    ? [...conductor.tempos.map((t) => tempoEvent(t.tick, t.bpm)), ...conductor.meters.map((m) => meterEvent(m.tick, m.numerator, m.denominator))]
+    : [tempoEvent(0, bpm), meterEvent(0, 4, 4)])
 
   const noteTracks = tracks.map((t) => {
     const name = text(t.name)
     const setup: RawEvent[] = [
       { tick: 0, order: 0, bytes: [0xff, 0x03, name.length, ...name] },
+      ...(t.drums && t.channel !== 9 ? [{ tick: 0, order: 0, bytes: gsRhythmPart(t.channel) }] : []),
       { tick: 0, order: 0, bytes: [0xc0 | t.channel, t.program] },
       { tick: 0, order: 0, bytes: [0xb0 | t.channel, 10, t.pan ?? 64] },
       { tick: 0, order: 0, bytes: [0xb0 | t.channel, 91, t.reverb ?? 30] },

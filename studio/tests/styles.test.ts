@@ -25,8 +25,8 @@ describe('styles', () => {
   })
 
   test('iReal Pro style names map to the closest style', () => {
-    expect(mapStyle('Waltz', [3, 4])).toBe('swing')
-    expect(mapStyle('Medium Swing', [3, 4])).toBe('swing')
+    expect(mapStyle('Waltz', [3, 4])).toBe('jazz-waltz')
+    expect(mapStyle('Medium Swing', [3, 4])).toBe('jazz-waltz') // a song in three swings as a jazz waltz
     expect(mapStyle('Medium Swing')).toBe('swing')
     expect(mapStyle('Samba')).toBe('latin')
     expect(mapStyle('Bossa Nova')).toBe('bossa-nova')

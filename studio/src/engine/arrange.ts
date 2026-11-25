@@ -1,20 +1,22 @@
 import type { Chart } from '../music/chart'
+import { JAZZ_WALTZ, WALTZ_DOWNBEAT_BASS } from '../styles/jazzWaltz'
 import { compoundStyle } from '../styles/compound'
 import type { StyleDefinition } from '../styles/types'
 import { generateBass } from './bass'
 import { generateBassPattern, type BassPatternId } from './bassPatterns'
+import { CLICK_CHANNEL, clickTrack } from './click'
 import { generateComp, pedalChanges } from './comp'
 import { generatePianoPattern, PIANO_PATTERNS, usesWalkingBass } from './pianoPatterns'
 import type { PianoPattern } from './pianoPatterns'
 import { PPQ, type NoteEvent } from './events'
 import { DRUM_CHANNEL, generateDrums } from './drums'
-import { writeMidi } from './midiWriter'
+import { writeMidi, type TrackSpec } from './midiWriter'
 import { buildTimeline, type PracticeOptions, type Timeline } from './timeline'
 import { melodyEvents } from './melody'
 import { melodyProgram } from '../music/melody'
 
 // Channel layout, shared with the mixer (channel 2 is the live MIDI keyboard's piano, player.ts)
-export const CHANNELS = { bass: 0, comp: 1, melody: 3, drums: DRUM_CHANNEL } as const
+export const CHANNELS = { bass: 0, comp: 1, melody: 3, click: CLICK_CHANNEL, drums: DRUM_CHANNEL } as const
 export type Part = keyof typeof CHANNELS
 
 // Playback rate is set relative to this tempo, so tempo changes don't regenerate the MIDI
@@ -24,6 +26,7 @@ export interface Arrangement {
   midi: Uint8Array
   timeline: Timeline
   pianoOnsets: number[] // the beats the band's piano (its pattern, or its comping) strikes, for the left-hand rhythm
+  tracks: TrackSpec[] // the parts written in `midi`, to write a file for download (exportTrack.ts)
 }
 
 /**
@@ -53,6 +56,8 @@ export function bassEventsForStyle(
       .filter((event) => event.channel === CHANNELS.bass)
   }
   if (pattern && (style.id === 'blues' || style.id === 'straight pop/rock')) return []
+  // Under a Jazz Waltz piano pattern (chords on 2 and 3) the bass holds each chord's root
+  if (pattern && style.id === JAZZ_WALTZ.id) return generateBass(timeline.slots, WALTZ_DOWNBEAT_BASS, style.swing)
   return generateBass(timeline.slots, style.bass, style.swing, compound.bass)
 }
 
@@ -78,7 +83,7 @@ export function arrange(
   const selectedBass = parts.bassPatternId
     ? generateBassPattern(timeline, style, parts.bassPatternId) : null
   const bass = selectedBass?.events ?? bassEventsForStyle(timeline, style, compound, selectedPattern, patternEvents)
-  const midi = writeMidi(BASE_BPM, [
+  const tracks: TrackSpec[] = [
     {
       name: 'Bass',
       channel: CHANNELS.bass,
@@ -110,8 +115,9 @@ export function arrange(
       program: melodyProgram(chart.melody),
       pan: 54,
       reverb: 45,
-      events: melodyEvents(chart, timeline, CHANNELS.melody, swing, transpose, practice.keyStep ?? 0),
+      events: melodyEvents(chart, timeline, CHANNELS.melody, swing, transpose, practice),
     }] : []),
-  ])
-  return { midi, timeline, pianoOnsets: attackBeats(patternEvents ?? comp) }
+    clickTrack(timeline),
+  ]
+  return { midi: writeMidi(BASE_BPM, tracks), timeline, pianoOnsets: attackBeats(patternEvents ?? comp), tracks }
 }

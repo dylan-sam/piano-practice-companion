@@ -1,8 +1,8 @@
 import { MIDIControllers } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib'
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
+import { lockVolume, masterGainFor, outputStage, SOUNDFONT_URL } from './mastering'
 
-const SOUNDFONT_URL = `${import.meta.env.BASE_URL}soundfonts/openstand.sf3`
 const UNLOCK_EVENTS = ['pointerdown', 'touchend', 'keydown'] as const
 
 // Download a file, reporting the share received so far
@@ -29,15 +29,11 @@ async function fetchWithProgress(url: string, onProgress: (ratio: number) => voi
   return out.buffer
 }
 
-// About +10 dB: brings the band from around -28 dBFS (RMS) to the level of other music
-const MASTER_GAIN = 3.2
 const LIVE_PIANO_CHANNEL = 2
 // An "ended" this soon after a song started may belong to the song it replaced (see Player.ended)
 const LATE_END_MS = 2000
 // After a hand-over, the synthesizer that played rings out this long before it loads the next chunk
 const RING_OUT_MS = 2500
-// Master gain for a volume from 0 to 100 (squared, so the slider feels even)
-const masterGainFor = (volume: number) => MASTER_GAIN * (volume / 100) ** 2
 
 /** A synthesizer with the sequencer that plays songs on it. */
 interface Deck { synth: WorkletSynthesizer; seq: Sequencer }
@@ -50,6 +46,7 @@ interface Deck { synth: WorkletSynthesizer; seq: Sequencer }
 // started exactly at the hand-over (`startQueued`) while the first lets its last notes ring.
 export class Player {
   private ctx: AudioContext
+  private latencyOffset = 0 // the mixer's Sync, in seconds
   private synth: WorkletSynthesizer | null = null // the synthesizer playing now
   private seq: Sequencer | null = null // and its sequencer
   private live: WorkletSynthesizer | null = null // the synthesizer of the live piano: always the first one
@@ -102,11 +99,11 @@ export class Player {
 
   private master(): AudioNode {
     if (this.masterGain) return this.masterGain
-    this.masterGain = new GainNode(this.ctx, { gain: masterGainFor(this.masterVolume) })
+    const { input, output } = outputStage(this.ctx, this.masterVolume)
+    this.masterGain = input
     this.meter = new AnalyserNode(this.ctx, { fftSize: 1024 })
-    const limiter = new DynamicsCompressorNode(this.ctx, { threshold: -8, knee: 4, ratio: 12, attack: 0.002, release: 0.15 })
-    this.masterGain.connect(limiter).connect(this.ctx.destination)
-    limiter.connect(this.meter)
+    output.connect(this.ctx.destination)
+    output.connect(this.meter)
     return this.masterGain
   }
 
@@ -346,10 +343,18 @@ export class Player {
   // Position of what can be heard right now: the output (phone speaker, Bluetooth) plays a little
   // behind the synthesizer, so the chart follows the ears rather than the synthesizer.
   // The audio clock moves in steps; the smoothed clock keeps the chart's highlight gliding.
+  /**
+   * Extra delay of the output in milliseconds (the mixer's Sync), for speakers or headphones that
+   * do not report theirs, such as Bluetooth: the highlight and the judging of the keys played wait for it.
+   */
+  setLatencyOffset(ms: number): void {
+    this.latencyOffset = ms / 1000
+  }
+
   get heardPosition(): number {
     const seq = this.seq
     if (!seq) return 0
-    const latency = (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0)
+    const latency = (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0) + this.latencyOffset
     return Math.max(0, seq.currentHighResolutionTime - latency * seq.playbackRate)
   }
 
@@ -398,12 +403,9 @@ export class Player {
 
   // Locks the volume so controllers in the MIDI file cannot override the mixer
   private applyVolume(synth: WorkletSynthesizer, channel: number, volume: number): void {
-    const midiChannel = synth.midiChannels[channel]
-    if (!midiChannel) return
-    midiChannel.lockController(MIDIControllers.mainVolume, false)
-    synth.controllerChange(channel, MIDIControllers.mainVolume, Math.round(volume))
-    midiChannel.lockController(MIDIControllers.mainVolume, true)
+    lockVolume(synth, channel, volume)
   }
+
 
   private requireSeq(): Sequencer {
     if (!this.seq) throw new Error('Player is not ready yet')

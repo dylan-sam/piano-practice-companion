@@ -7,7 +7,7 @@ OpenStand's copyright notices and its [AGPL-3.0-or-later license](LICENSE) are
 kept.
 
 **Changed from OpenStand:** song search in the ChoCo catalog and chart
-conversion, the project's six styles and their piano patterns, the two
+conversion, the project's seven styles and their piano patterns, the two
 exercises, the Display menu, Android and iOS apps, a link to the source code,
 and lead sheets (a melody over the chords, drawn with abcjs), and the removal of
 OpenStand's example songs, telemetry and submission action.
@@ -37,7 +37,7 @@ OpenStand's example songs, telemetry and submission action.
 | Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
 | Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` (the Scoring button of the bottom bar); the left-hand stages are `ChordJudge` options (`src/exercises/sightReading.ts`), text helpers in `readingText.ts` |
 | Free Improvisation | `/improvisation/free` | `src/exercises/FreeImprovisation.tsx`, the keys written out in `src/exercises/improvisation.ts`, coloured by `toneColors.ts` |
-| Lessons | `/lessons` | `src/lessons/`: the program (`program.ts`), the links that set screens up (`lessonLink.ts`, `useLessonSong.ts`), progress (`useLessonProgress.ts`), the screen (`Lessons.tsx`) |
+| Lessons | `/lessons` | `src/lessons/`: the program (`program.ts`), the links that set screens up (`lessonLink.ts`, `useLessonSong.ts`, `useLessonOverride.ts`), targets that tick a step (`useLessonGoal.ts`), progress (`useLessonProgress.ts`), the songs' scale maps (`scaleMaps.ts`, shown by `ScaleMap.tsx`), the screen (`Lessons.tsx`) |
 
 The back button and a screen's title go up one level (`parentRoute` in
 `src/router.ts`): a screen to its area's menu, an area's menu to the main menu.
@@ -171,6 +171,7 @@ settings in `src/ui/display.ts`, kept in the browser):
 
 | Setting | Example |
 |---|---|
+| **Sheet size** A− / A+ (70% to 175%, 100% by default) | the title and the bars of a chord chart are zoomed (CSS `zoom` on `.sheet > .rows` and `.sheet-head`, the paper keeps its margins; chords still shrink to fit their bar); a lead sheet is engraved with a narrower or wider layout width, so its music is drawn larger or smaller |
 | **Roman numerals** On / Off | in C: `Dm7 G7 Cmaj7` is drawn `II-7 V7 I^7`; `Db7` is `bII7` |
 | **Minor written** C− or Cm | `C-7` or `Cm7` |
 | **Repeat sign** | a bar repeating the bar before (same chords, same lengths) is drawn `%` |
@@ -194,6 +195,7 @@ playlist, then the other saved playlists, then the catalog's results.
 | New, Edit | Studio | write or change a chart, saved as a tune |
 | Import → iReal Pro | Studio's tune list | adds iReal Pro links or playlist files as a playlist |
 | Import → Studio export | Studio's tune list | restores a file made by Export, with its playlist names |
+| Export → MIDI file, WAV audio, MP3 audio | Studio's top bar | the band's track as it plays now (see below) |
 | Export | Studio's top bar | downloads, as a JSON file of editable charts: the songs written or edited in the app (My tunes; an edited shared or imported song stays in its own group), the songs shared with you via link, the imported playlists, or all 3 (catalog songs opened for preview and the shipped songs are not included) |
 | Share → Copy Studio link | Studio's top bar | a link that opens the chart in this app; nothing is uploaded |
 | Share → Copy iReal Pro link | Studio's top bar | an `irealb://` link that opens in iReal Pro |
@@ -201,7 +203,160 @@ playlist, then the other saved playlists, then the catalog's results.
 Export a file before clearing the browser's storage, or the tunes are lost.
 
 The **Mixer** (part volumes, mutes, master volume, kept in the browser) is
-shared by the player and the exercises (`src/audio/useMixer.ts`).
+shared by the player and the exercises (`src/audio/useMixer.ts`). Its parts:
+
+| Part | Channel | Notes |
+|---|---|---|
+| Bass, Piano (or Guitar), Melody, Drums | 0, 1, 3, 9 | channel 2 is the live MIDI keyboard's piano |
+| Click | 4 | the metronome (`src/engine/click.ts`, adapted from OpenStand): a bell (GM note 34) on each downbeat, a click (33) on the other beats, every dotted quarter in 6/8, 9/8 and 12/8; none in the count-in (the drums count) or the ending. Channel 4 is made a percussion part by a Roland GS "use for rhythm part" message (`gsRhythmPart` in `midiWriter.ts`), so the click has its own fader apart from the drums. Always written, muted until turned on; on or off is kept in the browser |
+
+**Sync** (-300 to +300 ms, kept in the browser) is added to the output
+latency the browser reports (`player.ts` `heardPosition`): with Bluetooth
+headphones the band is heard later than it is played, so the highlight, the
+scale shown and the judging of your notes wait for it.
+
+**Practice > Keys** (`src/music/practice.ts` `KEY_STEPS`, `src/engine/keyOrder.ts`):
+a step each chorus (a fourth or a fifth, a half step up or down, a whole step,
+a minor or a major third), or random keys (from OpenStand #124): the twelve
+keys in a shuffled order, the written key first, each once in twelve choruses
+and never the same key twice in a row. The order comes from a seed chosen when
+random keys are picked (Mulberry32), so the band, the key on the stand, the
+melody and the sightreaders' expected notes agree (`chorusKeyOffset`).
+Choosing random keys makes at least twelve choruses.
+
+**The chord helper** (Chord Player, Lead Sheet Player, Free Improvisation;
+`src/ui/ChordHelper.tsx`, `useChordHelper.ts`; idea, keyboard drawing and
+Follow from OpenStand's chord helper, keyboard only): a tap on a chord (a bar
+of a lead sheet), or the bottom bar's **Chords** button (beside Practice; in the
+Settings panel below 1760 px), shows the bar's chords as the band plays them (`chordsOfBar`: in the
+chorus playing, its key with Practice > Keys; a bar with no chord written shows
+the chord it holds), each on two octaves of keys with its tones marked and the
+chosen scale dotted, and **Hear** (the chord, or the scale up an octave, on the
+live piano channel: `src/audio/hear.ts`). The scales (`src/exercises/scaleSuggestions.ts`), each once, best first:
+
+| Group | Scales |
+|---|---|
+| For this chord | its scale where it is (`chordScale`, as Free Improvisation colours: a V to minor gets Mixolydian b9 b13, a V to major Mixolydian, a dominant going down a half step or up a step to I (a tritone substitution, a backdoor ♭VII7: `stepDominant`) Lydian dominant, a minor 7th Dorian...), then its pentatonic (major over a major or unaltered dominant chord, minor over a minor 7th) |
+| From the key | the key's major pentatonic (major keys), minor pentatonic and blues scale |
+| Also good | kept from OpenStand after checking them: Lydian (major chords), bebop dominant (dominants), altered and half-whole (a V), Lydian dominant (a dominant that does not go down a 5th), half-whole first for a 7b9 with a 13th, Aeolian (minor chords), Phrygian (only over the key's iii; OpenStand offers it over every minor chord, wrong over a ii), Locrian (half-diminished), whole tone (augmented, 7#5) |
+
+**Follow the chord playing** (on by default, kept in the browser) shows the
+chord sounding, chord after chord, while the band plays or is paused; tapping
+a chord while the band is on one turns it off. Only the chord's own scales
+show until **Show more scales** (the key's and the other good ones). Escape,
+× or the Chords button closes it.
+
+**Substitutions** (every screen with a band and a song: Chord Player, Lead
+Sheet Player, Lead Sheet, Exercises, Lick and Chord Sightreading, Free
+Improvisation; not an infinite line; the bottom bar's button beside Practice;
+`src/music/substitutions.ts`, `src/ui/Substitutions.tsx`): the band plays
+chord substitutions instead of the written chords, drawn in blue
+(`--sub-color`; `.chord-sub` on a chart, `text.lead-chord-sub` on a lead sheet,
+`useSubstitutedChart`), in the chord helper too, which says which chord is
+written there (`Slot.written`, `chordsOfBar`).
+`substituteChart(chart, settings, chorus)` gives the chart a chorus plays;
+`buildTimeline` calls it for each chorus (`PracticeOptions.subs`), so the MIDI,
+WAV and MP3 downloads play them too. The sheet shows the chorus playing.
+
+| Substitution | Roman numerals | Example in C | Where |
+|---|---|---|---|
+| Add the ii before a long V7 | V7 → ii−7 V7 | G7 (a bar or more) → D−7 G7, half each | a V7 going down a 5th, not after its ii; over blank bars the ii takes half of them |
+| Passing diminished chord | I ii−7 → I ♯I°7 ii−7, ii−7 iii−7 → ii−7 ♯ii°7 iii−7 (and I vi−7 ii−7 → I ♯I°7 ii−7) | C D−7 → C C♯°7 D−7, C A−7 D−7 → C C♯°7 D−7 | a minor chord a whole step above a chord, from any degree (I to ii, ii to iii, V to vi), not a major or dominant one: in place of a short chord (2 beats or less) between the two that is not a major chord (the vi or VI7 of I vi ii V, a repeated chord: B♭ B♭6 C−7 → B♭ B°7 C−7), or on the last 2 beats (1 of 2 or 3) of the chord a whole step under |
+| Backdoor ii-V | ii−7 V7 I → iv−7 ♭VII7 I | D−7 G7 C → F−7 B♭7 C | a ii-V to a major chord |
+| Turnaround with dominants | vi−7 ii−7 → VI7 ii−7 | A−7 D−7 → A7 D−7 | a minor chord going down a 5th to a minor chord |
+| Secondary dominant on the ii | ii−7 V7 I → II7 V7 I | D−7 G7 C → D7 G7 C | a ii-V whose V goes down a 5th (not the backdoor's iv−7 ♭VII7) |
+| Tritone substitution | V7 I → ♭II7 I | G7 C → D♭7 C | any dominant 7th going down a 5th, to any chord (a V7, a secondary dominant, I7 to IV7 in a blues); not one going elsewhere |
+| Altered dominant | V7 I → V7♭9 I, V7 i−7 → V7♭9♭13 i−7 | G7 C → G7♭9 C, G7 C−7 → G7♭9♭13 C−7 | a dominant 7th going down a 5th with no alteration written: the ♭9, and the ♭13 before a minor chord (written so, not "alt"); the rootless voicings and the chord helper (half-whole and altered scales) follow |
+
+Roman numerals count from the chord a chord leads to, so each works in any key
+area. The ticked ones are applied one after another from the top of the menu
+(`settings.ids`, in the menu's order `settings.order`, `substitutionOrder`),
+each on the chart the ones before it made (a chord keeps in `written` the symbol
+first written there). The order matters, and the menu's rows are dragged by
+their handles (`useDragReorder`: mouse, pen or finger, or the arrow keys on a
+handle) to change it: Turnaround, then Secondary dominant, then Tritone
+substitution turn C A−7 D−7 G7 into C A7 D−7 G7, C A7 D7 G7, then
+C E♭7 A♭7 D♭7; with the secondary dominant above the turnaround, the A−7
+stays, as the D7 after it is no longer minor. The default order lets them build
+on each other (the list above). The menu shows each one's Roman numerals and,
+under the list, a short note on the order and the clash rule.
+
+**Infinite lines** (Chord and Lick Sightreading, Free Improvisation) have no
+Substitutions menu: substitutions are part of the line instead
+(`withSubstitutions` in `src/exercises/sightReading.ts`). Each substitution is
+used on about half of the sheets, in a random order, at about one place in two
+where it fits (`substituteChart(..., { piece: true })`: whole chords only, so
+no ii added and no chord split, two chords to a bar; the sheet's first and
+last chords as written, as the line goes on to the next sheet). A substituted
+step keeps its chord in `written`: blue on the sheet and on Chord
+Sightreading's scrolling cards, and the chord to play is the substitute. **When**: every chorus, from a
+chosen chorus (2 to 12), every other chorus (the 2nd, 4th...), or here and
+there at random (each spot about one time in two; a seed kept in the settings
+so the sheet and the band agree, a new one each time Random is chosen). On a
+lead sheet, a substitute is left out where a melody note at least a beat long
+would clash with it (a note outside its chord tones and tensions). Substitutions
+change the sheet but not the song's length: the band goes on at once.
+A lesson step's link can set them (`subs=addII`, always on).
+
+The whole bottom bar (its buttons 16 px apart, so a sightreading screen's four
+fit beside its controls on one line) needs about 1760 px: below that (`COMPACT_TRANSPORT_QUERY`
+in `src/ui/useNarrowScreen.ts`), its controls, Chords, Practice and Mixer move
+into the **Settings** panel, as on phones and tablets. Chords there closes the
+panel (`data-closes-settings`), so the helper shows. On the full bar the helper's bottom is on the
+bottom of the other panels (Practice, Substitutions, Mixer). The browser tests run in a
+1760 px wide window, the full desktop bar. A lesson song's **scale ideas** sit under the sheet of
+Free Improvisation (`SongScaleIdeas`).
+
+**Start from a chord** (Chord Player and Lead Sheet Player): while the band is
+stopped or paused, the chord helper's **Start the band from here** makes the
+chord the start point: `chordStartBeat` (`src/engine/timeline.ts`) finds where it is first
+played (outside the loop: no start point), and `usePausedAt().holdAt` keeps it
+like a pause, with a mark (`.chord-start`). Play then goes on from there
+(20 ms early, so its first notes sound) without a count-in; the
+play-from-the-beginning button, a new loop, and **Start from the beginning
+again** in the helper forget it.
+
+**Jazz Waltz** (`src/styles/jazzWaltz.ts`): drums and bass from OpenStand's
+jazz-waltz.ts (ride on 1, 2 and the "and" of 2, hi-hat pedal on 2 and 3, a
+feathered kick, an occasional snare comment; a bass mixing a held root, root
+and 5th, and three walking quarters with a half-step approach), checked and
+kept unchanged. Its chord comping picks one figure a bar from Wynton Kelly's
+comping on "Someday My Prince Will Come" (Miles Davis, 1961, after a published
+transcription): the dotted-quarter cell (1 and the "and" of 2), the two
+off-beats, beat 2 held, beats 1 and 3, a chord held on 1, a chord laid in on
+the "and" of 1. Its piano pattern **Waltz: bass on 1, chords on 2 and 3** plays
+rootless voicings on 2 and 3 while the bass holds each chord's root
+(`WALTZ_DOWNBEAT_BASS`). Every song in 3/4 starts as a Jazz Waltz
+(`styleForChart`; iReal Pro's swing and waltz styles in 3/4 map to it), unless a
+lesson step asks for another style.
+
+**The crash catch** (`src/ui/CrashScreen.tsx`, around every screen in
+`Root.tsx`): an error while drawing a screen, or a screen's code that cannot be
+downloaded (offline after an update), shows *Something went wrong* with
+**Reload** and **Main menu** instead of a blank page; the error goes to the
+console.
+
+**Downloading the band** (Export menu, `src/engine/exportTrack.ts`,
+`src/audio/exportAudio.ts`; ideas from OpenStand #1, #70, #122, #126):
+
+| Step | What happens |
+|---|---|
+| arrangement | `arrange` with the settings of the moment (style, piano pattern, choruses, loop, keys); the tracks of muted parts are left out (the click only when it is on) |
+| MIDI file | written at the song's real tempo, a tempo change at each chorus with Practice's speed-up (`rampedBpm`), and time signatures where the meter changes (6/8 written in eighths). The app itself plays its files at 120 bpm and sets the speed |
+| audio | the MIDI file is rendered at 44.1 kHz by SpessaSynth's core synthesizer in a worker (`synthWorker.ts`; on the page where workers are missing), with the mixer's channel volumes locked like the player's, then passed through the same master gain and limiter as the live band (`mastering.ts` `outputStage`) on an `OfflineAudioContext` |
+| WAV | 16-bit stereo (about 10 MB a minute) |
+| MP3 | 192 kbps, encoded by LAME in JavaScript (`@breezystack/lamejs`, LGPL-3.0, loaded only for this) |
+
+SpessaSynth's two packages are pinned (`spessasynth_core` 4.4.4,
+`spessasynth_lib` 4.4.2): the live player's audio worklet comes with the
+library, and a newer core on the page could not read the songs the worklet
+sends back (errors when a song loads).
+
+**First screen.** Every screen is its own download (`React.lazy` in
+`src/Root.tsx`), and the audio engine is loaded after a screen is drawn
+(`usePlayer`), so the menu shows without waiting for the band, the
+engraver or the exercises (the first download went from 1.2 MB to 0.34 MB of
+script).
 
 ## Playback without clicks
 
@@ -215,6 +370,16 @@ synthesizer (made in the background after the warm-up):
   (`play(midi, fromSeconds)`);
 - an endless exercise loads its next chunk there ahead of time (`queue`) and
   starts it on the bar line (`startQueued`).
+
+**Pause** works the same way: each screen keeps where the band was paused
+(`usePausedAt` in `src/audio/usePlayer.ts`), and Play arranges the band again
+with the current settings and goes on from there (`play(midi, fromSeconds)`),
+the notes and chords before it judged already; an endless line goes on with the
+sheet on the stand, then the next ones. The button beside Play (`onRestart` of
+`Transport`) starts from the beginning; a new song, or a change made while
+paused that would start the song again while playing (a new loop; in the
+sightreaders and Free Improvisation a new key too), also starts over. A new
+number of choruses goes on from where the band is, as a new style does.
 
 Only a real start (a new song, key or loop, or Play) loads on the playing
 synthesizer, from the beginning.
@@ -254,14 +419,14 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | Folder | Holds |
 |---|---|
 | `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which the melody sightreaders also judge), timeline and count-in (`timeline.ts`) |
-| `src/styles/` | the six styles, compound meters (`compound.ts`) and the Pattern Creator (`lab.ts`) |
+| `src/styles/` | the seven styles (the Jazz Waltz in `jazzWaltz.ts`), compound meters (`compound.ts`) and the Pattern Creator (`lab.ts`) |
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), places on the staff (`staff.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
 | `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage (`storage.ts`, and a screen's settings kept there: `useStoredSettings.ts`) |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Pattern Creator, loop picking (`useLoopPicking.ts`), keyboard shortcuts (`useWindowKeys.ts`), check-box filters (`CheckFilter.tsx`: Progressions, Playlists, Licks) |
 | `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`: `arrangeMelody`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), Free Improvisation (`FreeImprovisation.tsx`, `improvisation.ts`, `toneColors.ts`). Shared by the exercises: the key menu, Tonic and Cadence, status messages, MIDI notes held, source buttons and random song picker (`ExerciseControls.tsx`); by the sightreaders: where the music comes from, with the song list, Import and the catalog (`useSongSource.ts`, laid out by `SongWorkspace.tsx`), the band's settings (`useBand.ts`), the hand-over of endless lines (`useEndlessLine.ts`); by the melody screens: judging (`useMelodyJudging.ts`) and the Scoring button, sheet and score line (`ReadingControls.tsx`) |
-| `src/lessons/` | The Lessons tab: its 30-week program, the links that open a screen set up for a step, progress kept on the device |
+| `src/lessons/` | The Lessons tab: its 46-week program, the links that open a screen set up for a step, the targets that tick a step, progress kept on the device, the lesson songs' scale maps |
 | `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
 | `tests/` | the app's unit tests (`pnpm test`) |
 | `e2e/` | the browser tests (Playwright, `pnpm run test:e2e`): every screen at three sizes, settings that must not restart the song, endless lines, Melodic Dictation, Export |

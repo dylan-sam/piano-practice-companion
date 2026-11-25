@@ -1,10 +1,10 @@
 // React hooks shared by every screen that plays the band: the sound bank player and its clock.
 
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { BASE_BPM } from '../engine/arrange'
 import { reportError } from '../errorReports'
 import type { Readiness } from '../ui/Transport'
-import { Player } from './player'
+import type { Player } from './player'
 
 /**
  * Create the player for a screen: load the sound bank with progress, decode the band's
@@ -27,24 +27,29 @@ export function usePlayer(
   useEffect(() => {
     // The effect may run twice (StrictMode); a discarded player must not update the UI
     let active = true
-    const player = new Player()
-    playerRef.current = player
-    player.onEnded = () => callbacks.current.onEnded()
-    player
-      .init((progress) => active && setReadiness({ kind: 'loading', progress }))
-      .then(() => {
+    let player: Player | null = null
+    // The audio engine (SpessaSynth) is loaded after the screen is drawn, so the screen shows first
+    void (async () => {
+      try {
+        const { Player } = await import('./player')
+        if (!active) return
+        player = new Player()
+        playerRef.current = player
+        player.onEnded = () => callbacks.current.onEnded()
+        await player.init((progress) => active && setReadiness({ kind: 'loading', progress }))
         if (!active) return
         setReadiness({ kind: 'ready' })
         void player.warmUp(callbacks.current.warmUpSongs())
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!active) return
         setReadiness({ kind: 'error', message: String(err) })
         reportError(err, 'sound bank')
-      })
+      }
+    })()
     return () => {
       active = false
-      void player.dispose()
+      if (player && playerRef.current === player) playerRef.current = null
+      void player?.dispose()
     }
   }, [playerRef])
 
@@ -74,4 +79,23 @@ export function useHeardBeat(active: boolean, playerRef: RefObject<Player | null
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [active, playerRef])
+}
+
+/**
+ * Pause, as in a music player: where the band was paused (seconds of MIDI time), so that Play
+ * goes on from there; null when the next Play starts from the beginning. `hold` keeps the
+ * band's position (call it before stopping the player), `forget` makes the next Play start over
+ * (a new song, a new sheet, the end of the song, the start-again button). `holdAt` sets a start
+ * point chosen on the sheet, with a mark naming it (the chord to draw as the start).
+ */
+export function usePausedAt(playerRef: RefObject<Player | null>) {
+  const [paused, setPaused] = useState<{ at: number; mark: string | null } | null>(null)
+  const hold = useCallback(() => {
+    const at = playerRef.current?.position
+    setPaused(at ? { at, mark: null } : null)
+  }, [playerRef])
+  // A start point chosen on the sheet (a chord), with a mark naming it
+  const holdAt = useCallback((at: number, mark: string) => setPaused({ at, mark }), [])
+  const forget = useCallback(() => setPaused(null), [])
+  return { pausedAt: paused?.at ?? null, mark: paused?.mark ?? null, hold, holdAt, forget }
 }

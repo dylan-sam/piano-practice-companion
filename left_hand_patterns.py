@@ -17,6 +17,8 @@ LESSONS = "Lessons tab song patterns (jazz-piano teaching: bass, shells, stride,
 SISKIND = "Jeremy Siskind, Playing Solo Jazz Piano (2022): bass notes, Type A shells"
 LEVINE = "Mark Levine, The Jazz Piano Book (1989): left-hand voicings (ch. 7), fourth chords"
 WINN = "Edward R. Winn, How to Play Ragtime (1913): the Winn bass"
+# The waltz's bass-chord-chord, with the bass played by the band's bass and rootless chords on 2 and 3
+WALTZ = "Waltz accompaniment: bass on 1, chords on 2 and 3 (Nathaniel School, 3/4 left-hand patterns)"
 SHUFFLE_POSITIONS = (0, .1875, .25, .4375, .5, .6875, .75, .9375)
 SHUFFLE_DURATIONS = (.1875, .0625) * 4
 SHELL_PATTERN_IDS = frozenset(("boogie_walking_shells",))
@@ -183,6 +185,9 @@ ALL_PATTERN_LIST = (
     _make_scored_pattern("broken_tenths", "Broken chord: root, 5th, 10th", "ballad", (LESSONS,),
                          tuple((index / 8, .125, role) for index, role in enumerate(
                              "root fifth tenth fifth root fifth tenth fifth".split())), transcribed=False),
+    # Written in 4/4 (beats 2 and 4): a 3/4 bar plays beats 1, 2 and 4, so the chords fall on 2 and 3
+    _make_scored_pattern("jazz_waltz_two_three", "Waltz: bass on 1, chords on 2 and 3", "jazz_waltz", (WALTZ, LEVINE),
+                         ((.25, .2, "rootless"), (.75, .2, "rootless")), transcribed=False),
     _make_scored_pattern("quartal_pad", "Quartal pad (stacked 4ths)", "swing ballad", (LESSONS,),
                          ((0, 1, "quartal"),), transcribed=False),
     _make_scored_pattern("fourths_from_ninth", "Fourth chords from the 9th", "swing ballad bossa", (LEVINE,),
@@ -217,6 +222,7 @@ CURATED_PATTERN_IDS_BY_STYLE = {
     "bossa nova": ("bossa_chord_comp", "bossa_bass", "block_chords", "rootless_held", "fourths_from_ninth"),
     "latin": ("latin_montuno", "tango", "bossa_bass"),
     "straight pop/rock": ("pop_rock", "broken_chords", "open_fifths"),
+    "jazz waltz": ("jazz_waltz_two_three",),
     "ballad": ("broken_chords", "arpeggio_ascending", "rolled_chords", "broken_tenths", "quartal_pad",
                "rootless_held", "open_fifths", "type_a_shells", "fourths_from_ninth"),
 }
@@ -228,7 +234,7 @@ MENU_ORDER = (
     "latin_montuno", "tango", "bossa_bass", "bossa_chord_comp", "pop_rock",
     "open_fifths", "block_chords", "broken_chords", "broken_tenths", "arpeggio_ascending",
     "rolled_chords", "type_a_shells", "charleston", "shells_charleston", "type_a_charleston",
-    "rootless_charleston", "rootless_held", "quartal_pad", "fourths_from_ninth",
+    "rootless_charleston", "rootless_held", "jazz_waltz_two_three", "quartal_pad", "fourths_from_ninth",
 )
 CURATED_PATTERN_IDS = frozenset(
     pattern_id for pattern_ids in CURATED_PATTERN_IDS_BY_STYLE.values()

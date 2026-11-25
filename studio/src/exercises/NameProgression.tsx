@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { Player } from '../audio/player'
-import { useHeardBeat, usePlayer } from '../audio/usePlayer'
+import { useHeardBeat, usePausedAt, usePlayer } from '../audio/usePlayer'
 import { useMixer } from '../audio/useMixer'
 import { Mixer } from '../ui/Mixer'
 import { Popover } from '../ui/Popover'
@@ -108,12 +108,15 @@ export function NameProgression() {
   const [repeats, setRepeats] = useState(1)
   const [playing, setPlaying] = useState<Playing>(null)
   const [position, setPosition] = useState<ReturnType<typeof measureAt>>(null)
+  // Where the line was paused: Play goes on from there
+  const { pausedAt, hold: holdPause, forget: forgetPause } = usePausedAt(playerRef)
   // The sound bank, set up as in Studio
   const readiness = usePlayer(
     playerRef,
     () => {
       setPlaying(null)
       setPosition(null)
+      forgetPause()
     },
     () => STYLES.map(warmUpMidi),
   )
@@ -125,12 +128,20 @@ export function NameProgression() {
   const isCustom = level === CUSTOM_LEVEL
   const options = useMemo(() => (bank ? levelProgressions(bank, level, custom) : []), [bank, level, custom])
 
-  /** Stop whatever is playing and clear the bar highlight. */
+  /** Stop whatever is playing and clear the bar highlight; the next Play starts the line over. */
   const stop = useCallback(() => {
     playerRef.current?.stop()
     setPlaying(null)
     setPosition(null)
-  }, [])
+    forgetPause()
+  }, [forgetPause])
+
+  /** Pause the line where it is: the highlight stays, and Play goes on from there. */
+  const pauseLine = () => {
+    holdPause()
+    playerRef.current?.stop()
+    setPlaying(null)
+  }
 
   // Set when a new question is asked: its line plays by itself once drawn and the sounds are ready
   const autoPlay = useRef(false)
@@ -207,10 +218,14 @@ export function NameProgression() {
     if (!player || !line || readiness.kind !== 'ready') return
     const { midi, timeline } = arrange(line, getStyle(opts.styleId), opts.transpose, opts.repeats, { ending: false }, opts.patternId)
     timelineRef.current = timeline
+    forgetPause()
     await player.play(midi, fromSeconds)
     player.setRate(bpm / BASE_BPM)
     setPlaying('line')
   }
+
+  /** Play the shown line, going on from where it was paused. */
+  const playOrGoOn = () => void playChart(chart, undefined, pausedAt ?? 0)
 
   // A new question plays its line at once, unless the browser still waits for a first tap (Play then starts it)
   useEffect(() => {
@@ -225,6 +240,7 @@ export function NameProgression() {
     if (!player || !asked || readiness.kind !== 'ready') return
     timelineRef.current = null
     setPosition(null)
+    forgetPause()
     await player.play(keyReferenceMidi(reference, keyPc, asked.question.minor, BASE_BPM))
     player.setRate(1)
     setPlaying(reference)
@@ -346,8 +362,8 @@ export function NameProgression() {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag) || e.metaKey || e.ctrlKey || e.altKey) return
     if (e.key === ' ' && tag !== 'BUTTON') {
       e.preventDefault()
-      if (playing === 'line') stop()
-      else void playChart()
+      if (playing === 'line') pauseLine()
+      else playOrGoOn()
     } else if (asked && referenceForKey(e.key, asked.question.minor, REFERENCE_KEYS)) {
       void playReference(referenceForKey(e.key, asked.question.minor, REFERENCE_KEYS)!)
     } else if (/^[1-9]$/.test(e.key)) {
@@ -562,7 +578,9 @@ export function NameProgression() {
       <Transport
         readiness={readiness}
         playing={playing === 'line'}
-        onToggle={() => (playing === 'line' ? stop() : void playChart())}
+        onToggle={() => (playing === 'line' ? pauseLine() : playOrGoOn())}
+        paused={pausedAt !== null}
+        onRestart={() => void playChart()}
         position={readout}
         styleId={styleId}
         onStyle={(id) => change({ styleId: id, patternId: defaultPatternForStyle(id) })}

@@ -1,16 +1,26 @@
 import { Popover } from './Popover'
-import { setDisplay, useDisplay, useDisplayChanged } from './display'
+import { SHEET_SCALES, setDisplay, stepSheetScale, useDisplay, useDisplayChanged } from './display'
 
 /**
- * The chart display options: Roman numerals, how minor is written, % for a repeated bar and the
- * sheet auto-scroller. `roman` is false where numerals would give an answer away (Name the
- * progression); `autoScroll` is shown where a whole sheet is read (player and sightreader);
- * `scalePanel` where scale ideas are shown under the sheet (Free Improvisation).
+ * The chart display options: the sheet size, Roman numerals, how minor is written, % for a repeated
+ * bar and the sheet auto-scroller. `roman` is false where numerals would give an answer away (Name the
+ * progression); `autoScroll` is shown where a whole sheet is read (player and sightreader).
  */
-export function DisplayOptions({ roman = true, autoScroll = false, scalePanel = false }: { roman?: boolean; autoScroll?: boolean; scalePanel?: boolean }) {
+export function DisplayOptions({ roman = true, autoScroll = false }: { roman?: boolean; autoScroll?: boolean }) {
   const display = useDisplay()
   return (
     <>
+      <div className="share-option display-size">
+        <span className="share-name" id="sheet-size-label">Sheet size</span>
+        <div className="stepper" role="group" aria-labelledby="sheet-size-label">
+          <button aria-label="Smaller sheet" disabled={display.sheetScale <= SHEET_SCALES[0]}
+            onClick={() => setDisplay({ sheetScale: stepSheetScale(display.sheetScale, -1) })}>A−</button>
+          <output className="stepper-value">{display.sheetScale}%</output>
+          <button aria-label="Larger sheet" disabled={display.sheetScale >= SHEET_SCALES.at(-1)!}
+            onClick={() => setDisplay({ sheetScale: stepSheetScale(display.sheetScale, 1) })}>A+</button>
+        </div>
+        <span className="share-desc">Draw the chords and the music smaller, to see more of a song, or larger, to read from further away.</span>
+      </div>
       {roman && (
         <button className="share-option" aria-pressed={display.roman} onClick={() => setDisplay({ roman: !display.roman })}>
           <span className="share-name">Roman numerals {display.roman ? 'On' : 'Off'}</span>
@@ -32,13 +42,6 @@ export function DisplayOptions({ roman = true, autoScroll = false, scalePanel = 
           <span className="share-desc">While playing, scroll a long sheet so the highlighted bar stays near the middle of the screen.</span>
         </button>
       )}
-      {scalePanel && (
-        <button className="share-option" aria-pressed={display.scalePanel === 'fixed'}
-          onClick={() => setDisplay({ scalePanel: display.scalePanel === 'fixed' ? 'under' : 'fixed' })}>
-          <span className="share-name">Scale ideas {display.scalePanel === 'fixed' ? 'always in view' : 'under the sheet'}</span>
-          <span className="share-desc">Keep the scale of the chord playing and the song's scale ideas at the bottom of the screen while the sheet scrolls, or leave them after the end of the sheet.</span>
-        </button>
-      )}
     </>
   )
 }
@@ -47,13 +50,13 @@ export function DisplayOptions({ roman = true, autoScroll = false, scalePanel = 
  * The Display button of a sheet-reading screen's top bar (player, sightreader), with the display
  * options; `autoScroll` is false where no sheet is read (the sightreader's infinite line).
  */
-export function DisplayMenu({ roman = true, autoScroll = true, scalePanel = false }: { roman?: boolean; autoScroll?: boolean; scalePanel?: boolean }) {
-  const changed = useDisplayChanged(roman, autoScroll, scalePanel)
+export function DisplayMenu({ roman = true, autoScroll = true }: { roman?: boolean; autoScroll?: boolean }) {
+  const changed = useDisplayChanged(roman, autoScroll)
   return (
     <Popover id="chart-display" className="share" label="Display" title="Choose how chord charts are drawn" active={changed}>
       {() => (
         <div className="share-panel">
-          <DisplayOptions roman={roman} autoScroll={autoScroll} scalePanel={scalePanel} />
+          <DisplayOptions roman={roman} autoScroll={autoScroll} />
         </div>
       )}
     </Popover>

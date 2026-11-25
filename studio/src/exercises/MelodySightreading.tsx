@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/player'
 import { MELODY_PARTS, useMixer } from '../audio/useMixer'
-import { useHeardBeat, usePlayer } from '../audio/usePlayer'
+import { useHeardBeat, usePausedAt, usePlayer } from '../audio/usePlayer'
 import { BASE_BPM } from '../engine/arrange'
 import { defaultPatternForStyle, patternsForStyle, PIANO_PATTERNS } from '../engine/pianoPatterns'
-import { barAtBeat, chorusTranspose, type Timeline } from '../engine/timeline'
+import { barAtBeat, chorusKeyOffset, type Timeline } from '../engine/timeline'
 import { warmUpMidi } from '../engine/warmup'
 import { reportError } from '../errorReports'
 import { loadBundledLeadSheets } from '../library/bundled'
@@ -12,7 +12,7 @@ import { loadTunes } from '../library/db'
 import { LEAD_SOURCES } from '../library/importTunes'
 import { useStoredSettings } from '../library/useStoredSettings'
 import { hasMelody, type Chart as ChartData } from '../music/chart'
-import { applyPracticeChange, rampedBpm, type PracticeSettings } from '../music/practice'
+import { BPM_RANGE, applyPracticeChange, rampedBpm, type PracticeSettings } from '../music/practice'
 import type { Tune } from '../music/songs'
 import { getStyle, STYLES } from '../styles'
 import { Wordmark } from '../ui/AppLink'
@@ -20,6 +20,8 @@ import { DisplayMenu } from '../ui/DisplayMenu'
 import { ImportDialog } from '../ui/ImportDialog'
 import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
+import { Substitutions } from '../ui/Substitutions'
+import { useSubstitutedChart } from '../ui/useSubstitutedChart'
 import { Transport } from '../ui/Transport'
 import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl } from './ExerciseControls'
@@ -57,12 +59,13 @@ const KINDS: Record<ReadingKind, { title: string; item: string; items: string; e
 /** Whether a tune belongs on a reading screen: a lead sheet (with a melody, not a lick), or an exercise or lick. */
 const readable = (kind: ReadingKind) => (tune: Tune) =>
   kind === 'exercises' ? !!tune.chart.lick : hasMelody(tune.chart) && !tune.chart.lick
-const BPM_RANGE: [number, number] = [40, 300]
 
 /** Practice reading lead sheet melodies by playing them on a MIDI keyboard with the band. */
 export function MelodySightreading({ kind }: { kind: ReadingKind }) {
   const words = KINDS[kind]
   const playerRef = useRef<Player | null>(null)
+  // Where the band was paused: Play goes on from there, the notes before it judged already
+  const { pausedAt, hold: holdPause, forget: forgetPause } = usePausedAt(playerRef)
 
   const [error, setError] = useState('')
   const [playing, setPlaying] = useState(false)
@@ -98,8 +101,10 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
   const style = getStyle(styleId)
   const position = timeline ? barAtBeat(timeline, beat) : null
   const currentChorus = position?.chorus ?? 0
-  const shownTranspose = playing ? chorusTranspose(transpose, practice.keyStep, currentChorus) : transpose
+  const shownTranspose = playing ? chorusKeyOffset(practice, currentChorus, transpose) : transpose
   const liveBpm = rampedBpm(bpm, practice, Math.min(currentChorus, choruses - 1), BPM_RANGE)
+  // The sheet of the chorus playing, its substitutions in a colour (a lesson step can ask for some)
+  const shownChart = useSubstitutedChart(tune?.chart, practice.subs, playing, currentChorus)
 
   /**
    * Arrange the song for the full band (the melody too, at the Mixer's Melody volume) and start judging; from
@@ -121,6 +126,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
         setBeat(0)
       }
       setTimeline(timeline)
+      forgetPause()
       await player.play(midi, fromSeconds)
       player.setRate(liveBpm / BASE_BPM)
       setPlaying(true)
@@ -128,11 +134,12 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
       setError(String(cause))
       reportError(cause, 'melody sight-reading playback')
     }
-  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm, begin, resume])
+  }, [styleId, patternId, transpose, choruses, practice, settings, liveBpm, begin, resume, forgetPause])
 
   const readiness = usePlayer(playerRef, () => {
     settleThrough(Infinity)
     setPlaying(false)
+    forgetPause()
   }, () => STYLES.map(warmUpMidi))
   const mixer = useMixer(playerRef, readiness, lesson?.mute)
   // The lesson's target: the whole piece judged, right enough, fast enough
@@ -161,8 +168,15 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind])
 
-  /** Stop the band; the notes already due are settled. */
+  /** Stop the band; the notes already due are settled, and the next Play starts from the beginning. */
   function stop() {
+    pauseBand()
+    forgetPause()
+  }
+
+  /** Pause the band where it is: the notes already due are settled, and Play goes on from there. */
+  function pauseBand() {
+    holdPause()
     settleThrough((playerRef.current?.heardPosition ?? 0) * BASE_BPM / 60)
     playerRef.current?.stop()
     setPlaying(false)
@@ -176,16 +190,18 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
 
   /**
    * Change what the band plays or how notes are judged. What leaves the sheet as it is (style,
-   * piano pattern, what is checked, any octave, timing) goes on from where the band is, the notes
-   * still to come judged the new way; a change of the sheet (key, choruses, loop) starts again.
+   * piano pattern, what is checked, any octave, timing) and a new number of choruses go on from
+   * where the band is, the notes still to come judged the new way; a new key or loop starts again.
    */
   function changeArrangement(nextStyle: string, nextPattern: string | null, nextTranspose: number,
     nextChoruses = choruses, nextPractice = practice, nextSettings = settings) {
     band.set({ styleId: nextStyle, patternId: nextPattern, transpose: nextTranspose, choruses: nextChoruses, practice: nextPractice })
     const player = playerRef.current
-    if (!playing || !chart || !player) return
     // The melody swings as the new style does
-    const soundOnly = nextTranspose === transpose && nextChoruses === choruses && nextPractice === practice
+    // A new number of choruses goes on too, as a new style does
+    const soundOnly = nextTranspose === transpose && nextPractice === practice
+    if (!soundOnly && !playing) forgetPause() // a paused band starts a changed sheet from its beginning
+    if (!playing || !chart || !player) return
     if (soundOnly) settleThrough(player.heardPosition * BASE_BPM / 60)
     void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice, nextSettings, soundOnly ? player.position : 0)
   }
@@ -245,7 +261,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
             <button className="button button-primary" onClick={chooseRandomSong}
               disabled={!leadSheets.length}>Choose random {words.item}</button>
           </div>}
-          {tune && <ReadingSheet chart={tune.chart} style={style} transpose={shownTranspose} position={position} beat={beat}
+          {tune && <ReadingSheet chart={shownChart!} style={style} transpose={shownTranspose} position={position} beat={beat}
             playing={playing} loopPicking={loopPicking} loop={practice.loop} feedback={feedback} chordFeedback={chordFeedback} reading={reading}
             bpm={liveBpm} hint={readingHint(reading.checking, 'the melody', leftHandStage(settings))} />}
           {reachedGoal && <LessonDone />}
@@ -255,7 +271,8 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
       </SongWorkspace>
 
       {chart && <Transport readiness={readiness} playing={playing}
-        onToggle={() => playing ? stop() : void startPlayback(chart)}
+        onToggle={() => playing ? pauseBand() : void startPlayback(chart, styleId, patternId, transpose, choruses, practice, settings, pausedAt ?? 0)}
+        paused={pausedAt !== null} onRestart={() => void startPlayback(chart)}
         position={positionLabel} styleId={styleId}
         onStyle={(id) => changeArrangement(id, defaultPatternForStyle(id), transpose)}
         pianoPatternId={patternId} pianoPatterns={patterns}
@@ -269,6 +286,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
         <Practice chart={chart} settings={practice}
           onChange={changePractice}
           onPickLoop={loopPicking.start} />
+        <Substitutions practice={practice} onChange={changePractice} />
         <Mixer {...mixer(style.comp.program)} parts={MELODY_PARTS} />
       </Transport>}
       {kind === 'lead-sheets' && <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)}
