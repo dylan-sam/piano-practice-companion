@@ -1,7 +1,11 @@
 import catalog from '../../../data/left_hand_patterns.json'
-import { chordTones, type Chord } from '../music/chords'
+import { chordTones, rootlessVoicings, type Chord } from '../music/chords'
 import { swingPlacer, toTicks, type NoteEvent } from './events'
+import { remap, remapToPulses, type Timed } from './meter'
 import type { Timeline, Slot } from './timeline'
+
+// Every pattern's bar is written in 4/4 (stepsInBar fits it to other meters)
+const SOURCE_BEATS = 4
 
 interface PatternStep {
   position: number
@@ -40,20 +44,23 @@ export function usesWalkingBass(pattern: PianoPattern): boolean {
 }
 
 /** Return the curated piano choices in the project's source order. */
+// A style's name in the pattern catalog (left_hand_patterns.py) where it differs from its id
+const CATALOG_STYLE: Record<string, string> = { 'bossa-nova': 'bossa nova', 'jazz-waltz': 'jazz waltz' }
+
 export function patternsForStyle(styleId: string): PianoPattern[] {
-  const key = styleId === 'bossa-nova' ? 'bossa nova' : styleId
+  const key = CATALOG_STYLE[styleId] ?? styleId
   return PIANO_PATTERNS.filter((pattern) => pattern.styles.includes(key))
 }
 
 /** Find the catalog's default piano pattern for one style. */
 export function catalogPatternForStyle(styleId: string): string | null {
-  const key = styleId === 'bossa-nova' ? 'bossa nova' : styleId
+  const key = CATALOG_STYLE[styleId] ?? styleId
   return PIANO_PATTERNS.find((pattern) => pattern.default_for.includes(key))?.id ?? null
 }
 
-/** The piano pattern a style starts with in every screen: its chord comping for Swing and Bossa, else the catalog's default. */
+/** The piano pattern a style starts with in every screen: its chord comping for Swing, Jazz Waltz and Bossa, else the catalog's default. */
 export function defaultPatternForStyle(styleId: string): string | null {
-  return styleId === 'swing' || styleId === 'bossa-nova'
+  return styleId === 'swing' || styleId === 'jazz-waltz' || styleId === 'bossa-nova'
     ? null : catalogPatternForStyle(styleId)
 }
 
@@ -89,41 +96,23 @@ function blockVoicing(chord: Chord, low: number): number[] {
 }
 
 /**
- * Levine's left-hand voicing of a chord (The Jazz Piano Book, ch. 7): four notes without the
- * root, in semitones above it, with the 3rd at the bottom (position A). Position B starts from
- * the 7th (its last two notes, then its first two).
+ * Levine's left-hand rootless voicing of a chord (The Jazz Piano Book, ch. 7 and 8), the same as
+ * the band's comping (rootlessVoicings: its alterations written, b9, #9, b13...), in position A
+ * (from the 3rd) or B (from the 7th): the one whose notes move least from the last voicing played
+ * (`last`), its lowest note between C3 and Bb3, so ii-V-I alternates A, B, A.
  *
- *   D-7: F A C E (3 5 7 9)     G7: B E F A (3 13 7 9)     C^7: E G B D (3 5 7 9)
- */
-function rootlessSteps(chord: Chord): number[] {
-  const { quality, tensions } = chord
-  const dark = tensions.includes('alt') // an altered dominant takes the b9 and the b13
-  if (quality === 'min7' || quality === 'min') return [3, 7, 10, 14]
-  if (quality === 'min6' || quality === 'minMaj7') return [3, 7, quality === 'min6' ? 9 : 11, 14]
-  if (quality === 'half') return [3, 6, 10, 12]
-  if (quality === 'dim7' || quality === 'dim') return [0, 3, 6, 9]
-  if (quality === 'dom7' || quality === 'sus7') {
-    const thirteenth = dark || tensions.includes('#5') || tensions.includes('b13') ? 8 : 9
-    const ninth = dark || tensions.includes('b9') ? 13 : tensions.includes('#9') ? 15 : 14
-    return [quality === 'sus7' ? 5 : 4, thirteenth, 10, ninth]
-  }
-  return [4, 7, quality === 'maj7' ? 11 : 9, 14] // major: the 6th unless a major 7th is written
-}
-
-/**
- * The rootless voicing of a chord, in position A or B: the one whose notes move least from the
- * last voicing played (`last`), its lowest note between C3 and Bb3, so ii-V-I alternates A, B, A.
+ *   D-7: F A C E (3 5 7 9)     G7: B E F A (3 13 7 9)     G7b9b13: B Eb F Ab (3 b13 7 b9)
  */
 function rootlessVoicing(chord: Chord, last: number[] | null): number[] {
-  const steps = rootlessSteps(chord)
+  const [a, b] = rootlessVoicings(chord)
   // Stack the notes upwards from the first, which is placed from C3
   const stack = (order: number[]) => order.slice(1).reduce((notes, step) =>
     [...notes, midiNote((chord.root + step) % 12, notes[notes.length - 1] + 1)], [midiNote((chord.root + order[0]) % 12, 48)])
-  const positions = [stack(steps), stack([steps[2], steps[3], steps[0], steps[1]])].filter((notes) => notes[0] <= 58)
+  const positions = [stack(a), stack(b)].filter((notes) => notes[0] <= 58)
   // How far the hand moves from the last voicing (the first one sits nearest E3)
   const moved = (notes: number[]) => last ? notes.reduce((sum, note, i) => sum + Math.abs(note - (last[i] ?? note)), 0)
     : Math.abs(notes[0] - 52)
-  return positions.sort((a, b) => moved(a) - moved(b))[0] ?? stack(steps)
+  return positions.sort((x, y) => moved(x) - moved(y))[0] ?? stack(a)
 }
 
 /** What a pattern remembers from one chord to the next: the last rootless voicing, for the voice leading. */
@@ -211,6 +200,36 @@ function stepsForBar(pattern: PianoPattern, barBeats: number): PatternStep[] {
   }))
 }
 
+/** A step placed in a bar: its time and length in the bar's beats. */
+interface PlacedStep extends Timed { step: PatternStep }
+
+/**
+ * The steps of a pattern's cycle bar placed in a bar of the song, in that bar's beats. Patterns
+ * are written in 4/4: a bar of another simple meter plays the beats meter.ts gives (3/4: beats 1,
+ * 2 and 4, so a stride stays oom-pah-pah on the beat), a compound bar (6/8) puts each half of the
+ * 4/4 bar on one dotted-quarter pulse. Steps already measured in the bar (repeated chord pulses,
+ * varied shells) keep their place.
+ */
+function stepsInBar(pattern: PianoPattern, bar: { beats: number; compound?: boolean }, cycleIndex: number,
+  barIndex: number): PlacedStep[] {
+  const fitted = !!pattern.beat_interval_quarters
+  const own = stepsForBar(pattern, bar.beats).filter((step) => Math.floor(step.position) === cycleIndex
+    && (!SHELL_PATTERNS.has(pattern.id) || step.role !== 'upper_shell'))
+  const lengthOf = (step: PatternStep, index: number) => step.duration
+    ?? Math.max(0.08, ((own[index + 1]?.position ?? cycleIndex + 1) - step.position) * 0.82)
+  let placed: PlacedStep[]
+  if (fitted) placed = own.map((step, index) => ({ at: (step.position - cycleIndex) * bar.beats, dur: lengthOf(step, index) * bar.beats, step }))
+  else {
+    const written = own.map((step, index) => ({ at: (step.position - cycleIndex) * SOURCE_BEATS, dur: lengthOf(step, index) * SOURCE_BEATS, step }))
+    placed = bar.compound ? remapToPulses(written, bar.beats) : remap(written, SOURCE_BEATS, bar.beats)
+  }
+  if (SHELL_PATTERNS.has(pattern.id)) {
+    placed.push(...shellSteps(pattern, bar.beats, cycleIndex, barIndex)
+      .map((step) => ({ at: (step.position - cycleIndex) * bar.beats, dur: step.duration! * bar.beats, step })))
+  }
+  return placed.sort((a, b) => a.at - b.at)
+}
+
 /** Add one varied shell rhythm without restarting the bass figure. */
 function shellSteps(pattern: PianoPattern, barBeats: number, cycleIndex: number, barIndex: number): PatternStep[] {
   const choices = pattern.shell_variations.filter((variation) => variation.hits.every((hit) => {
@@ -282,24 +301,18 @@ export function generatePianoPattern(timeline: Timeline, pattern: PianoPattern, 
       return
     }
     const cycleIndex = barIndex % pattern.cycle_bars
-    const steps = stepsForBar(pattern, bar.beats)
-      .filter((step) => !SHELL_PATTERNS.has(pattern.id) || step.role !== 'upper_shell')
-    if (SHELL_PATTERNS.has(pattern.id)) steps.push(...shellSteps(pattern, bar.beats, cycleIndex, barIndex))
-    steps.sort((a, b) => a.position - b.position)
-    // Beats of this bar where the pattern plays sixteenths stay straight in a swung style
-    const placed = swingPlacer(steps.filter((step) => Math.floor(step.position) === cycleIndex)
-      .map((step) => (step.position - cycleIndex) * bar.beats), swing)
-    steps.forEach((step, index) => {
-      if (Math.floor(step.position) !== cycleIndex || step.role === 'rest') return
+    const placedSteps = stepsInBar(pattern, bar, cycleIndex, barIndex)
+    // Beats of this bar where the pattern plays sixteenths stay straight in a swung style; a
+    // compound bar (6/8) plays straight eighths
+    const placed = swingPlacer(placedSteps.map((item) => item.at), swing)
+    placedSteps.forEach(({ at, dur, step }) => {
+      if (step.role === 'rest') return
       if (step.initial_only && barIndex >= pattern.cycle_bars) return
-      const local = step.position - cycleIndex
-      const nominal = bar.start + local * bar.beats
-      const attack = bar.start + (pattern.fidelity === 'scored example' ? local * bar.beats : placed(local * bar.beats))
+      const nominal = bar.start + at
+      const attack = bar.start + (pattern.fidelity === 'scored example' || bar.compound ? at : placed(at))
       const active = activeSlot(timeline.slots, step.grace ? nominal : attack)
       if (!active) { walk.pitch = null; walk.chord = null; walk.index = null; return }
-      const nextPosition = steps[index + 1]?.position ?? pattern.cycle_bars
-      let duration = (step.duration ?? Math.max(0.08, (nextPosition - step.position) * 0.82)) * bar.beats
-      duration = Math.min(duration, end - attack)
+      const duration = Math.min(dur, end - attack)
       if (duration <= 0) return
       const start = step.grace ? Math.max(0, nominal - duration) : attack
       const walking = usesWalkingBass(pattern) && step.role !== 'upper_shell'
@@ -332,7 +345,7 @@ export function generatePianoPattern(timeline: Timeline, pattern: PianoPattern, 
     const distance = first.note - last.note
     const gap = first.tick - last.tick
     if (first.tick !== toTicks(timeline.bars[barIndex + 1].start) || Math.abs(distance) !== 2 ||
-      gap <= 0 || gap > toTicks(timeline.bars[barIndex].beats / 4)) continue
+      gap <= 0 || gap > toTicks(1)) continue
     const passing = last.tick + Math.round(gap * (swing > 0.5 ? 2 / 3 : 0.5))
     last.duration = Math.min(last.duration, passing - last.tick)
     events.push({ tick: passing, channel: 0, note: last.note + Math.sign(distance),

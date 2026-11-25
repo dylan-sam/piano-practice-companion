@@ -120,4 +120,20 @@ describe('project piano patterns in Studio', () => {
     expect(bar(1)).toEqual([53, 57, 59, 64]) // F A B E: 7th at the bottom
     expect(bar(2)).toEqual([52, 55, 59, 62]) // E G B D: 3rd at the bottom
   })
+
+  it('keeps a 4/4 pattern on the beat in 3/4 and 6/8 bars', () => {
+    const onsets = (time: [number, number], id: string) => {
+      const chart = chartFromMeasures({ title: 'M', style: 'swing', key: 0, bpm: 120, time }, [['C'], ['F']])
+      const timeline = buildTimeline(chart, 0, 1, { countIn: false, ending: false })
+      const events = generatePianoPattern(timeline, PIANO_PATTERNS.find((p) => p.id === id)!, 0.5) // straight eighths
+      return [...new Set(events.filter((event) => event.tick < 3 * 480).map((event) => event.tick / 480))].sort((a, b) => a - b)
+    }
+    // 3/4 plays beats 1, 2 and 4 of the 4/4 bar: oom-pah-pah, three quarter notes
+    expect(onsets([3, 4], 'stride')).toEqual([0, 1, 2])
+    expect(onsets([3, 4], 'walking_bass')).toEqual([0, 1, 2])
+    expect(onsets([3, 4], 'charleston')).toEqual([0, 1.5])
+    // 6/8: each half of the 4/4 bar on a dotted quarter, on the eighths
+    expect(onsets([6, 8], 'stride')).toEqual([0, 1, 1.5, 2.5])
+  })
 })
+

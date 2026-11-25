@@ -43,6 +43,31 @@ export function remap<T extends Timed>(pattern: T[], source: number, target: num
   return out
 }
 
+/**
+ * A 4/4 pattern played in a compound bar of `target` beats (6/8: 3, 9/8: 4.5, 12/8: 6): each half
+ * of the 4/4 bar goes on one dotted-quarter pulse, its offsets shrunk to the pulse and set on its
+ * eighths (when two hits of different times land on the same eighth, the first one stays).
+ *
+ *   4/4 stride: bass 1, chord 2, bass 3, chord 4  ->  6/8: bass 1, chord on the 3rd eighth, bass 4, chord 6
+ */
+export function remapToPulses<T extends Timed>(pattern: T[], target: number): T[] {
+  const out: T[] = []
+  const takenBy = new Map<number, number>() // eighth (in beats) -> the 4/4 time that took it
+  const pulses = Math.round(target / PULSE)
+  for (let pulse = 0; pulse < pulses; pulse++) {
+    const half = (pulse % 2) * 2
+    for (const item of pattern) {
+      if (item.at < half - 1e-9 || item.at >= half + 2 - 1e-9) continue
+      const at = pulse * PULSE + Math.round(((item.at - half) * PULSE / 2) / 0.5) * 0.5
+      const taker = takenBy.get(at)
+      if (at >= target - 1e-9 || (taker !== undefined && Math.abs(taker - item.at) > 1e-9)) continue
+      takenBy.set(at, item.at)
+      out.push({ ...item, at, dur: Math.min(item.dur * PULSE / 2, target - at) })
+    }
+  }
+  return out
+}
+
 // The pattern for a chord lasting `length` beats, from patterns listed by chord length
 export function patternFor<T extends Timed>(patterns: Partial<Record<string, T[][]>>, length: number, compound: boolean, fallback: T): T[] {
   const exact = patterns[String(length)]
