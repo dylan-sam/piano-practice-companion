@@ -299,7 +299,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
 
       <SongWorkspace source={source} label="Sight-reading mode" tunes={leadSheets} emptyText={words.empty}
         canImport={kind === 'lead-sheets'} categories={kind === 'exercises'}
-        onNew={kind === 'exercises' ? toggleBuilder : undefined} newLabel="Build" panel={builder || undefined} modes={[{ id: 'pick', text: `Pick ${words.item === 'song' ? 'a' : 'an'} ${words.item}` },
+        onNew={kind === 'exercises' ? toggleBuilder : undefined} newLabel="Build exercise" panel={builder || undefined} modes={[{ id: 'pick', text: `Pick ${words.item === 'song' ? 'a' : 'an'} ${words.item}` },
           { id: 'random', text: `Random ${words.item}` }]}>
           <ExerciseStatus error={error} readiness={readiness} keyboard={keyboard} />
           {mode === 'random' && <div className="sight-picker">

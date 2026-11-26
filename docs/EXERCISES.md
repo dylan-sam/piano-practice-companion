@@ -380,7 +380,7 @@ auto-scroller On/Off).
 |---|---|
 | Mode | **Pick a song** or **Random song** (Lead Sheet Sightreading), **Pick an exercise** or **Random exercise** (Exercises Sightreading) |
 | Songs | Lead Sheet Sightreading: the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody. **Import** MuseScore MusicXML files or a Studio export: they are saved for the Lead Sheet Player too |
-| Exercises | Exercises Sightreading: six example exercises (one per category), your own presets, and the 175 licks of the [lick database](LICKS.md). **Build** opens the [exercise builder](#the-exercise-builder) |
+| Exercises | Exercises Sightreading: six example exercises (one per category), your own presets, and the 175 licks of the [lick database](LICKS.md). **Build exercise** opens the [exercise builder](#the-exercise-builder) |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
@@ -396,7 +396,7 @@ every style (moving only its "and" would make them uneven).
 
 Exercises Sightreading writes its exercises from a few settings
 (`studio/src/exercises/builder/`, the kinds in [LICKS.md](LICKS.md#exercises)).
-**Build**, above the list, opens the builder on the exercise on the stand (or on
+**Build exercise**, above the list, opens the builder on the exercise on the stand (or on
 major triads, when the stand is empty):
 
 | Setting | Choices |
@@ -406,6 +406,13 @@ major triads, when the stand is empty):
 | Key | the key it starts in |
 | Then | stay in the key, or move up a half step, a whole step, a minor 3rd, a fourth (the cycle of fourths) or a fifth; arpeggios can also go through the diatonic chords of the key |
 | Keys | how many keys it goes through: 2, 3, 4, 6 or all 12 |
+
+The keys it goes through are listed under the settings ("Played in: C, F,
+B♭..."). An interval exercise has no chords, so its settings say what they do
+there: **First note** (the lower note of the first pair), **Next pairs start**
+(on the same note, or a half step, a fourth... higher each time) and
+**Pairs** (how many). A scale pattern shows its notes in scale degrees: 1-2-3-5
+plays 1 2 3 5, then 2 3 4 6, then 3 4 5 7... from every note of the scale.
 
 Each change writes the exercise again on the stand, titled from its settings
 ("Dominant 7th chords in fourths: 1-3-5-7 up"). A setting that does not fit

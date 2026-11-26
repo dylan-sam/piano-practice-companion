@@ -7,13 +7,20 @@ import { useState, type ReactNode } from 'react'
 import { prettyChordText } from '../../music/chordText'
 import {
   APPROACH_CHORD_NAMES, APPROACHES, CHORDS, DIRECTIONS, exerciseTitle, FAMILIES, FAMILY_DEFAULTS, FIGURES, fit, INTERVALS, LINES,
-  MOVES, NOTE_SETS, ORDERS, PROGRESSIONS, RHYTHMS, SCALE_PATTERNS, specText, type ExercisePreset, type ExerciseSpec, type Family,
+  MOVES, NOTE_SETS, ORDERS, PROGRESSIONS, RHYTHMS, rootsOf, SCALE_PATTERNS, specText, type ExercisePreset, type ExerciseSpec, type Family,
 } from './exerciseBuilder'
 import { SCALES } from './exerciseMusic'
 import { addPreset, deletePreset, isExample, updatePreset } from './exercisePresets'
 
 const KEY_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B']
 const KEY_COUNTS = [2, 3, 4, 6, 12]
+
+/** The words of the key settings: an interval has no key, only the note each pair starts on. */
+function keyWords(family: Family) {
+  return family === 'interval'
+    ? { key: 'First note', then: 'Next pairs start', count: 'Pairs', all: 'One on every note (12)', many: (n: number) => `${n} pairs`, through: 'Pairs start on' }
+    : { key: 'Key', then: 'Then', count: 'Keys', all: 'All 12 keys', many: (n: number) => `${n} keys`, through: 'Played in' }
+}
 
 /** One setting: a label and a menu of choices. */
 function Choice<T extends string | number>({ label, value, options, onChange, disabled }: {
@@ -56,7 +63,7 @@ function FamilySettings({ spec, set, disabled }: { spec: ExerciseSpec; set: (cha
       <Choice label="Scale" value={spec.scale} disabled={disabled} onChange={(value) => set({ scale: value })}
         options={SCALES.map((scale) => [scale.name, prettyChordText(`${scale.name} (${scale.chord})`)])} />
       <Choice label="Pattern" value={spec.pattern} disabled={disabled} onChange={(value) => set({ pattern: value })}
-        options={Object.entries(SCALE_PATTERNS).map(([id, item]) => [id, item.label])} />
+        options={Object.entries(SCALE_PATTERNS).map(([id, item]) => [id, `${item.label} (${item.hint})`])} />
       {direction}
       {rhythm}
       <Choice label="Range" value={spec.octaves} disabled={disabled} onChange={(value) => set({ octaves: value })} options={[[1, 'One octave'], [2, 'Two octaves']]} />
@@ -103,6 +110,7 @@ export function ExerciseBuilder({ spec, preset, locked, onChange, onSaved, onDel
   /** Change some settings, made to fit together. */
   const set = (change: Partial<ExerciseSpec>) => onChange(fit({ ...spec, ...change }))
   const title = exerciseTitle(spec)
+  const words = keyWords(spec.family)
 
   return (
     <section className="builder" aria-label="Exercise builder">
@@ -116,13 +124,15 @@ export function ExerciseBuilder({ spec, preset, locked, onChange, onSaved, onDel
           onChange={(family) => onChange({ ...FAMILY_DEFAULTS[family], key: spec.key })}
           options={Object.entries(FAMILIES).map(([id, text]) => [id as Family, text])} />
         <FamilySettings spec={spec} set={set} disabled={locked} />
-        <Choice label="Key" value={spec.key} disabled={locked} onChange={(value) => set({ key: value })}
+        <Choice label={words.key} value={spec.key} disabled={locked} onChange={(value) => set({ key: value })}
           options={KEY_NAMES.map((text, pc) => [pc, text])} />
-        <Choice label="Then" value={spec.move} disabled={locked}
+        <Choice label={words.then} value={spec.move} disabled={locked}
           onChange={(value) => set({ move: value, keys: value === 'none' ? 1 : value === 'diatonic' ? 1 : spec.keys > 1 ? spec.keys : 12 })}
-          options={Object.entries(MOVES).filter(([id]) => id !== 'diatonic' || spec.family === 'arpeggio').map(([id, item]) => [id as ExerciseSpec['move'], item.label])} />
-        {spec.move !== 'none' && spec.move !== 'diatonic' && <Choice label="Keys" value={spec.keys} disabled={locked}
-          onChange={(value) => set({ keys: value })} options={KEY_COUNTS.map((count) => [count, count === 12 ? 'All 12 keys' : `${count} keys`])} />}
+          options={Object.entries(MOVES).filter(([id]) => id !== 'diatonic' || spec.family === 'arpeggio')
+            .map(([id, item]) => [id as ExerciseSpec['move'], spec.family === 'interval' && id === 'none' ? 'On the same note' : item.label])} />
+        {spec.move !== 'none' && spec.move !== 'diatonic' && <Choice label={words.count} value={spec.keys} disabled={locked}
+          onChange={(value) => set({ keys: value })} options={KEY_COUNTS.map((count) => [count, count === 12 ? words.all : words.many(count)])} />}
+        <p className="builder-through">{words.through}: {rootsOf(spec).map((pc) => KEY_NAMES[pc]).join(', ')}</p>
       </div>
       {!locked && <div className="builder-save">
         <input className="library-search" value={name} placeholder={title} aria-label="Preset name"

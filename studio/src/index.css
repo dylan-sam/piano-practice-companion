@@ -4472,3 +4472,4 @@ input.fader::-moz-range-thumb {
 .builder-save { display: grid; gap: 6px; margin-top: 10px; }
 .builder-save .library-search { margin: 0; }
 .builder-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.builder-through { margin: 0; font-size: 0.85em; opacity: 0.8; }

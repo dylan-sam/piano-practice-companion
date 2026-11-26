@@ -97,12 +97,13 @@ export const CHORDS: Record<string, ChordType & { kind: 'triad' | 'seventh' }> =
 }
 
 /** Scale patterns: the steps of each group from step i, going up (down mirrors them). */
-export const SCALE_PATTERNS: Record<string, { label: string; group: number[] }> = {
-  straight: { label: 'Straight', group: [0] },
-  thirds: { label: 'In thirds', group: [0, 2] },
-  '1-2-3-5': { label: '1-2-3-5', group: [0, 1, 2, 4] },
-  fours: { label: 'Groups of four', group: [0, 1, 2, 3] },
-  triads: { label: 'Triads on every step', group: [0, 2, 4] },
+// A pattern repeats its group from every note of the scale; `hint` shows it in scale degrees.
+export const SCALE_PATTERNS: Record<string, { label: string; group: number[]; hint: string }> = {
+  straight: { label: 'Straight', group: [0], hint: '1 2 3 4 5...' },
+  thirds: { label: 'In thirds', group: [0, 2], hint: '1 3, 2 4, 3 5...' },
+  '1-2-3-5': { label: '1-2-3-5', group: [0, 1, 2, 4], hint: '1 2 3 5, 2 3 4 6, 3 4 5 7...' },
+  fours: { label: 'Groups of four', group: [0, 1, 2, 3], hint: '1 2 3 4, 2 3 4 5...' },
+  triads: { label: 'Triads on every step', group: [0, 2, 4], hint: '1 3 5, 2 4 6, 3 5 7...' },
 }
 
 /** A progression's chords in C, and its name. */
@@ -332,7 +333,7 @@ export function exerciseTitle(spec: ExerciseSpec): string {
       }
       case 'interval': {
         const moving = spec.move === 'none' ? '' : ` ${MOVES[spec.move].words}`
-        return `${capital(INTERVALS[spec.interval])}${moving}${spec.keys !== 12 && spec.move !== 'none' ? ` (${spec.keys} keys)` : ''}${inKey}: ${ORDERS[spec.order]}${rhythm}`
+        return `${capital(INTERVALS[spec.interval])}${moving}${spec.keys !== 12 && spec.move !== 'none' ? ` (${spec.keys} pairs)` : ''}${inKey}: ${ORDERS[spec.order]}${rhythm}`
       }
       case 'rhythm':
         return `Rhythm on ${nameInC(spec.key)}7${keysWords(spec, ` ${MOVES[spec.move].words}`)}: ${FIGURES[spec.figure].label}`

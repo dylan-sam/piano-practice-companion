@@ -305,8 +305,8 @@ the percentage and your average timing (early or late, in milliseconds).
 The same screen with the [licks and exercises](#licks-and-exercises) of a few
 bars: scales, arpeggios, guide tones, approach notes, intervals, rhythm drills
 and licks. **Pick an exercise** or **Random exercise**; the key and tempo can
-change at each repetition with the Practice button. **Build** opens the
-exercise builder: choose the kind of exercise and its settings (the chord, the
+change at each repetition with the Practice button. **Build exercise**
+opens the exercise builder: choose the kind of exercise and its settings (the chord, the
 scale, the progression, the key, how it moves through the keys...), and save
 it under a name as a preset, listed under its category. A lesson step builds
 its own exercise, with its settings locked.

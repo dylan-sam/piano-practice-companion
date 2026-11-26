@@ -89,14 +89,14 @@ The exercises are built in the app by the **exercise builder**
 (`studio/src/exercises/builder/exerciseBuilder.ts`) from a few settings: the
 kind of exercise, its own settings, the key it starts in and how it moves
 through the keys. Exercises Sightreading lists six examples (one per category)
-and the person's own presets; its **Build** button opens the builder
+and the person's own presets; its **Build exercise** button opens the builder
 ([how](EXERCISES.md#the-exercise-builder)). A lesson step builds its exercise
 the same way, from the settings in its link.
 
 | Kind | Settings | What they practise |
 |---|---|---|
 | Arpeggios | major, minor, diminished, augmented and sus4 triads; major 7th, minor 7th, dominant 7th, half-diminished, diminished 7th and minor-major 7th chords; the notes (1-3-5, 1-3-5-8, 1-3-5-7, 1-3-5-7-8, **without the fifth** 1-3-7-8, the upper structure 3-5-7-9, 1-3-5-7-9), the note to start on, up, down, up and down, or up one and down the next; in a key, through the keys, or the diatonic chords of a key | the 1-3-5 drills of Kelly and Rasmussen's Module 1, arpeggios with and without the fifth |
-| Scales | 25 scales over their chord (the modes of the major and melodic minor scales, harmonic minor, Phrygian dominant, the bebop scales, pentatonics, blues, whole tone and both diminished scales); straight, in thirds, 1-2-3-5, groups of four or triads on every step; one or two octaves | chord scales |
+| Scales | 25 scales over their chord (the modes of the major and melodic minor scales, harmonic minor, Phrygian dominant, the bebop scales, pentatonics, blues, whole tone and both diminished scales); straight, in thirds (1 3, 2 4...), 1-2-3-5 (1 2 3 5, 2 3 4 6..., from every note of the scale), groups of four or triads on every step; one or two octaves | chord scales |
 | Lines through a progression | 16 progressions (ii-V-I, minor ii-V-i, ii-V7b9-I, minor ii-V7b9b13-i, I-vi-ii-V, iii-VI-ii-V, jazz blues, minor blues, rhythm changes A section, the four substitutions of the Lessons tab, the diatonic cycle, the cycle of dominants, the Coltrane cycle): guide tones one per chord from the 3rd or from the 7th, two per chord, chord tones or chord scales in eighth notes, every 3rd enclosed | voice leading through the changes |
 | Approach notes | into 1, 3, 5, 7 and 8 of a major 7th, minor 7th or dominant chord: chromatic approach from below, scale approach from above, double chromatic approach, three enclosures | bebop chromaticism |
 | Intervals | minor 2nds to octaves: lower note first, upper note first, or up one and down the next (no chords) | Kelly and Rasmussen's interval drills |

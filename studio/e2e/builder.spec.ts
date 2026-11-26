@@ -9,7 +9,7 @@ const titles = (page: Page) => page.locator('.library-list .tune-title').allInne
 
 /** Open the song list (on a phone it is a panel) and the builder. */
 async function openBuilder(page: Page) {
-  const build = page.getByRole('button', { name: 'Build', exact: true })
+  const build = page.getByRole('button', { name: 'Build exercise', exact: true })
   if (!(await build.isVisible())) await page.getByRole('button', { name: 'Exercises', exact: true }).click()
   await build.click()
   return page.getByRole('region', { name: 'Exercise builder' })
