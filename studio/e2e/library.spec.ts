@@ -1,5 +1,6 @@
-// The Playlists filter of the song list, and the Licks filter of Lick Sightreading: check boxes,
-// like the Progressions filter. Only the checked playlists are listed (all of them when none is).
+// The song list: one playlist of the app's songs (the person's own playlists made, chosen and
+// deleted in the Playlists panel), the categories of the exercises, and the Licks filter of Lick
+// Sightreading (check boxes, like the Progressions filter).
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -10,60 +11,86 @@ async function check(page: Page, filter: RegExp, names: string[]) {
   for (const name of names) await page.getByRole('checkbox', { name, exact: true }).click()
 }
 
-test('only the checked playlists are listed', async ({ page }) => {
+/** The number of songs listed, as the search box says ("Search 1483 songs"). */
+async function songCount(page: Page): Promise<number> {
+  const placeholder = await page.getByRole('searchbox', { name: 'Search songs' }).getAttribute('placeholder')
+  return Number(/Search (\d+)/.exec(placeholder ?? '')?.[1] ?? NaN)
+}
+
+test('one playlist of every shipped song, with no chooser until the person makes a playlist', async ({ page }) => {
   await page.goto('/play-along/lead-sheets')
-  await check(page, /^Playlists/, ['Nottingham folk tunes'])
-  const groups = page.locator('.library-group')
-  await expect(groups).toHaveText(['Nottingham folk tunes'])
-  await expect(page.getByRole('button', { name: /^Playlists \(1\)/ })).toBeVisible()
-
-  await expect(page.locator('.library-count')).toHaveText('981')
-
-  // A second playlist joins the list (its songs come after the first's); Clear lists every playlist again
-  await check(page, /^Playlists/, ['OpenEWLD lead sheets'])
-  await expect(page.locator('.library-count')).toHaveText('1479')
+  // The study tunes, the OpenEWLD lead sheets and the Nottingham folk tunes, in one list by title
+  await expect.poll(() => songCount(page)).toBe(1483)
+  await expect(page.getByRole('combobox', { name: 'Playlist' })).toHaveCount(0)
   await page.getByRole('searchbox', { name: 'Search songs' }).fill('Blue Moon')
-  await expect(groups).toHaveText(['OpenEWLD lead sheets'])
+  await expect(page.locator('.library-list .tune-title').first()).toHaveText(/Blue Moon/)
   await page.getByRole('searchbox', { name: 'Search songs' }).fill('')
-  await page.locator('.check-filter').getByRole('button', { name: 'Clear' }).click()
-  await expect(page.getByRole('button', { name: /^Playlists$/ })).toBeVisible()
+
+  // Make a playlist (Playlists): the chooser appears and shows it, empty
+  await page.locator('.library-list .tune').first().click()
+  await page.getByRole('button', { name: 'Playlists', exact: true }).click()
+  await page.getByRole('textbox', { name: 'New playlist name' }).fill('Jazz')
+  await page.getByRole('button', { name: 'Create' }).click()
+  const chooser = page.getByRole('combobox', { name: 'Playlist' })
+  await expect(chooser.locator('option:checked')).toHaveText('Jazz (0)')
+  await page.locator('.playlist-panel').getByRole('button', { name: 'Close' }).click()
+  // The open song put in it with Edit Song > Manage playlists
+  await page.getByRole('button', { name: 'Edit Song' }).click()
+  await page.getByRole('button', { name: 'Manage playlists' }).click()
+  const box = page.getByRole('dialog', { name: /Playlists of/ }).getByRole('checkbox', { name: /in Jazz/ })
+  await box.click()
+  await expect(box).toBeChecked()
+  await page.getByRole('dialog', { name: /Playlists of/ }).getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('button', { name: 'Close' }).click()
+  await expect(chooser.locator('option:checked')).toHaveText('Jazz (1)')
+  await expect.poll(() => songCount(page)).toBe(1)
+  // Taken out again: a shipped song is not deleted, only taken out
+  await page.locator('.library-list .tune-remove').click()
+  await expect.poll(() => songCount(page)).toBe(0)
+  await expect(page.getByText('This playlist is empty.')).toBeVisible()
+  // Deleted, keeping the songs: back to the one playlist, no chooser
+  await page.getByRole('button', { name: 'Playlists', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete Jazz' }).click()
+  await page.getByRole('button', { name: 'none of its songs' }).click()
+  await expect(chooser).toHaveCount(0)
+  await expect.poll(() => songCount(page)).toBe(1483)
+
+  // A song of the app deleted for good (Edit Song, two presses) is hidden; the main menu recovers it
+  await page.locator('.playlist-panel').getByRole('button', { name: 'Close' }).click()
+  await page.getByRole('button', { name: 'Edit Song' }).click()
+  await page.getByRole('button', { name: 'Delete song' }).click()
+  await page.getByRole('button', { name: 'Delete it for good?' }).click()
+  await expect.poll(() => songCount(page)).toBe(1482)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Restore all default songs' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Recovered 1 song.' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Restore all default songs' })).toBeDisabled()
+  await page.goto('/play-along/lead-sheets')
+  await expect.poll(() => songCount(page)).toBe(1483)
 })
 
-test('lick playlists list their licks in order, easiest first', async ({ page }) => {
+test('exercises and licks are listed by category, in their order', async ({ page }) => {
   await page.goto('/sightreading/exercises')
-  await check(page, /^Playlists/, ['Licks: Arpeggios'])
+  await check(page, /^Categories/, ['Licks: Arpeggios'])
   const titles = await page.locator('.library-list .tune-title').allInnerTexts()
   expect(titles[0]).toBe('Arpeggio 1-3-5-7, scale down to the 9')
   expect(titles.slice(1).every((title) => /arpeggio/i.test(title))).toBe(true)
+  await expect(page.getByRole('button', { name: 'Playlists', exact: true })).toHaveCount(0)
 })
 
-test('the ChoCo charts are one of the playlists', async ({ page }) => {
+test('the ChoCo charts are searched with the shipped songs', async ({ page }) => {
   await page.goto('/play-along/chords')
-  await check(page, /^Playlists/, ['ChoCo charts'])
-  await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toBeVisible()
-  await expect(page.locator('.library-group')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /^Progressions/ })).toBeVisible()
-
-  // With a saved playlist checked too, both are listed; without ChoCo, its search goes away
-  await check(page, /^Playlists/, ['Nottingham folk tunes'])
-  await expect(page.locator('.library-group')).toHaveText(['Nottingham folk tunes'])
-  await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toBeVisible()
-  await check(page, /^Playlists/, ['ChoCo charts'])
-  await expect(page.getByRole('heading', { name: 'ChoCo scores' })).toHaveCount(0)
-  // The progressions are found in the other playlists too
+  await expect(page.getByRole('heading', { name: /ChoCo chord charts/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /^Progressions/ })).toBeVisible()
 })
 
 test('the progressions are found in the shipped lead sheets, any of them by default', async ({ page }) => {
   await page.goto('/sightreading/lead-sheets')
-  await check(page, /^Playlists/, ['OpenEWLD lead sheets'])
-  await expect(page.locator('.library-count')).toHaveText('498')
+  await expect.poll(() => songCount(page)).toBe(1483)
   await check(page, /^Progressions/, ['vi – ii – V – I'])
   await expect(page.getByRole('button', { name: 'Any of them' })).toHaveAttribute('aria-pressed', 'true')
-  await expect.poll(async () => Number(await page.locator('.library-count').innerText())).toBeLessThan(498)
-  await expect.poll(async () => Number(await page.locator('.library-count').innerText())).toBeGreaterThan(10)
-  // My tunes alone offers no progressions
-  await page.locator('.check-filter').first().getByRole('button', { name: 'Clear' }).click()
+  await expect.poll(() => songCount(page)).toBeLessThan(1483)
+  await expect.poll(() => songCount(page)).toBeGreaterThan(10)
 })
 
 test('the Licks filter offers only the checked lick playlists', async ({ page }) => {

@@ -18,20 +18,28 @@
 }
 
 :root {
-  --desk: #e6e1d6;
-  --paper: #fbf8f1;
-  --paper-edge: #d8d0bf;
-  --ink: #1c1a17;
-  --ink-2: #4a453d;
-  --muted: #7a7366;
-  --line: #cfc7b7;
-  --control: #f3efe6;
-  --highlighter: #ffde3b;
-  --sub-color: #1f6fd1; /* substituted chords */
-  --highlighter-blend: multiply;
-  --note-playing: #b8460e;
-  --on-ink: #fbf8f1;
-  --danger: #a3322a;
+  /* Dark mode, the default theme ("Jazz club"): a night-blue room, warm amber and teal lights.
+     ui/theme.ts switches to Light mode (data-mode="light") or a custom theme (these variables set inline). */
+  --desk: #14161f;
+  --paper: #1f2230;
+  --paper-edge: #2e3244;
+  --ink: #f3ead8;
+  --ink-2: #d6ccb8;
+  --muted: #a59c8a;
+  --line: #353a4e;
+  --control: #272b3b;
+  --highlighter: rgb(242 181 68 / 0.32);
+  --sub-color: #6fb0ff; /* substituted chords */
+  --highlighter-blend: normal;
+  --note-playing: #f2b544;
+  --on-ink: #14161f;
+  --danger: #ff8a7a;
+  --accent: #f2b544; /* the theme's light: today's lesson, the current week, effects */
+  --accent-2: #5ec2b7; /* its second colour: weeks done, icons */
+  --on-accent: #14161f;
+  --good: #6cc48a; /* a right answer, in the effects */
+  --display: Georgia, 'Times New Roman', serif; /* titles of the home screen and the lessons */
+  --card-radius: 16px;
 
   --sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -42,28 +50,33 @@
   font: 14px/1.45 var(--sans);
   color: var(--ink);
   background: var(--desk);
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --desk: #121110;
-    --paper: #1d1b18;
-    --paper-edge: #2c2924;
-    --ink: #ece6d9;
-    --ink-2: #c4bcad;
-    --muted: #8c8577;
-    --line: #36322c;
-    --control: #24211d;
-    --highlighter: rgb(255 214 51 / 0.3);
-    --sub-color: #6fb0ff;
-    --note-playing: #ffb15c;
-    --highlighter-blend: normal;
-    --on-ink: #121110;
-    --danger: #e0786e;
-    color-scheme: dark;
-  }
+/* Light mode ("Bossa"): warm cream, coral and teal, rounder */
+:root[data-mode='light'] {
+  --desk: #fff4e8;
+  --paper: #ffffff;
+  --paper-edge: #f1dcc8;
+  --ink: #2b2135;
+  --ink-2: #4f4459;
+  --muted: #85788b;
+  --line: #ead6c3;
+  --control: #fff8f1;
+  --highlighter: #ffd166;
+  --sub-color: #1f6fd1;
+  --highlighter-blend: multiply;
+  --note-playing: #e05a2b;
+  --on-ink: #ffffff;
+  --danger: #c0392b;
+  --accent: #ff7a59;
+  --accent-2: #16a394;
+  --on-accent: #ffffff;
+  --good: #2e9d55;
+  --display: var(--sans);
+  --card-radius: 22px;
+  color-scheme: light;
 }
 
 * {
@@ -215,8 +228,17 @@ button:disabled {
 .library-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 0 12px 10px;
+  padding: 0 0 12px;
+}
+
+/* Read by screen readers only */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .library-head h2 {
@@ -230,7 +252,17 @@ button:disabled {
 
 .library-actions {
   display: flex;
+  flex: 1 1 auto;
   gap: 6px;
+  min-width: 0;
+}
+
+/* Playlists, New and Import share the width of the list */
+.library-actions > .library-import {
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 6px;
 }
 
 .library[inert] {
@@ -2576,15 +2608,14 @@ input.fader::-moz-range-thumb {
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
-  .answer-correct {
-    border-color: #6cc48a;
-    box-shadow: inset 0 0 0 1.5px #6cc48a;
-  }
+/* Dark mode: a lighter green */
+:root:not([data-mode='light']) .answer-correct {
+  border-color: #6cc48a;
+  box-shadow: inset 0 0 0 1.5px #6cc48a;
+}
 
-  .feedback-correct strong {
-    color: #6cc48a;
-  }
+:root:not([data-mode='light']) .feedback-correct strong {
+  color: #6cc48a;
 }
 
 @media (max-width: 820px) and (min-height: 501px), (max-width: 600px) {
@@ -3462,11 +3493,9 @@ input.fader::-moz-range-thumb {
   --dictation-ghost: rgba(47, 111, 191, 0.55);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dictation {
-    --dictation-ink: #79aef0;
-    --dictation-ghost: rgba(121, 174, 240, 0.45);
-  }
+:root:not([data-mode='light']) .dictation {
+  --dictation-ink: #79aef0;
+  --dictation-ghost: rgba(121, 174, 240, 0.45);
 }
 
 /* Notes are written by tapping and dragging on the staff, so the page does not scroll from there */
@@ -3626,41 +3655,102 @@ input.fader::-moz-range-thumb {
   cursor: default;
 }
 
-/* Lessons: units that open, weeks, and step cards (one column on phones) */
+/* Lessons: a path of units, each a row of week circles, and the open week's step cards */
 .lessons-page {
   /* The app's frame does not scroll: the page scrolls under the top bar */
   overflow-y: auto;
   min-height: 0;
   padding: 16px max(16px, calc((100% - 920px) / 2)) 48px;
-}
-
-.lessons-intro h1 { margin: 8px 0; }
-.lessons-progress { color: var(--ink-2); }
-.lessons-next { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-
-.lesson-unit {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--paper);
-  margin: 12px 0;
-  padding: 0 14px;
-}
-
-.lesson-unit summary {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lessons-intro h1 { margin: 8px 0; font-family: var(--display); font-weight: 500; font-size: 30px; }
+.lessons-intro p { color: var(--ink-2); }
+.lessons-how summary { cursor: pointer; color: var(--ink-2); }
+.lessons-next { margin: -6px 0 0; }
+.link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+
+.lesson-path { display: grid; gap: 14px; }
+
+.unit-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  padding: 14px 16px;
+}
+
+.unit-complete { border-color: color-mix(in srgb, var(--accent-2) 60%, var(--line)); }
+
+.unit-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'badge text' 'badge meter';
+  align-items: center;
   gap: 4px 12px;
-  padding: 12px 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
+.unit-badge {
+  grid-area: badge;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--control);
+  border: 1px solid var(--line);
+  font-family: var(--display);
+  font-size: 18px;
+}
+
+.unit-complete .unit-badge { background: var(--accent-2); border-color: var(--accent-2); color: var(--on-accent); }
+.unit-text { grid-area: text; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; }
 .lesson-unit-title { font-weight: 600; }
-.lesson-unit-weeks { color: var(--ink-2); }
-.lesson-week h3 { margin: 16px 0 8px; }
-.lesson-week-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.lesson-week-tabs [aria-selected='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+.lesson-unit-weeks { color: var(--muted); }
+.unit-meter { grid-area: meter; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.unit-meter i { display: block; height: 100%; background: var(--accent-2); }
+
+/* The weeks: circles joined by a line, the current one larger in the accent colour */
+.week-path { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 0; list-style: none; margin: 14px 0 0; padding: 0 0 0 4px; }
+.week-stop { display: flex; flex-direction: column; align-items: center; position: relative; padding: 0 0 0 26px; }
+.week-stop:first-child { padding-left: 0; }
+.week-line { position: absolute; left: 0; top: 19px; width: 26px; height: 3px; background: var(--line); }
+.week-done .week-line, .week-current .week-line, .week-started .week-line { background: var(--accent-2); }
+.week-stop small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+.week-node {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font: 600 14px var(--sans);
+  cursor: pointer;
+  transition: transform 120ms;
+}
+
+.week-node:hover { transform: scale(1.06); }
+.week-node .icon { width: 18px; height: 18px; }
+.week-done .week-node { background: var(--accent-2); border-color: var(--accent-2); color: var(--on-accent); }
+.week-started .week-node { border-color: var(--accent-2); color: var(--ink); }
+.week-current .week-node { background: var(--accent); border-color: var(--accent); color: var(--on-accent); width: 48px; height: 48px; margin: -4px 0; box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 25%, transparent); }
+.week-node[aria-selected='true'] { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.unit-body { margin-top: 12px; border-top: 1px solid var(--line); }
+.lesson-week h3 { margin: 16px 0 8px; font-family: var(--display); font-weight: 500; font-size: 20px; }
 
 .lesson-steps {
   list-style: none;
@@ -3672,41 +3762,68 @@ input.fader::-moz-range-thumb {
 
 .lesson-step {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: calc(var(--card-radius) - 4px);
+  background: var(--control);
+  padding: 12px 14px;
   scroll-margin-top: 70px;
 }
 
 .lesson-step p { margin: 6px 0; }
-.lesson-step-next { box-shadow: 0 0 0 2px var(--ink-2); }
-.lesson-step-done { opacity: 0.65; }
-.lesson-step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.lesson-step-next { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+.lesson-step-done { opacity: 0.7; }
+.lesson-step-head { display: flex; align-items: center; gap: 12px; }
 .lesson-step-head h4 { margin: 0; font-size: 1rem; }
 
-.lesson-kind {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-2);
+/* Each kind of step its icon and colour */
+.lesson-step-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kind) 18%, transparent);
+  color: var(--kind);
 }
 
+.lesson-step { --kind: var(--accent-2); }
+.lesson-step-song, .lesson-step-listen { --kind: var(--accent); }
+.lesson-step-improvise { --kind: #b07cf0; }
+.lesson-step-ear { --kind: #e46a9a; }
+.lesson-step-check { --kind: var(--muted); }
+.lesson-step-done .lesson-step-icon { background: var(--accent-2); color: var(--on-accent); }
+
+.lesson-kind {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.lesson-more summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
 .lesson-meta { display: grid; gap: 2px; margin: 6px 0; font-size: 0.9rem; }
 .lesson-meta div { display: flex; gap: 8px; }
 .lesson-meta dt { min-width: 6.5em; color: var(--ink-2); }
 .lesson-meta dd { margin: 0; }
 .lesson-checks { list-style: none; padding: 0; margin: 6px 0; }
-.lesson-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.lesson-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .lessons-reset { margin-top: 24px; }
 
 @media (max-width: 520px) {
   .lesson-meta div { flex-direction: column; gap: 0; }
+  .week-stop { padding-left: 16px; }
+  .week-line { width: 16px; }
+  .week-node { width: 34px; height: 34px; }
+  .week-current .week-node { width: 42px; height: 42px; }
+  .week-line { top: 16px; }
 }
 
 /* A lesson step's target reached on a screen */
 .lesson-reached { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #2e9d55; font-weight: 600; }
 
 /* Delete all my data (main menu footer): the button, then a warning to confirm */
-.home-reset { margin-top: 16px; }
+.home-reset { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.recover-songs { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .delete-data-confirm {
   max-width: 520px;
   margin: 0 auto;
@@ -4042,3 +4159,316 @@ input.fader::-moz-range-thumb {
   font-size: 13px;
 }
 
+/* A lesson step's text: its line breaks kept (an intro and an ending step has a paragraph for each) */
+.lesson-what {
+  white-space: pre-line;
+}
+
+/* ---------- Home screen: greeting, today's lesson, statistics, tiles ---------- */
+.icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+.home-main { max-width: 1000px; gap: 24px; padding-top: calc(24px + var(--inset-top)); }
+.home-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink-2); }
+.home-brand .home-mark { width: 28px; height: 28px; stroke: var(--accent); }
+.home-hello h1 { margin: 0 0 6px; font-family: var(--display); font-weight: 500; font-size: 36px; letter-spacing: -0.01em; }
+.home-hello p { margin: 0; color: var(--ink-2); font-size: 16px; max-width: 60ch; }
+.home-main h2 { margin: 0 0 12px; font-family: var(--display); font-weight: 500; font-size: 22px; }
+
+/* Today's lesson: the accent colour, one Start button */
+.today {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  padding: 18px 20px;
+  border-radius: var(--card-radius);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.today-loading { min-height: 110px; opacity: 0.4; }
+.today-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 320px; }
+.today-kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.8; }
+.today-title { font-family: var(--display); font-weight: 500; font-size: 22px; line-height: 1.25; }
+.today-progress { display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: 0.85; }
+.today-bar { width: 120px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--on-accent) 25%, transparent); overflow: hidden; }
+.today-bar i { display: block; height: 100%; background: var(--on-accent); }
+.today-actions { display: flex; gap: 8px; }
+.today-start, .today-all { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 18px; border-radius: 999px; font: 600 15px var(--sans); cursor: pointer; }
+.today-start { border: 0; background: var(--on-accent); color: var(--accent); }
+.today-start .icon { fill: currentColor; stroke: none; width: 16px; height: 16px; }
+.today-all { border: 1.5px solid color-mix(in srgb, var(--on-accent) 55%, transparent); background: none; color: var(--on-accent); }
+
+/* Statistics */
+.stat-empty { margin: -4px 0 12px; color: var(--muted); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.stat { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--card-radius); background: var(--paper); border: 1px solid var(--line); min-width: 0; }
+.stat-label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.stat-label .icon { width: 16px; height: 16px; color: var(--accent-2); }
+.stat-streak .stat-label .icon { color: var(--accent); }
+.stat-value { font-family: var(--display); font-size: 30px; font-weight: 500; line-height: 1.1; }
+.stat-note { color: var(--muted); font-size: 13px; }
+.stat-bars { display: flex; align-items: flex-end; gap: 6px; height: 56px; margin-top: 4px; }
+.stat-bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; }
+.stat-bar i { display: block; width: 100%; max-width: 18px; border-radius: 4px 4px 2px 2px; background: var(--line); }
+.stat-bar i.on { background: var(--accent-2); }
+.stat-bar small { color: var(--muted); font-size: 10px; }
+.stat-area-list, .stat-work-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.stat-area-list li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 4em; align-items: center; gap: 8px; }
+.stat-area-list li span:last-child { text-align: right; color: var(--muted); }
+.stat-area-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.stat-area-bar i { display: block; height: 100%; background: var(--accent); }
+.stat-areas, .stat-work { grid-column: span 2; }
+
+/* Phones: two columns, the week and the lists across both */
+@media (max-width: 520px) {
+  .stats-grid, .home-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { padding: 12px; }
+  .stat-week, .stat-areas, .stat-work { grid-column: span 2; }
+  .stat-value { font-size: 26px; }
+  .home-tile { min-height: 104px; padding: 12px; }
+  .home-tile-lessons { grid-column: span 2; }
+  .home-hello h1 { font-size: 30px; }
+}
+
+/* The areas, as tiles */
+.home-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.home-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 120px;
+  padding: 16px;
+  border-radius: var(--card-radius);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 120ms, border-color 120ms;
+}
+
+.home-tile:hover { border-color: var(--accent-2); transform: translateY(-2px); }
+.home-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.home-tile .icon { width: 28px; height: 28px; color: var(--accent-2); margin-bottom: auto; }
+.home-tile-lessons .icon { color: var(--accent); }
+.home-tile-title { font-size: 17px; font-weight: 600; margin-top: 12px; }
+.home-tile-desc { color: var(--muted); font-size: 13px; min-height: 2.9em; }
+
+/* Appearance: themes and the effects */
+.appearance .band-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.appearance .popover-panel { right: 0; left: auto; top: calc(100% + 8px); bottom: auto; width: min(380px, 92vw); }
+.appearance-panel { display: grid; gap: 10px; }
+.appearance-themes { display: grid; gap: 6px; }
+.appearance-theme { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-areas: 'swatch name' 'swatch hint'; column-gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--control); color: var(--ink); font: inherit; cursor: pointer; }
+.appearance-theme[aria-checked='true'] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.appearance-theme strong { grid-area: name; }
+.appearance-theme span:last-child { grid-area: hint; color: var(--muted); font-size: 12px; }
+.appearance-swatch { grid-area: swatch; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); }
+.appearance-theme-dark .appearance-swatch { background: conic-gradient(#14161f 0 50%, #f2b544 0 75%, #5ec2b7 0); }
+.appearance-theme-light .appearance-swatch { background: conic-gradient(#fff4e8 0 50%, #ff7a59 0 75%, #16a394 0); }
+.appearance-theme-custom .appearance-swatch { background: conic-gradient(var(--desk) 0 50%, var(--accent) 0 75%, var(--accent-2) 0); }
+.appearance-custom { display: grid; gap: 6px; padding: 8px 0; border-top: 1px solid var(--line); }
+.appearance-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.appearance-row input[type='color'] { width: 44px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; }
+.appearance-effects { align-items: flex-start; line-height: 1.35; }
+
+/* ---------- Effects while playing (ui/effects.ts) ---------- */
+.effects { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+
+.effect-flash {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--transport-h) + var(--inset-bottom, 0px) + 20px);
+  padding: 6px 16px;
+  border-radius: 999px;
+  font: 700 16px var(--sans);
+  letter-spacing: 0.02em;
+  animation: effect-flash 700ms ease-out forwards;
+}
+
+.effect-perfect { background: var(--accent); color: var(--on-accent); }
+.effect-good { background: var(--good); color: #0f2416; }
+.effect-miss { background: var(--control); color: var(--muted); border: 1px solid var(--line); }
+
+@keyframes effect-flash {
+  0% { transform: translate(-50%, 10px) scale(0.85); opacity: 0; }
+  20% { transform: translate(-50%, 0) scale(1.05); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(-50%, -14px) scale(1); opacity: 0; }
+}
+
+.effect-burst { position: absolute; left: 50%; top: 42%; }
+.effect-burst i {
+  position: absolute;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: effect-burst 1500ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.effect-burst i:nth-child(3n + 1) { background: var(--accent-2); }
+.effect-burst i:nth-child(3n + 2) { background: var(--good); }
+
+@keyframes effect-burst {
+  0% { transform: rotate(var(--angle)) translateY(0) scale(0.4); opacity: 1; }
+  100% { transform: rotate(var(--angle)) translateY(calc(-1 * var(--far))) rotate(200deg) scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effect-flash { animation-duration: 1ms; animation-fill-mode: none; }
+  .effect-burst { display: none; }
+}
+
+/* ---------- A lesson step's page: what to do, why, the theory, then "Understood, start" ---------- */
+.lesson-summary { margin: 6px 0; color: var(--ink-2); }
+.lesson-page { max-width: none; }
+.lesson-page h2 { margin: 0 0 8px; font-family: var(--display); font-weight: 500; font-size: 20px; }
+.lesson-page-head { display: flex; align-items: center; gap: 14px; }
+.lesson-page-head h1 { margin: 2px 0 0; font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.2; }
+.lesson-page .lesson-step-icon { width: 44px; height: 44px; }
+.lesson-page > .lesson-summary { font-size: 16px; margin: 0; }
+
+.lesson-panel,
+.theory-card {
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--paper);
+  padding: 14px 16px;
+}
+
+.lesson-panel p { margin: 0 0 6px; }
+.lesson-theory { display: grid; gap: 12px; }
+.lesson-theory > h2 { margin-bottom: 0; }
+.theory-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.theory-card p { margin: 0 0 8px; color: var(--ink-2); }
+.theory-staff { color: var(--ink); max-width: 640px; margin-top: 6px; }
+
+/* A progression: chord boxes in a row, each with its Roman numeral under it */
+.theory-progression { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0 4px; }
+.theory-progression li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--control);
+}
+.theory-progression li.theory-arrow { border: 0; background: none; min-width: 0; justify-content: center; }
+.theory-chord { font: 18px 'Petaluma Script', var(--sans); color: var(--ink); }
+.theory-numeral { font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
+
+/* The buttons stay in reach at the bottom of the page while it scrolls */
+.lesson-page-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0 calc(12px + var(--inset-bottom, 0px));
+  background: linear-gradient(to bottom, transparent, var(--desk) 30%);
+}
+
+.lesson-refs { font-size: 0.85rem; color: var(--muted); }
+.lesson-refs h2 { font-size: 16px; }
+.lesson-refs ul { margin: 0; padding-left: 18px; }
+
+@media (max-width: 520px) {
+  .lesson-page-head h1 { font-size: 22px; }
+  .theory-progression li { min-width: 54px; padding: 5px 7px; }
+  .lesson-page-actions .button { flex: 1 1 100%; justify-content: center; }
+}
+
+/* ---------- Playlists: the chooser and the panel of the song list, the import and save targets, the export ---------- */
+.library-playlist { width: 100%; margin-bottom: 8px; }
+.playlist-panel {
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.playlist-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.playlist-panel .library-more { margin: 4px 0 8px; }
+.playlist-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
+/* A playlist: its name (wrapping), its number of songs and its trash, inside the panel; in Manage
+   playlists, its box and its name */
+.playlist-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 6px;
+  min-height: 30px;
+}
+.playlist-name { min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.playlist-list.playlist-ticks li { grid-template-columns: 16px minmax(0, 1fr); }
+.playlist-list .library-count { margin: 0; }
+.playlist-list .link-button[aria-current='true'] { font-weight: 600; }
+.playlist-list .library-more { margin: 0; }
+.playlist-check { flex: none; width: 16px; text-align: center; color: var(--muted); }
+.playlist-new { display: flex; gap: 6px; }
+.playlist-new .library-search { flex: 1 1 auto; min-width: 0; margin: 0; }
+
+/* A song of one of the person's playlists: its remove button beside it */
+.tune-row { display: flex; align-items: center; flex-wrap: wrap; }
+.tune-row > .library-group { flex: 1 1 100%; }
+.tune-row > .tune { flex: 1 1 0; min-width: 0; }
+.tune-remove {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2);
+  font-size: 18px;
+  cursor: pointer;
+}
+.tune-remove:hover { background: var(--control); color: var(--danger); }
+.tune-remove .icon { width: 16px; height: 16px; vertical-align: middle; }
+.playlist-list .library-remove-confirm { flex: none; }
+
+.import-targets { display: grid; gap: 10px; }
+.import-target { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 6px; }
+.import-target legend { padding: 0 4px; font-weight: 600; }
+.import-target-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.import-target-row .select, .import-target-row .library-search { flex: 1 1 160px; min-width: 0; margin: 0; }
+
+.export-playlists { border: 0; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.export-playlist { display: flex; align-items: center; gap: 8px; }
+.export-playlist label { display: flex; align-items: center; gap: 6px; flex: none; }
+.export-playlist .library-search { flex: 1 1 auto; min-width: 0; margin: 0; }
+.export-empty { display: block; margin: 0 0 8px; }
+
+/* The theory's key and chord names (or Roman numerals); each picture's Listen button */
+.lesson-theory-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.lesson-theory-head h2 { margin: 0 auto 0 0; }
+.lesson-theory-key { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.lesson-theory-names { display: inline-flex; gap: 6px; }
+.theory-listen { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; }
+.theory-listen .icon { width: 16px; height: 16px; vertical-align: -3px; }
+.theory-chord { display: inline-flex; gap: 10px; }
+.theory-chord .chord { font: 18px 'Petaluma Text', var(--sans); }
+.playlist-delete { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0 4px; font-size: 12px; min-width: 0; }
+.playlist-delete .library-remove, .playlist-delete .library-import { height: auto; min-height: 28px; max-width: 100%; white-space: normal; text-align: left; }
+.playlist-more { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* ---------- The exercise builder (Exercises Sightreading's list) ---------- */
+.builder {
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.builder .library-more { margin: 4px 0 8px; }
+.builder-fields { display: grid; gap: 6px; margin-top: 6px; }
+.builder-field { display: grid; gap: 2px; min-width: 0; }
+.builder-field .select { width: 100%; min-width: 0; }
+.builder-save { display: grid; gap: 6px; margin-top: 10px; }
+.builder-save .library-search { margin: 0; }
+.builder-buttons { display: flex; flex-wrap: wrap; gap: 6px; }

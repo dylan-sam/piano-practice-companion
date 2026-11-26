@@ -33,6 +33,7 @@ import { useLessonLink } from '../lessons/lessonLink'
 import { useLessonGoal } from '../lessons/useLessonGoal'
 import { LessonDone } from '../lessons/LessonDone'
 import { useWindowKeys } from '../ui/useWindowKeys'
+import { countAnswer } from '../library/practiceLog'
 
 const SETTINGS_KEY = 'eartraining:melodic-dictation'
 const LESSON_NOTES = 20 // notes written before a lesson step can be ticked
@@ -333,6 +334,7 @@ export function MelodicDictation() {
     setShowMine(false)
     setSelected(null)
     const right = Object.values(judged).filter((r) => r === 'correct').length
+    for (const index of excerpt.hidden) countAnswer('ear', judged[index] === 'correct')
     setTally((t) => ({ notes: t.notes + excerpt.hidden.length, correct: t.correct + right }))
   }
 

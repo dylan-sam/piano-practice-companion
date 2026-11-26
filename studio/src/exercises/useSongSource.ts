@@ -5,11 +5,9 @@
 import { useEffect, useState } from 'react'
 import { listProgressions, randomSong } from '../library/catalog'
 import { fetchChocoTune } from '../library/choco'
-import { importTunes } from '../library/importTunes'
 import type { CatalogProgression } from '../library/scoreSearch'
 import type { Tune } from '../music/songs'
 import { useBackClose } from '../ui/backButton'
-import type { ImportResult, ImportSource } from '../ui/ImportDialog'
 import { useDrawerScreen } from '../ui/useNarrowScreen'
 import { BANK_URL, type QuestionBank } from './nameProgression'
 
@@ -69,15 +67,13 @@ export function useSongSource({ playing, onOpen, onLeave, onError }: SourceEvent
   }
 
   /**
-   * Import charts (saved for every screen that shows them) and open the first one this screen
-   * reads (`readable`).
+   * List the songs just imported (saved for every screen that shows them) and open the first one
+   * this screen reads (`readable`).
    */
-  const importFrom = async (source: ImportSource, text: string, readable: (tune: Tune) => boolean = () => true): Promise<ImportResult> => {
-    const { added, result } = await importTunes(source, text)
+  const imported = (added: Tune[], readable: (tune: Tune) => boolean = () => true) => {
     addTunes(added)
     const first = added.find(readable)
     if (first) open(first)
-    return result
   }
 
   /** Open a random song of the catalog, containing a chosen progression if one is chosen. */
@@ -121,7 +117,7 @@ export function useSongSource({ playing, onOpen, onLeave, onError }: SourceEvent
 
   return {
     mode, shown, libraryOpen, setLibraryOpen, tunes, setTunes, tune, importOpen, setImportOpen,
-    open, loadChoco, importFrom, openRandomSong, chooseMode,
+    open, loadChoco, imported, openRandomSong, chooseMode,
   }
 }
 

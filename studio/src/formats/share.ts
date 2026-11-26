@@ -80,6 +80,15 @@ export async function styleShareUrl(lab: LabStyle, chart?: Chart): Promise<strin
   return linkWith({ [STYLE_PARAM]: await encodeJson(lab), ...(chart ? { [PARAM]: await encodeChart(chart) } : {}) })
 }
 
+/**
+ * The charts of some Studio links pasted together (one per line, or separated by spaces): each
+ * link's `#tune=` part is read; links that carry no valid chart are left out.
+ */
+export async function chartsFromLinks(text: string): Promise<Chart[]> {
+  const hashes = text.match(/#[^\s"'<>]*tune=[^\s"'<>]+/g) ?? []
+  return (await Promise.all(hashes.map(chartFromHash))).filter((chart): chart is Chart => chart !== null)
+}
+
 // The Pattern Creator style a link's hash carries, or null
 export async function labFromHash(hash: string): Promise<LabStyle | null> {
   const value = fromHash(hash, STYLE_PARAM)

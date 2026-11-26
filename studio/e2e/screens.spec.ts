@@ -10,6 +10,7 @@ const SCREENS = [
   '/ear-training/name-the-progression', '/ear-training/melodic-dictation',
   '/sightreading/chords', '/sightreading/lead-sheets', '/sightreading/exercises', '/sightreading/licks',
   '/improvisation', '/improvisation/free', '/lessons',
+  '/lessons/step?id=w13-hands1', '/lessons/step?id=mblues1-hands1', // steps' pages: two staves; a 12-bar progression
 ]
 
 const SIZES = [
@@ -101,4 +102,24 @@ test('the bottom bar of Lead Sheet Sightreading fits a 1760 px wide window on on
   expect(controls.height).toBeLessThan(60)
   const [scroll, client] = await page.locator('.transport').evaluate((el) => [el.scrollWidth, el.clientWidth])
   expect(scroll).toBeLessThanOrEqual(client)
+})
+
+test('the home screen: today\'s lesson, the statistics, the tiles, and the themes', async ({ page }) => {
+  const errors = collectErrors(page)
+  await page.goto('/')
+  await expect(page.getByRole('region', { name: "Today's lesson" })).toContainText('Week 1')
+  await expect(page.getByRole('heading', { name: 'Your statistics' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Practice' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main menu' }).getByRole('link')).toHaveCount(5)
+  expect(await page.evaluate(() => document.documentElement.dataset.mode)).toBe('dark')
+  await page.getByRole('button', { name: /Appearance/ }).click()
+  await page.getByRole('radio', { name: /Light mode/ }).click()
+  expect(await page.evaluate(() => document.documentElement.dataset.mode)).toBe('light')
+  await page.getByRole('radio', { name: /My colours/ }).click()
+  await page.getByLabel('Accent', { exact: true }).fill('#123456')
+  expect(await page.evaluate(() => document.documentElement.style.getPropertyValue('--accent'))).toBe('#123456')
+  // Kept after a reload
+  await page.reload()
+  expect(await page.evaluate(() => document.documentElement.style.getPropertyValue('--accent'))).toBe('#123456')
+  expect(errors).toEqual([])
 })

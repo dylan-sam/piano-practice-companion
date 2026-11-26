@@ -13,7 +13,7 @@ import {
   alteredNotes, answerChart, cutExcerpt, excerptAt, fromSource, hiddenRun, judge, MAX_ALL_NOTES, MAX_BARS, melodyAloneMidi, pickExcerpt,
   transposeGuesses, type Excerpt,
 } from '../src/exercises/melodicDictation'
-import { makeLickChart, parseChords, parseNotes } from '../scripts/lickCharts'
+import { makeLickChart, parseChords, parseNotes } from '../src/exercises/builder/lickCharts'
 
 const info = { kind: 'lick' as const, category: 'Vocabulary', context: 'ii-V', source: 'test', license: 'CC BY 4.0' }
 

@@ -5,6 +5,7 @@ import { BASE_BPM } from '../engine/arrange'
 import { reportError } from '../errorReports'
 import type { Readiness } from '../ui/Transport'
 import type { Player } from './player'
+import { markActivity } from '../library/practiceLog'
 
 /**
  * Create the player for a screen: load the sound bank with progress, decode the band's
@@ -28,6 +29,7 @@ export function usePlayer(
     // The effect may run twice (StrictMode); a discarded player must not update the UI
     let active = true
     let player: Player | null = null
+    let practiceTimer = 0
     // The audio engine (SpessaSynth) is loaded after the screen is drawn, so the screen shows first
     void (async () => {
       try {
@@ -40,6 +42,8 @@ export function usePlayer(
         if (!active) return
         setReadiness({ kind: 'ready' })
         void player.warmUp(callbacks.current.warmUpSongs())
+        // The band playing counts as practice (home screen statistics)
+        practiceTimer = window.setInterval(() => { if (player?.isPlaying) markActivity() }, 5000)
       } catch (err: unknown) {
         if (!active) return
         setReadiness({ kind: 'error', message: String(err) })
@@ -48,6 +52,7 @@ export function usePlayer(
     })()
     return () => {
       active = false
+      window.clearInterval(practiceTimer)
       if (player && playerRef.current === player) playerRef.current = null
       void player?.dispose()
     }

@@ -13,6 +13,7 @@ import { allowedPitchClasses, ChordJudge, LEFT_HAND_STAGES, type LeftHandStage }
 import {
   CHECK_MODES, checksChords, checksMelody, EMPTY_SCORE, handsTogether, MelodyJudge, noteKey, TIMING_WINDOWS, type CheckMode, type MelodyScore, type NoteResult, type Strictness,
 } from './melodyReading'
+import { judged, judgementOf } from '../ui/effects'
 
 /** How notes are judged, kept on this device. */
 export interface ReadingSettings {
@@ -93,11 +94,15 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
   /** Show the notes and chords whose time has ended as wrong or missed. */
   const settleThrough = useCallback((targetBeat: number) => {
     const missedChords = chordJudgeRef.current?.expire(targetBeat) ?? []
-    if (scoringRef.current) markChords(missedChords, 'missed')
+    if (scoringRef.current) {
+      markChords(missedChords, 'missed')
+      for (let i = 0; i < missedChords.length; i++) judged('sightreading', 'miss')
+    }
     const judge = judgeRef.current
     if (!judge) return
     const settled = judge.expire(targetBeat)
     if (!settled.length || !scoringRef.current) return
+    for (let i = 0; i < settled.length; i++) judged('sightreading', 'miss') // wrong or missed: the right ones count when played
     setFeedback((current) => {
       const next = { ...current }
       for (const { note, result } of settled) next[noteKey(note.measure, note.at)] = result
@@ -115,7 +120,10 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     const chords = chordJudgeRef.current
     if (chords) {
       const slot = chords.accept(beat, held, note)
-      if (slot) markChords([slot], 'correct')
+      if (slot) {
+        markChords([slot], 'correct')
+        judged('sightreading', judgementOf(beat - slot.start))
+      }
     }
     const judge = judgeRef.current
     if (!judge) return
@@ -123,6 +131,7 @@ export function useMelodyJudging(playerRef: RefObject<Player | null>) {
     const chord = chords?.chordAt(beat)
     if (chord && !judge.isDue(beat, note) && allowedPitchClasses(chord).has(note % 12)) return
     const press = judge.press(beat, note)
+    if (press.result === 'correct') judged('sightreading', judgementOf(press.offset ?? 0))
     if (press.note && press.result !== 'extra') {
       const key = noteKey(press.note.measure, press.note.at)
       setFeedback((current) => ({ ...current, [key]: press.result as NoteResult }))

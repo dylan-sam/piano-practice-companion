@@ -9,11 +9,11 @@ import { isLessonProgress, nextStep } from '../src/lessons/useLessonProgress'
 import { reachesGoal } from '../src/lessons/useLessonGoal'
 import { parseChord } from '../src/music/chords'
 import { ROUTES } from '../src/router'
+import { exerciseTitle, readSpec } from '../src/exercises/builder/exerciseBuilder'
 
 const charts = (file: { playlists: { charts: { title: string; style?: string }[] }[] }) =>
   file.playlists.flatMap((list) => list.charts.map((chart) => ({ chart })))
 const leadSheets = [...charts(bundled), ...charts(lessonSongs)]
-const exercises = charts(licks)
 
 describe('lesson links', () => {
   test('a link goes to its address and back', () => {
@@ -47,7 +47,11 @@ describe('the program', () => {
     for (const item of ALL_STEPS) {
       const link = item.link
       if (!link) continue
-      if (link.route === ROUTES.exerciseSightreading) expect(findByTitle(exercises, link.song!), link.song).toBeDefined()
+      if (link.route === ROUTES.exerciseSightreading) {
+        const spec = readSpec(link.exercise ?? '')
+        expect(spec, `${item.id} ${link.exercise}`).toBeTruthy()
+        expect(link.song).toBe(exerciseTitle(spec!))
+      }
       else if (link.song) expect(findByTitle(leadSheets, link.song), link.song).toBeDefined()
       if (link.pattern) {
         const style = link.style ?? findByTitle(leadSheets, link.song!)?.chart.style ?? 'swing'
@@ -141,9 +145,9 @@ describe('the lesson tunes', () => {
     // The altered unit's songs play the altered dominant substitution
     const altered = PROGRAM.find((unit) => unit.id === 'uAltered')!.weekList.flatMap((week) => week.steps)
     expect(altered.filter((item) => item.kind === 'song').every((item) => item.link?.subs?.includes('altered'))).toBe(true)
-    // Intros and endings on several songs, the band muted
+    // Intros and endings on several songs, each with its frame of bars
     const intros = ALL_STEPS.filter((item) => item.id.includes('-intro-'))
-    expect(new Set(intros.map((item) => item.link?.song)).size).toBeGreaterThanOrEqual(6)
-    expect(intros.every((item) => item.link?.mute?.length === 3)).toBe(true)
+    expect(new Set(intros.map((item) => item.link?.song)).size).toBe(8)
+    expect(intros.every((item) => item.link?.frame && item.what.includes('bars added before the head'))).toBe(true)
   })
 })

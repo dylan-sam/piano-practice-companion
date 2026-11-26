@@ -1,13 +1,6 @@
-Lick database built 2026-11-25
+Lick database built 2026-11-26
 
-Generated exercises and vocabulary:
-  Exercises: triads: 33
-  Exercises: seventh chords: 39
-  Exercises: guide tones and chord-tone lines: 71
-  Exercises: scales and scale patterns: 55
-  Exercises: approach notes and enclosures: 20
-  Exercises: intervals: 27
-  Exercises: rhythm: 8
+Vocabulary licks written for the project:
   Licks: vocabulary: 24
 
 OpenEWLD melodies: 498 songs, 883 windows make licks, 301 kept
@@ -50,5 +43,21 @@ One-chord licks, by group:
   Approach notes: 16
   Colours: 13
   Blues: 9
+
+Shipped (curated, lickCuration.ts):
+  Licks: vocabulary over progressions: 12 of 12
+  Licks: Arpeggios: 15 of 30
+  Licks: Scale lines: 15 of 31
+  Licks: Neighbours and turns: 15 of 34
+  Licks: Approach notes: 15 of 16
+  Licks: Colours: 13 of 13
+  Licks: Blues: 9 of 9
+  Licks from standards: ii-V-I major: 15 of 40
+  Licks from standards: minor ii-V-i: 6 of 6
+  Licks from standards: ii-V: 15 of 35
+  Licks from standards: V-I: 15 of 40
+  Licks from standards: I-vi-ii-V turnaround: 15 of 23
+  Licks from standards: Blues I7-IV7: 15 of 36
+  Licks from folk tunes: none of 99 (not shipped)
 
 No /home/claude/w/weimar/weimar_solos.json: no Weimar licks built

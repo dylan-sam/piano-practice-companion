@@ -27,23 +27,69 @@ OpenStand's example songs, telemetry and submission action.
 
 | Screen | Address | Code |
 |---|---|---|
-| Main menu, and the menus of its three areas | `/`, `/play-along`, `/ear-training`, `/sightreading` | `src/Home.tsx` (`Menu`, texts in `MENUS`) |
+| Main menu (the home screen), and the menus of its areas | `/`, `/play-along`, `/ear-training`, `/sightreading`, `/improvisation` | `src/Home.tsx` (`Menu`, texts in `MENUS`): today's lesson (`src/lessons/TodayLesson.tsx`, loaded after the screen is drawn), the statistics (`src/PracticeStats.tsx`, worked out in `src/library/practiceStats.ts` from the practice log `src/library/practiceLog.ts`: time and answers per day by area, a screen opened from a lesson step counting under Lessons, Free Improvisation counting each chorus's notes inside the harmony; the chords missed in Chord Sightreading and the answers of Name the progression), the tiles (icons in `src/ui/Icon.tsx`), Appearance (`src/ui/Appearance.tsx`) |
 | Chord Player (Studio) | `/play-along/chords` | `src/App.tsx` (`mode="chords"`) |
 | Lead Sheet Player | `/play-along/lead-sheets` | `src/App.tsx` (`mode="lead"`) |
 | Name the progression | `/ear-training/name-the-progression` | `src/exercises/NameProgression.tsx`, questions in `public/exercises/name-progression.json` |
 | Melodic Dictation | `/ear-training/melodic-dictation` | `src/exercises/MelodicDictation.tsx`, excerpts and answers in `src/exercises/melodicDictation.ts`; notes are written on the staff with `src/ui/useStaffInput.ts` (places on the staff in `src/music/staff.ts`) |
 | Chord Sightreading | `/sightreading/chords` | `src/exercises/ChordSightreading.tsx`, voicing drills in `matchesVoicing` (`src/exercises/sightReading.ts`) |
 | Lead Sheet Sightreading | `/sightreading/lead-sheets` | `src/exercises/MelodySightreading.tsx` (`kind="lead-sheets"`), note judging in `src/exercises/melodyReading.ts` |
-| Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`) |
+| Exercises Sightreading | `/sightreading/exercises` | `src/exercises/MelodySightreading.tsx` (`kind="exercises"`); the exercise builder in `src/exercises/builder/` (`exerciseBuilder.ts` settings, titles and charts, `exerciseMusic.ts` chord tones and lines, `lickCharts.ts` charts from notes, `ExerciseBuilder.tsx` its panel, `exercisePresets.ts` the examples and the person's presets, `eartraining:exercise-presets`) |
 | Lick Sightreading | `/sightreading/licks` | `src/exercises/LickSightreading.tsx`, the lick over the chords in `src/exercises/lickReading.ts`; the melody screens share `useMelodyJudging.ts` and `ReadingControls.tsx` (the Scoring button of the bottom bar); the left-hand stages are `ChordJudge` options (`src/exercises/sightReading.ts`), text helpers in `readingText.ts` |
 | Free Improvisation | `/improvisation/free` | `src/exercises/FreeImprovisation.tsx`, the keys written out in `src/exercises/improvisation.ts`, coloured by `toneColors.ts` |
-| Lessons | `/lessons` | `src/lessons/`: the program (`program.ts`), the links that set screens up (`lessonLink.ts`, `useLessonSong.ts`, `useLessonOverride.ts`), targets that tick a step (`useLessonGoal.ts`), progress (`useLessonProgress.ts`), the songs' scale maps (`scaleMaps.ts`, shown by `ScaleMap.tsx`), the screen (`Lessons.tsx`) |
+| Lessons, a step's page | `/lessons`, `/lessons/step?id=` | `src/lessons/`: the program (`program.ts`), a step's page (`LessonStepPage.tsx`, its theory cards in `theory.ts` drawn by `TheoryPictures.tsx` in the key chosen or as Roman numerals with `theoryMusic.ts`, heard with `listen.ts`, the engraver shared in `src/ui/abcjsLoad.ts`; chord symbols in the texts written for reading by `src/music/chordText.ts`), the links that set screens up (`lessonLink.ts`, `useLessonSong.ts`, `useLessonOverride.ts`), the intros and endings added to a song for a step (`introEndings.ts`), targets that tick a step (`useLessonGoal.ts`), progress (`useLessonProgress.ts`), the songs' scale maps (`scaleMaps.ts`, shown by `ScaleMap.tsx`), the screen (`Lessons.tsx`) |
+
+**Themes** (`src/ui/theme.ts`): `index.css` holds Dark mode (the root's
+variables, the default) and Light mode (`:root[data-mode='light']`); a custom
+theme sets its colours inline on the root, the other shades worked out from
+them (`customVariables`: the secondary text, lines and controls mixed from the
+text and the sheet; the text on the accent black or white by its luminance).
+The theme is applied before the first drawing (`main.tsx`). New styles use the
+theme's `--accent`, `--accent-2`, `--on-accent`, `--display` (titles) and
+`--card-radius`.
+
+**Practice log** (`src/library/practiceLog.ts`): seconds and answers judged by
+day and area (play along, sightreading, ear training, improvisation).
+`usePracticeClock` (in `Root.tsx`) counts PRACTICE_TICK seconds at a time while
+a practice screen is in view and in use: clicks and keys are seen there, MIDI
+notes (`useMidiKeyboard`) and the band playing (`usePlayer`) call
+`markActivity`. Answers are counted by `countAnswer` (Name the progression,
+Melodic Dictation) or through the effects (`judged`), and written every tick.
+
+**Effects while playing** (`src/ui/effects.ts`, drawn by `src/ui/Effects.tsx`
+in `Root.tsx`): the judging screens (Chord Sightreading, `useMelodyJudging` for
+the melody screens) call `judged(area, judgement)` for each chord or note:
+right ones "perfect" within PERFECT_WITHIN of a beat (`judgementOf`), wrong or
+missed ones "miss" when they are settled. `useChorusEffects(chorus, playing)`
+ends a chorus (a burst when `earnsBurst`: 90% right of 6 answers or more);
+`celebrate()` bursts for a lesson unit finished. The setting is
+`eartraining:effects` (`data-effects` on the root).
 
 The back button and a screen's title go up one level (`parentRoute` in
 `src/router.ts`): a screen to its area's menu, an area's menu to the main menu.
-Import works the same on every screen that offers it (`src/library/importTunes.ts`):
-charts are saved in the one library of saved tunes, so a chart imported in a
-sightreader is in the matching player too, and the other way round.
+Import works the same on every screen that offers it (`src/library/importTunes.ts`,
+`src/ui/ImportDialog.tsx`): an import is read first (iReal Pro links, a MusicXML
+lead sheet, Studio links pasted from Share, or a Studio export), then saved into
+the playlists chosen for its lists (`src/ui/PlaylistTarget.tsx`,
+`src/library/playlistChoice.ts`). Charts are saved in the one library of saved
+tunes, so a chart imported in a sightreader is in the matching player too.
+
+**Playlists** (`src/library/playlists.ts`, IndexedDB table `playlists` of
+`src/library/db.ts`, version 2, which turned the old playlist names of the
+saved songs into playlists): the default App Playlist is every
+shipped lead sheet (not the licks and exercises) and the ChoCo catalog; the
+person's playlists are lists of song ids, a song in several, a ChoCo chart
+kept on the device once added. A saved song left in no playlist goes to
+"Without playlist". Deleting a saved song erases it; deleting a shipped or ChoCo
+song, or the whole default playlist, only hides it (`eartraining:hidden-songs`),
+so the lessons and exercises keep their songs; Restore all default songs (`src/ui/RecoverAppSongs.tsx`,
+main menu) brings them back, with the example exercises deleted (hidden as `exercise:<id>`). The song list (`src/ui/Library.tsx`; the number listed in its search box)
+shows one playlist (the chooser only when there is more than one; the playlist
+shown is shared by every screen: `useShownPlaylist`), the Playlists panel
+(`src/ui/PlaylistPanel.tsx`: make, show and delete playlists; a song's playlists are ticked in Edit Song's Manage playlists, `src/ui/ManagePlaylists.tsx`) and, for the licks and exercises, their categories.
+Export (`src/ui/ExportPlaylists.tsx`) writes the playlists ticked, each under the
+name typed, with `serializeStudioPlaylists`; a new song is saved into a playlist
+chosen in `src/ui/SaveToPlaylist.tsx`.
 
 Routes live in `src/router.ts` and `src/Root.tsx`. The exercises are described
 in [docs/EXERCISES.md](../docs/EXERCISES.md).
@@ -192,11 +238,15 @@ playlist, then the other saved playlists, then the catalog's results.
 
 | Action | Where | What it does |
 |---|---|---|
-| New, Edit | Studio | write or change a chart, saved as a tune |
-| Import → iReal Pro | Studio's tune list | adds iReal Pro links or playlist files as a playlist |
-| Import → Studio export | Studio's tune list | restores a file made by Export, with its playlist names |
+| New, Edit | Studio | write or change a chart; a new song is saved into a playlist chosen then (Edit > Delete song deletes a song for good) |
+| New, Playlists, Import | Studio's tune list (above the Progressions filter and the search box) | Playlists makes, shows and deletes playlists; songs are put in playlists with Edit Song > Manage playlists |
+| Edit Song → Manage playlists, Save, Save new song, Delete song | the editor | the song's playlists (no edits yet); the edits saved in place (one's own song) or as a new song into a playlist chosen, then edited on; the song deleted for good (an app song only hidden) |
+| Restore all default songs | main menu, beside Delete all my data | the App Playlist's songs deleted (hidden), the App Playlist itself, and the example exercises deleted, come back |
+| Import → iReal Pro (MusicXML on the lead sheet screens) | Studio's tune list | reads iReal Pro links or playlist files, then saves them into the playlists chosen |
+| Import → Studio shared link | Studio's tune list | reads one or more links copied with Share, then saves them into a playlist |
+| Import → Studio export | Studio's tune list | reads a file made by Export; its playlist names are suggested for new playlists |
 | Export → MIDI file, WAV audio, MP3 audio | Studio's top bar | the band's track as it plays now (see below) |
-| Export | Studio's top bar | downloads, as a JSON file of editable charts: the songs written or edited in the app (My tunes; an edited shared or imported song stays in its own group), the songs shared with you via link, the imported playlists, or all 3 (catalog songs opened for preview and the shipped songs are not included) |
+| Export → Playlists to export | Studio's top bar | downloads the playlists ticked, each under the name typed, as a JSON file of editable charts (not the App Playlist) |
 | Share → Copy Studio link | Studio's top bar | a link that opens the chart in this app; nothing is uploaded |
 | Share → Copy iReal Pro link | Studio's top bar | an `irealb://` link that opens in iReal Pro |
 
@@ -423,11 +473,11 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 | `src/audio/` | the synthesizer (SpessaSynth, `player.ts`), playback (`usePlayer.ts`), mixer, MIDI input (`useMidiKeyboard`, `nativeMidi.ts`) |
 | `src/music/` | chords (`chords.ts`), charts and tuplets (`chart.ts`), melodies (`melody.ts`) and their ABC notation (`abc.ts`), places on the staff (`staff.ts`), the `lick` record of licks and exercises and their rhythm rule (`licks.ts`), Roman numerals (`roman.ts`), practice settings (`practice.ts`), chart editing (`edit.ts`) |
 | `src/formats/` | iReal Pro import (`ireal.ts`) and export (`irealWrite.ts`), share links (`share.ts`) |
-| `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), saved styles, browser storage (`storage.ts`, and a screen's settings kept there: `useStoredSettings.ts`) |
+| `src/library/` | the catalog (`catalog.ts`), saved tunes (`db.ts`), playlists (`playlists.ts`, `playlistChoice.ts`, export files in `playlistExport.ts`), imports (`importTunes.ts`), saved styles, browser storage (`storage.ts`, and a screen's settings kept there: `useStoredSettings.ts`) |
 | `src/ui/` | screens and controls: chart, lead sheet (`LeadSheet.tsx`, measured by `engraving.ts`, notes written on it by `useStaffInput.ts`), transport, mixer, menus, editor, Pattern Creator, loop picking (`useLoopPicking.ts`), keyboard shortcuts (`useWindowKeys.ts`), check-box filters (`CheckFilter.tsx`: Progressions, Playlists, Licks) |
 | `src/exercises/` | Name the progression, Melodic Dictation (`MelodicDictation.tsx`, `melodicDictation.ts`), Chord Sightreading, Lead Sheet and Exercises Sightreading (`MelodySightreading.tsx`, `melodyReading.ts`: `arrangeMelody`), Lick Sightreading (`LickSightreading.tsx`, `lickReading.ts`), Free Improvisation (`FreeImprovisation.tsx`, `improvisation.ts`, `toneColors.ts`). Shared by the exercises: the key menu, Tonic and Cadence, status messages, MIDI notes held, source buttons and random song picker (`ExerciseControls.tsx`); by the sightreaders: where the music comes from, with the song list, Import and the catalog (`useSongSource.ts`, laid out by `SongWorkspace.tsx`), the band's settings (`useBand.ts`), the hand-over of endless lines (`useEndlessLine.ts`); by the melody screens: judging (`useMelodyJudging.ts`) and the Scoring button, sheet and score line (`ReadingControls.tsx`) |
-| `src/lessons/` | The Lessons tab: its 46-week program, the links that open a screen set up for a step, the targets that tick a step, progress kept on the device, the lesson songs' scale maps |
-| `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks and exercises (`lickCatalog.ts`, `lickExercises.ts`, `lickMining.ts`, `lickCharts.ts`, `pnpm run licks`) |
+| `src/lessons/` | The Lessons tab: its 46-week program, each step's page (what to do, why, the theory with staves and progressions, references), the links that open a screen set up for a step, the targets that tick a step, progress kept on the device, the lesson songs' scale maps |
+| `scripts/` | builds the shipped lead sheets (`leadSheetCatalog.ts`, `pnpm run leadsheets`) and the licks (`lickCatalog.ts`, `lickExercises.ts` the vocabulary, `lickMining.ts`, `lickCuration.ts`, `pnpm run licks`; the chart helpers are in `src/exercises/builder/`) |
 | `tests/` | the app's unit tests (`pnpm test`) |
 | `e2e/` | the browser tests (Playwright, `pnpm run test:e2e`): every screen at three sizes, settings that must not restart the song, endless lines, Melodic Dictation, Export |
 | `android/`, `ios/` | the native projects |

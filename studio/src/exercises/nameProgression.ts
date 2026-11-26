@@ -7,6 +7,7 @@ import { writeMidi } from '../engine/midiWriter'
 import { barAtBeat, type Timeline } from '../engine/timeline'
 import { ROW_CELLS, type BarChord, type Chart, type TimeSignature } from '../music/chart'
 import { keyPrefersFlats, noteName, offsetToKey } from '../music/chords'
+import { P } from './progressionNames'
 
 export interface Question {
   track_id: string
@@ -52,17 +53,6 @@ export function playable(bank: QuestionBank): Progression[] {
 }
 
 // ---------- Levels ----------
-
-// Catalog ids (data/common_progressions.json), named here by their numerals
-const P = {
-  ii_V_I: 'progression-02', II_V_I: 'progression-19', IV_V_I: 'progression-16', I_IV_V: 'progression-01',
-  vi_ii_V_I: 'progression-05', IV_V_I_vi: 'progression-08', iv_V_i: 'progression-20',
-  I_V_vi_IV: 'progression-03', vi_IV_I_V: 'progression-04', I_vi_IV_V: 'progression-07',
-  ii_bII7_I: 'progression-06', ii_bVII7_I: 'progression-12',
-  I_bVII_IV_I: 'progression-18', bVI_bVII_I: 'progression-13',
-  V_iv_I: 'progression-17', I_III_IV_iv: 'progression-10',
-  i_bVII_bVI_V: 'progression-09', i_bVII_bVI_bVII: 'progression-11',
-} as const
 
 export interface Level {
   id: string // shown as the level number, e.g. "1.3"

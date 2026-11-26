@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { chartFromMeasures, playbackOrder, tuplets, type Chart, type ChartBar } from '../src/music/chart'
-import { decodeChart, encodeChart } from '../src/formats/share'
+import { chartsFromLinks, decodeChart, encodeChart } from '../src/formats/share'
 
 function chart(bars: Partial<ChartBar>[]): Chart {
   return {
@@ -53,6 +53,13 @@ test('share links round-trip a chart', async () => {
   const encoded = await encodeChart(c)
   expect(encoded).toMatch(/^[\w-]+$/)
   expect(await decodeChart(encoded)).toEqual(c)
+})
+
+test('several pasted share links give their charts, broken ones left out', async () => {
+  const a = chartFromMeasures({ title: 'A', style: 'swing', key: 0, bpm: 120 }, [['C^7']])
+  const b = chartFromMeasures({ title: 'B', style: 'swing', key: 0, bpm: 120 }, [['F7']])
+  const text = `https://x.io/play-along/chords#tune=${await encodeChart(a)}\nhttps://x.io/#tune=broken https://x.io/#tune=${await encodeChart(b)}`
+  expect((await chartsFromLinks(text)).map((chart) => chart.title)).toEqual(['A', 'B'])
 })
 
 describe('tuplets of a bar', () => {

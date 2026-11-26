@@ -2,6 +2,8 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Menu } from './Home'
 import { routeUrl, ROUTES, usePath } from './router'
 import { CrashCatch } from './ui/CrashScreen'
+import { usePracticeClock } from './library/practiceLog'
+import { Effects } from './ui/Effects'
 
 // Each screen is its own download, fetched when it is opened: the menu (the first screen) shows
 // without waiting for the band, the sheet engraver or the exercises
@@ -17,6 +19,7 @@ const MelodySightreading = screen(() => import('./exercises/MelodySightreading.t
 const LickSightreading = screen(() => import('./exercises/LickSightreading.tsx'), 'LickSightreading')
 const FreeImprovisation = screen(() => import('./exercises/FreeImprovisation.tsx'), 'FreeImprovisation')
 const Lessons = screen(() => import('./lessons/Lessons.tsx'), 'Lessons')
+const LessonStepPage = screen(() => import('./lessons/LessonStepPage.tsx'), 'LessonStepPage')
 
 // Share links made before the menu existed point at '/#tune=...' or '/#style=...'.
 const SHARED = /^#(?:.*&)?(?:tune|style)=/
@@ -28,6 +31,7 @@ export default function Root() {
       <Suspense fallback={<div className="screen-loading" aria-busy="true" />}>
         <Screen />
       </Suspense>
+      <Effects />
     </CrashCatch>
   )
 }
@@ -35,6 +39,7 @@ export default function Root() {
 /** The screen of the current path. */
 function Screen() {
   const path = usePath()
+  usePracticeClock(path)
   if (path === ROUTES.home && SHARED.test(window.location.hash)) {
     history.replaceState(null, '', routeUrl(ROUTES.chordPlayer) + window.location.hash)
     return <App />
@@ -51,5 +56,6 @@ function Screen() {
   if (path === ROUTES.lickSightreading) return <LickSightreading />
   if (path === ROUTES.freeImprovisation) return <FreeImprovisation />
   if (path === ROUTES.lessons) return <Lessons />
+  if (path === ROUTES.lessonStep) return <LessonStepPage />
   return <Menu path={path} />
 }

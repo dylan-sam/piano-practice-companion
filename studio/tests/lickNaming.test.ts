@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Chart } from '../src/music/chart'
 import { parseChord } from '../src/music/chords'
 import { lickShape, shapePitch } from '../src/exercises/lickReading'
-import { makeLickChart, parseChords, parseNotes } from '../scripts/lickCharts'
+import { makeLickChart, parseChords, parseNotes } from '../src/exercises/builder/lickCharts'
 import { VOCABULARY } from '../scripts/lickExercises'
 import { groupOneChordLicks, lickDegrees, lickGroup, lickTitle } from '../scripts/lickNaming'
 

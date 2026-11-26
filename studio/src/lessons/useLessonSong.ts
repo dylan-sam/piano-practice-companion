@@ -28,6 +28,7 @@ export function useLessonSong<T extends Listed, P = string | null>(lesson: Omit<
 
   /** The lesson's band for a song being opened. */
   const bandFor = (id: string): LessonBand<P> | undefined => (lesson && id === opened.current
-    ? { style: lesson.style, pattern: lesson.pattern as P | undefined, key: lesson.key, bpm: lesson.bpm, subs: lesson.subs } : undefined)
+    ? { style: lesson.style, pattern: lesson.pattern as P | undefined, key: lesson.key, bpm: lesson.bpm, subs: lesson.subs,
+      choruses: lesson.choruses, keyStep: lesson.keyStep } : undefined)
   return { bandFor, missing: !!lesson?.song && tunes.length > 0 && !found ? lesson.song : null }
 }

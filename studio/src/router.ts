@@ -18,6 +18,7 @@ export const ROUTES = {
   improvisation: '/improvisation',
   freeImprovisation: '/improvisation/free',
   lessons: '/lessons',
+  lessonStep: '/lessons/step', // a step's explanation page (query id), before its exercise
 } as const
 
 /** The menu one level up from a route: a screen's area menu, an area menu's main menu. */
@@ -29,13 +30,24 @@ export function parentRoute(path: string): string {
 /** The query value that marks a screen opened from the Lessons tab (lessonLink.ts adds it). */
 export const FROM_LESSONS = 'lessons'
 
+/** The address of a lesson step's explanation page. */
+export function lessonStepPath(id: string): string {
+  return `${ROUTES.lessonStep}?id=${encodeURIComponent(id)}`
+}
+
 /**
- * Where the back button and the top-bar title lead from a route: the Lessons tab for a screen
- * opened from a lesson step (`?from=lessons`), else the menu one level up (parentRoute).
+ * Where the back button and the top-bar title lead from a route: for a screen opened from a
+ * lesson step (`?from=lessons`), the step's explanation page (`step`), or the Lessons tab for a
+ * link without one; else the menu one level up (parentRoute; the explanation page's is Lessons).
+ *
+ *   /sightreading/chords?step=w1-hands1&from=lessons -> /lessons/step?id=w1-hands1
+ *   /sightreading/chords                             -> /sightreading
  */
 export function backRoute(path: string, search = ''): string {
-  return new URLSearchParams(search).get('from') === FROM_LESSONS && normalizePath(path) !== ROUTES.lessons
-    ? ROUTES.lessons : parentRoute(path)
+  const query = new URLSearchParams(search)
+  if (query.get('from') !== FROM_LESSONS || normalizePath(path).startsWith(ROUTES.lessons)) return parentRoute(path)
+  const step = query.get('step')
+  return step ? lessonStepPath(step) : ROUTES.lessons
 }
 
 const NAVIGATE = 'eartraining:navigate'

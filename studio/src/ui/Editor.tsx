@@ -49,15 +49,18 @@ interface EditorProps {
   onChange: (chart: Chart) => void
   selected: number
   onSelect: (index: number) => void
-  saveLabel: string
+  edited: boolean // the chart differs from the song opened (a new song always does)
+  canSaveInPlace: boolean // one's own saved song: Save keeps it, Save new song makes a copy
   canDelete: boolean
-  onSave: () => void
+  onSave: () => void // save one's own song in place
+  onSaveNew: () => void // save the edits as a new song, into a playlist
+  onManage?: () => void // the playlists of the song (when it is a song: not a new chart)
   onCancel: () => void
   onDelete: () => void
 }
 
 // Edit a chart's bars: chords, time signature, sections, repeats and endings
-export function Editor({ chart, onChange, selected, onSelect, saveLabel, canDelete, onSave, onCancel, onDelete }: EditorProps) {
+export function Editor({ chart, onChange, selected, onSelect, edited, canSaveInPlace, canDelete, onSave, onSaveNew, onManage, onCancel, onDelete }: EditorProps) {
   const index = Math.min(selected, chart.bars.length - 1)
   const bar = chart.bars[index]
   const time = timeAt(chart, index)
@@ -349,15 +352,16 @@ export function Editor({ chart, onChange, selected, onSelect, saveLabel, canDele
             onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
             onBlur={() => setConfirmDelete(false)}
           >
-            {confirmDelete ? 'Delete tune?' : 'Delete tune'}
+            {confirmDelete ? 'Delete it for good?' : 'Delete song'}
           </button>
         )}
         <button className="chip" onClick={onCancel}>
-          Cancel
+          {edited ? 'Cancel' : 'Close'}
         </button>
-        <button className="chip chip-primary" onClick={onSave}>
-          {saveLabel}
-        </button>
+        {/* Without edits: the song's playlists; with edits: save them (in place for one's own song) or as a new song */}
+        {!edited && onManage && <button className="chip chip-primary" onClick={onManage}>Manage playlists</button>}
+        {edited && canSaveInPlace && <button className="chip chip-primary" onClick={onSave}>Save</button>}
+        {edited && <button className={canSaveInPlace ? 'chip' : 'chip chip-primary'} onClick={onSaveNew}>Save new song</button>}
       </div>
     </section>
   )

@@ -2,6 +2,7 @@ import type { PluginListenerHandle } from '@capacitor/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { midiNoteChange } from './midiInput'
 import { Midi, usesNativeMidi } from './nativeMidi'
+import { markActivity } from '../library/practiceLog'
 
 interface MidiKeyboardState {
   supported: boolean
@@ -32,6 +33,7 @@ export function useMidiKeyboard(
   const handleMessage = useCallback((data: Uint8Array | readonly number[]) => {
     const change = midiNoteChange(data)
     if (!change) return
+    markActivity() // the practice clock (home screen statistics)
     const next = new Set(heldRef.current)
     if (change.pressed) next.add(change.note)
     else next.delete(change.note)

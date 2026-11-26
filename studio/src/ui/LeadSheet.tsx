@@ -15,6 +15,7 @@ import { boxIn, classNumber, lineOf, staffBoxes, symbolBox, union, type Box, typ
 import { useTwoBarRows } from './useNarrowScreen'
 import { useStaffInput, type Ghost, type StaffInput } from './useStaffInput'
 import { spelledName } from '../music/staff'
+import { loadAbcjs } from './abcjsLoad'
 
 interface LeadSheetProps {
   chart: ChartData
@@ -36,10 +37,6 @@ interface LeadSheetProps {
   zoom?: number // draw the music larger (short excerpts): the layout width is divided by it
 }
 
-// The engraver is loaded with the first lead sheet, so chord charts don't download it
-type Abcjs = typeof import('abcjs')
-let abcjsLoad: Promise<Abcjs> | null = null
-const loadAbcjs = () => (abcjsLoad ??= import('abcjs'))
 
 const STAFF_WIDTH = 900 // abcjs layout width; the drawing then scales to the sheet's width
 const PHONE_STAFF_WIDTH = 520

@@ -23,6 +23,7 @@ import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
 import { Substitutions } from '../ui/Substitutions'
 import { useSubstitutedChart } from '../ui/useSubstitutedChart'
+import { useChorusEffects } from '../ui/effects'
 import { Transport } from '../ui/Transport'
 import { CheckFilter } from '../ui/CheckFilter'
 import { useLoopPicking } from '../ui/useLoopPicking'
@@ -160,6 +161,7 @@ export function LickSightreading() {
   const shownTranspose = playing ? chorusKeyOffset(practice, currentChorus, transpose) : transpose
   const liveBpm = rampedBpm(bpm, practice, Math.min(currentChorus, choruses - 1), BPM_RANGE)
   const shownChart = useSubstitutedChart(chart, practice.subs, playing, currentChorus)
+  useChorusEffects(currentChorus, playing)
   const liveBpmRef = useRef(liveBpm)
   useEffect(() => { liveBpmRef.current = liveBpm }, [liveBpm])
 
@@ -487,7 +489,7 @@ export function LickSightreading() {
         <Mixer {...mixer(style.comp.program)} parts={MELODY_PARTS} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}
-        onImport={(from, text) => source.importFrom(from, text)} />
+        onImported={(added) => source.imported(added)} />
     </div>
   )
 }

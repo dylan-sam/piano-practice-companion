@@ -22,6 +22,7 @@ import { Mixer } from '../ui/Mixer'
 import { Practice } from '../ui/Practice'
 import { Substitutions } from '../ui/Substitutions'
 import { useSubstitutedChart } from '../ui/useSubstitutedChart'
+import { useChorusEffects } from '../ui/effects'
 import { Transport } from '../ui/Transport'
 import { useLoopPicking } from '../ui/useLoopPicking'
 import { ExerciseStatus, HeldNotes, KeyChoiceControl } from './ExerciseControls'
@@ -29,6 +30,7 @@ import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ReadingPopover, ReadingSheet } from './ReadingControls'
 import { readingCount, readingHint, readingTally } from './readingText'
 import { useLessonLink } from '../lessons/lessonLink'
+import { withFrameOf } from '../lessons/introEndings'
 import { useLessonSong } from '../lessons/useLessonSong'
 import { useLessonOverride } from '../lessons/useLessonOverride'
 import { useLessonGoal } from '../lessons/useLessonGoal'
@@ -38,6 +40,9 @@ import { useSongSource } from './useSongSource'
 import { useBand } from './useBand'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
 import { arrangeMelody, averageOffsetMs } from './melodyReading'
+import { buildExercise, categoryList, EXAMPLES, exerciseCategory, FAMILY_DEFAULTS, readSpec, type ExercisePreset, type ExerciseSpec } from './builder/exerciseBuilder'
+import { presetOfTune, presetTune, usePresetTunes, useUserPresets } from './builder/exercisePresets'
+import { ExerciseBuilder } from './builder/ExerciseBuilder'
 
 const SETTINGS_KEY = 'eartraining:melody-reading'
 
@@ -52,8 +57,16 @@ const KINDS: Record<ReadingKind, { title: string; item: string; items: string; e
   },
   exercises: {
     title: 'Exercises Sightreading', item: 'exercise', items: 'Exercises', empty: 'No exercises found.',
-    choose: 'Choose an exercise: triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, or a lick.',
+    choose: 'Choose an exercise or a lick, or build your own (Build): arpeggios, scales, lines through a progression, approach notes, intervals, rhythm.',
   },
+}
+
+const LESSON_EXERCISE = 'lesson-exercise' // the tune id of an exercise a lesson step builds
+const DRAFT = 'builder-draft' // the tune id of the exercise being built
+
+/** An exercise built from its settings, as a tune of the list (named after its settings, in its category). */
+function exerciseTune(id: string, spec: ExerciseSpec): Tune {
+  return { id, source: 'example', playlist: categoryList(exerciseCategory(spec)), addedAt: 0, chart: buildExercise(spec) }
 }
 
 /** Whether a tune belongs on a reading screen: a lead sheet (with a melody, not a lick), or an exercise or lick. */
@@ -91,20 +104,33 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
     },
   })
   const { mode, tune } = source
+  const [building, setBuilding] = useState(false) // the exercise builder is open
+  const [editedPreset, setEditedPreset] = useState<string | null>(null) // the preset the builder's draft comes from
   // A Practice loop picked on the sheet: tap its first bar, then its last
   const loopPicking = useLoopPicking((loop) => changeArrangement(styleId, patternId, transpose, choruses, { ...practice, loop }))
 
+  // Exercises: the examples and one's own presets, and the exercise a lesson step builds (locked)
+  const presets = usePresetTunes()
+  const ownPresets = useUserPresets()
+  const lessonSpec = kind === 'exercises' && lesson?.exercise ? readSpec(lesson.exercise) : null
+  const lessonTune = useMemo(() => (lessonSpec ? { ...exerciseTune(LESSON_EXERCISE, lessonSpec), chart: { ...buildExercise(lessonSpec), title: lesson?.song ?? '' } } : null),
+    // the lesson's settings are read once per visit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lesson?.exercise])
   // Only what this screen reads: lead sheets (shipped and saved), or the exercises and licks
-  const leadSheets = useMemo(() => source.tunes.filter(readable(kind)), [source.tunes, kind])
+  const leadSheets = useMemo(() => [...(lessonTune ? [lessonTune] : []), ...(kind === 'exercises' ? presets : []), ...source.tunes.filter(readable(kind))],
+    [source.tunes, kind, presets, lessonTune])
   const lessonSong = useLessonSong(lesson, leadSheets, source.open)
-  const chart = tune?.chart ?? null
+  // A lesson's intro and ending: bars added before and after the head, for this visit only
+  const chart = useMemo(() => tune ? withFrameOf(tune.chart, lesson?.frame) : null, [tune, lesson])
   const style = getStyle(styleId)
   const position = timeline ? barAtBeat(timeline, beat) : null
   const currentChorus = position?.chorus ?? 0
   const shownTranspose = playing ? chorusKeyOffset(practice, currentChorus, transpose) : transpose
   const liveBpm = rampedBpm(bpm, practice, Math.min(currentChorus, choruses - 1), BPM_RANGE)
   // The sheet of the chorus playing, its substitutions in a colour (a lesson step can ask for some)
-  const shownChart = useSubstitutedChart(tune?.chart, practice.subs, playing, currentChorus)
+  const shownChart = useSubstitutedChart(chart, practice.subs, playing, currentChorus)
+  useChorusEffects(currentChorus, playing)
 
   /**
    * Arrange the song for the full band (the melody too, at the Mixer's Melody volume) and start judging; from
@@ -243,6 +269,24 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
       position ? `Bar\u00a0${position.measure + 1}\u00a0of\u00a0${chart.bars.length}${readingTally(reading)}` : chart.title
   const patterns = patternsForStyle(styleId).length ? patternsForStyle(styleId) : PIANO_PATTERNS
 
+  // The builder edits the exercise on the stand (its settings), and the preset it comes from: kept
+  // while the settings change (the stand then shows the builder's draft)
+  const presetId = tune && tune.id !== DRAFT ? presetOfTune(tune.id) : editedPreset
+  const openPreset: ExercisePreset | null = presetId ? [...EXAMPLES, ...ownPresets].find((item) => item.id === presetId) ?? null : null
+  if (tune && tune.id !== DRAFT && presetId !== editedPreset) setEditedPreset(presetId)
+  const standSpec = (tune?.chart.lick?.spec && readSpec(tune.chart.lick.spec)) || FAMILY_DEFAULTS.arpeggio
+  const builder = kind === 'exercises' && building && <ExerciseBuilder key={openPreset?.id ?? tune?.id ?? 'new'}
+    spec={standSpec} preset={openPreset} locked={tune?.id === LESSON_EXERCISE}
+    onChange={(next) => source.open(exerciseTune(DRAFT, next))}
+    onSaved={(saved) => { const shown = presetTune(saved); if (shown) source.open(shown) }}
+    onDeleted={() => setBuilding(false)} onClose={() => setBuilding(false)} />
+
+  /** Open or close the builder; opened on an empty stand, it writes its first exercise there. */
+  function toggleBuilder() {
+    if (!building && !tune) source.open(exerciseTune(DRAFT, standSpec))
+    setBuilding(!building)
+  }
+
   return (
     <div className="app sightreading">
       <header className="topbar">
@@ -254,7 +298,8 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
       </header>
 
       <SongWorkspace source={source} label="Sight-reading mode" tunes={leadSheets} emptyText={words.empty}
-        canImport={kind === 'lead-sheets'} modes={[{ id: 'pick', text: `Pick ${words.item === 'song' ? 'a' : 'an'} ${words.item}` },
+        canImport={kind === 'lead-sheets'} categories={kind === 'exercises'}
+        onNew={kind === 'exercises' ? toggleBuilder : undefined} newLabel="Build" panel={builder || undefined} modes={[{ id: 'pick', text: `Pick ${words.item === 'song' ? 'a' : 'an'} ${words.item}` },
           { id: 'random', text: `Random ${words.item}` }]}>
           <ExerciseStatus error={error} readiness={readiness} keyboard={keyboard} />
           {mode === 'random' && <div className="sight-picker">
@@ -290,7 +335,7 @@ export function MelodySightreading({ kind }: { kind: ReadingKind }) {
         <Mixer {...mixer(style.comp.program)} parts={MELODY_PARTS} />
       </Transport>}
       {kind === 'lead-sheets' && <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)}
-        sources={LEAD_SOURCES} onImport={(from, text) => source.importFrom(from, text, readable(kind))} />}
+        sources={LEAD_SOURCES} onImported={(added) => source.imported(added, readable(kind))} />}
     </div>
   )
 }

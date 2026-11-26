@@ -28,7 +28,12 @@ The player is a modified version of [OpenStand](https://github.com/canbmaj7/open
 
 ## What you can do
 
-The main menu has four areas, each opening a menu of its screens, and the **Lessons** tab last:
+The main menu (the home screen) greets you, offers **today's lesson** (the next
+step of the Lessons tab, with a Start button that opens its explanation and the
+program's progress), then **Practice**: four areas, each opening a menu of its
+screens, and the **Lessons** tab; then **your statistics** (streak, time by area,
+accuracy in sightreading, ear training, lesson steps and improvisation, where it
+counts the notes inside the harmony, and the chords and progressions to work on):
 
 | Area | Screens |
 |---|---|
@@ -42,9 +47,29 @@ The back button (and the title at the top left of a screen) goes up one level:
 from a screen to its area's menu, then to the main menu; a screen opened from a
 lesson step goes back to the Lessons tab.
 
+**Your practice** (kept on the device): days in a row with practice (and the
+best run, the hours in all), the minutes of each of the last 7 days, the share
+of chords and notes right in sightreading and of answers right in ear training
+this week against the week before, the time spent in each area over 30 days,
+and what to work on (the chords missed most in Chord Sightreading, the
+progression heard wrong most in Name the progression). Time counts while a
+practice screen is in use (the band playing, or a key, a click or a MIDI note in
+the last minute).
+
+**Appearance** (top right of the home screen): **Dark mode** (the default:
+night blue, amber and teal), **Light mode** (cream, coral and teal) or **My
+colours** (a theme of your own: background, sheet and panels, text, two accent
+colours, the highlighter and the substituted chords, starting from either
+mode), and the **effects while playing**: each chord or note judged shows
+"Perfect" (on time, within a sixth of a beat), "Good" or "Missed", with the run
+of right answers, and a chorus 90% right ends in a burst of colour. Finishing a unit of the Lessons tab also earns a burst. The effects can
+be turned off, and the burst never shows when the device asks for reduced
+motion.
+
 **Delete all my data**, at the bottom of the main menu, deletes everything the
 app keeps on the device (saved and imported songs and playlists, settings,
-styles, remembered mistakes, levels passed, lesson progress) after a second
+styles, remembered mistakes, levels passed, lesson progress, practice
+statistics, the theme) after a second
 confirmation, to start afresh. Other sites served from the same address keep
 their data.
 
@@ -118,13 +143,39 @@ A band (bass, piano, drums) plays any chart of the catalog, or one of your own, 
   and speed-up, and the mixer's levels (a muted part is left out). The audio is
   made in the app (a progress bar, Cancel), with the same sounds and limiter as
   the band you hear.
-- **Your own charts**: write or edit a chart (**Edit Song**), import iReal Pro
-  links and playlists, export your songs to a file (**Export**: the songs you
-  wrote or edited, the ones shared with you via link, the imported ones, or all
-  3),
-  and share a chart as a link that opens in this app or in iReal Pro. The
-  **Songs** list shows each playlist under a bar with its name; the playlist
-  you choose comes first.
+- **Your own charts**: write or edit a chart (**Edit Song**; a new song is
+  saved into a playlist of yours, or a new one), and share a chart as a link
+  that opens in this app or in iReal Pro.
+- **Playlists**: every song of the app (the study tunes, the OpenEWLD lead
+  sheets, the Nottingham folk tunes and the ChoCo chord charts) is in one
+  playlist, the **App Playlist**. The song list's buttons are **New**,
+  **Playlists** and **Import**; **Playlists** makes your own playlists, shows
+  one, or deletes one (with all its songs, only those in no other playlist, or
+  none). A song is put in playlists (a song can be in several) with **Edit
+  Song > Manage playlists**. In one of your playlists, the × beside a song
+  takes it out. A saved song left in no playlist goes to
+  "Without playlist". The playlist chooser of the song list appears once you
+  have a playlist of your own. Deleting a song of the app, or the whole
+  App Playlist, only hides it (the lessons and exercises still
+  use it): **Restore all default songs**, on the main menu beside Delete all
+  my data, brings it back (and the example exercises of Exercises
+  Sightreading, if deleted). A song is deleted with **Edit Song > Delete song**.
+- **Edit Song** offers **Manage playlists** (tick or untick the playlists the
+  song is in, or make one). Once you change the chart it offers **Save new
+  song** instead: the edited chart becomes a new song, saved into the playlist
+  you choose, and you go on editing it (your own songs can also be saved in
+  place with **Save**).
+- **Import** has three choices: iReal Pro links and playlists (MusicXML files
+  on the lead sheet screens), **Studio shared links** (paste one or more links
+  copied with Share), and a **Studio export** file. Before anything is saved,
+  you choose the playlist each part of the import goes into: an existing one,
+  or a new one whose name (the iReal Pro playlist's, or the one written in the
+  export file) is suggested and can be changed.
+- **Export** downloads the playlists you tick, each under a name you can
+  change, as a Studio export file (the App Playlist is not
+  exported: its songs ship with the app).
+
+<img src="docs/images/playlists.png" alt="The Playlists panel of the song list" width="640">
 - **Lead sheets too**: a lead sheet (see below) opens here as a chord chart,
   and the band plays it without its melody.
 
@@ -152,21 +203,26 @@ or the chart's own instrument) and has its own fader in the Mixer.
 
 ### Licks and exercises
 
-A database of **677 licks and improvisation exercises**, all in C and
-playable in any key, in Exercises Sightreading and Lick Sightreading
-([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
+Improvisation exercises built in the app, and a curated set of **175 licks**,
+all in C and playable in any key, in Exercises Sightreading and Lick
+Sightreading ([docs/LICKS.md](docs/LICKS.md)). No note value is shorter than a
 sixteenth; eighth-note triplets are used.
 
-- **Exercises** (253): triads and seventh chords through the keys (with and
-  without the fifth, 3-5-7-9), guide-tone lines and chord-tone lines through
-  ii-V-I in all keys, minor ii-V-i, turnarounds, the blues, rhythm changes,
-  the Coltrane cycle and four substitutions (the ii added, secondary dominants,
-  the tritone substitution, a passing diminished chord), altered dominants (ii-V7♭9-I, minor ii-V7♭9♭13-i) and the minor blues, 25 scales and scale patterns, approach notes and
-  enclosures, intervals, and rhythm drills.
+- **Exercises**, built from a few settings by the
+  [exercise builder](docs/EXERCISES.md#the-exercise-builder) and saved as your
+  own presets (six examples ship, one per category): triads and seventh chords
+  through the keys (with and without the fifth, 3-5-7-9), guide-tone lines and
+  chord-tone lines through ii-V-I in all keys, minor ii-V-i, turnarounds, the
+  blues, rhythm changes, the Coltrane cycle and four substitutions (the ii
+  added, secondary dominants, the tritone substitution, a passing diminished
+  chord), altered dominants (ii-V7♭9-I, minor ii-V7♭9♭13-i) and the minor
+  blues, 25 scales and scale patterns, approach notes and enclosures,
+  intervals, and rhythm drills.
 - **Licks** over a ii-V-I, a minor ii-V-i, a ii-V, a V-I, a turnaround, the
-  blues, or one chord: 301 from the melodies of the shipped standards, 99 from
-  folk tunes, and 24 written for the project. Each mined lick names its tune
-  and bar.
+  blues, or one chord: 175, at most 15 per list spread over three levels,
+  chosen from the 301 mined from the melodies of the shipped standards and the
+  24 written for the project (the 99 mined from folk tunes are not shipped).
+  Each mined lick names its tune and bar.
 
 ### Name the progression
 
@@ -244,10 +300,16 @@ the percentage and your average timing (early or late, in milliseconds).
 
 ### Exercises Sightreading
 
+![Exercises Sightreading with the exercise builder](docs/images/exercise-builder.png)
+
 The same screen with the [licks and exercises](#licks-and-exercises) of a few
 bars: scales, arpeggios, guide tones, approach notes, intervals, rhythm drills
 and licks. **Pick an exercise** or **Random exercise**; the key and tempo can
-change at each repetition with the Practice button.
+change at each repetition with the Practice button. **Build** opens the
+exercise builder: choose the kind of exercise and its settings (the chord, the
+scale, the progression, the key, how it moves through the keys...), and save
+it under a name as a preset, listed under its category. A lesson step builds
+its own exercise, with its settings locked.
 
 ### Lick Sightreading
 
@@ -287,9 +349,15 @@ chord), practised then played in the unit's song. Intros and endings come back
 on several songs, and each unit's improvising brings one tool to build a solo
 (space, rhythm, motifs, tension and release, a shape over choruses). Each week has hands together, a song learnt
 with a left hand that grows in stages, a few minutes of improvising and ear
-training. Each step's **Start** opens its screen already set up, and steps with
-a target tick themselves when you reach it. Nothing is locked; progress stays
-on the device ([docs/LESSONS.md](docs/LESSONS.md)).
+training. Each step's **Start** opens its page: what to do, why, and the
+music theory behind it, with scales and voicings on a staff and progressions
+with their Roman numerals, drawn in the key you choose (or as Roman numerals)
+and heard with **Listen**, and the books it comes from. **Understood, start**
+then opens its screen already set up; the back button comes back to the page.
+Steps with a target tick themselves when you reach it. Nothing is locked;
+progress stays on the device ([docs/LESSONS.md](docs/LESSONS.md)).
+
+<img src="docs/images/lesson-step.png" alt="A lesson step's page" width="640">
 
 All the exercises in detail: [docs/EXERCISES.md](docs/EXERCISES.md).
 

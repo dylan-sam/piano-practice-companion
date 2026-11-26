@@ -10,6 +10,7 @@ import type { Part } from '../engine/arrange'
 import { CHECK_MODES, type CheckMode } from '../exercises/melodyReading'
 import { LEFT_HAND_STAGES, VOICINGS, type LeftHandStage, type Voicing } from '../exercises/sightReading'
 import { SUBSTITUTIONS, type SubstitutionId } from '../music/substitutions'
+import { FRAMES } from './introEndings'
 
 export interface LessonLink {
   route: string // the screen (ROUTES)
@@ -24,10 +25,14 @@ export interface LessonLink {
   playlist?: string // Lick Sightreading: the lick playlist offered
   infinite?: boolean // start on an endless line of progressions
   voicing?: Voicing // Chord Sightreading: how chords must be voiced
-  step?: string // the lesson step it was opened from, ticked when its target is reached
+  step?: string // the lesson step it was opened from: back leads to its page, and it is ticked when its target is reached
   goal?: number // the target: this percent right, at `bpm` or faster
   timing?: number // ... and notes on time within this many milliseconds on average
   subs?: SubstitutionId[] // chord substitutions the band plays (and the sheet shows), every chorus
+  frame?: string // Lead Sheet Sightreading: bars added for an intro and an ending (introEndings.ts FRAMES), this visit only
+  exercise?: string // Exercises Sightreading: the settings of the exercise built for the step (exerciseBuilder.ts specText), locked
+  choruses?: number // Lead Sheet and Exercises Sightreading: how many times through (a short exercise played several times)
+  keyStep?: number // ... and the key moving by this many semitones each time (Practice > Keys; 5: up a fourth)
 }
 
 const PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
@@ -45,7 +50,7 @@ export function lessonUrl(link: LessonLink): string {
   if (mute?.length) query.set('mute', mute.join(','))
   if (infinite) query.set('infinite', '1')
   if (subs?.length) query.set('subs', subs.join(','))
-  query.set('from', FROM_LESSONS) // the back button leads to the Lessons tab
+  query.set('from', FROM_LESSONS) // the back button leads to the step's page (or the Lessons tab)
   return `${route}?${query.toString()}`
 }
 
@@ -80,6 +85,10 @@ export function readLessonLink(search: string): Omit<LessonLink, 'route'> | null
     goal: numberIn(query.get('goal'), 1, 100),
     timing: numberIn(query.get('timing'), 1, 1000),
     subs: query.get('subs')?.split(',').filter((id): id is SubstitutionId => SUBSTITUTIONS.some((s) => s.id === id)),
+    frame: oneOf(query.get('frame'), Object.keys(FRAMES).map((id) => ({ id }))),
+    exercise: query.get('exercise') ?? undefined,
+    choruses: numberIn(query.get('choruses'), 1, 24),
+    keyStep: numberIn(query.get('keyStep'), 1, 11),
   }
 }
 

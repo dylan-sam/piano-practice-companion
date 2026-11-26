@@ -1,10 +1,11 @@
 // Building lick and exercise charts: chords laid into 4/4 bars, note lines, a compact text
 // notation for hand-written licks, and chord transposition. Shared by the exercise generator
-// (lickExercises.ts), the miner (lickMining.ts) and the catalog (lickCatalog.ts).
+// (exerciseMusic.ts, exerciseBuilder.ts), and the scripts that build the lick database
+// (scripts/lickExercises.ts, lickMining.ts, lickCatalog.ts).
 
-import type { Chart, ChartBar } from '../src/music/chart'
-import type { MelodyNote } from '../src/music/melody'
-import type { LickInfo } from '../src/music/licks'
+import type { Chart, ChartBar } from '../../music/chart'
+import type { MelodyNote } from '../../music/melody'
+import type { LickInfo } from '../../music/licks'
 
 export const BAR_BEATS = 4
 

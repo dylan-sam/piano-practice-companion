@@ -23,14 +23,18 @@ export function SongsToggle({ source, text = 'Songs' }: { source: Source; text?:
  * `tunes` are the songs listed (the catalog is searched too when `catalog` is set); Import opens
  * the screen's import dialog when it has one.
  */
-export function SongWorkspace({ source, modes, label, tunes, catalog = false, canImport = true, emptyText, children }: {
+export function SongWorkspace({ source, modes, label, tunes, catalog = false, canImport = true, categories = false, emptyText, onNew, newLabel, panel, children }: {
   source: Source
   modes: { id: SourceMode; text: string }[]
   label: string
   tunes: Tune[]
   catalog?: boolean
   canImport?: boolean
+  categories?: boolean // shipped licks or exercises, listed by category (no playlists)
   emptyText?: string
+  onNew?: () => void // the list's New button (Exercises Sightreading: Build)
+  newLabel?: string
+  panel?: ReactNode // a panel under the list's buttons (the exercise builder)
   children: ReactNode
 }) {
   const picking = source.shown === 'pick'
@@ -40,8 +44,9 @@ export function SongWorkspace({ source, modes, label, tunes, catalog = false, ca
       <div className={picking ? `workspace${source.libraryOpen ? ' library-open' : ''}` : 'sight-workspace'}>
         {picking && <Library tunes={tunes} selectedId={source.tune?.id ?? ''}
           onSelect={(id) => { const selected = tunes.find((item) => item.id === id); if (selected) source.open(selected) }}
-          onLoadChoco={catalog ? source.loadChoco : undefined} emptyText={emptyText}
-          onImport={canImport ? () => source.setImportOpen(true) : undefined} />}
+          onLoadChoco={catalog ? source.loadChoco : undefined} emptyText={emptyText} categories={categories}
+          onTunesDeleted={(ids) => source.setTunes((current) => current.filter((item) => !ids.includes(item.id)))}
+          onImport={canImport ? () => source.setImportOpen(true) : undefined} onNew={onNew} newLabel={newLabel} panel={panel} />}
         <main className="stage exercise-stage sight-stage" onClick={() => source.setLibraryOpen(false)}>
           {children}
         </main>

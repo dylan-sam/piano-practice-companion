@@ -28,6 +28,7 @@ app).
   - [MIDI keyboards](#midi-keyboards)
 - [Lead Sheet and Exercises Sightreading](#lead-sheet-and-exercises-sightreading)
   - [Songs and the band](#songs-and-the-band)
+  - [The exercise builder](#the-exercise-builder)
   - [How notes are judged](#how-notes-are-judged)
   - [The score](#the-score)
 - [Lick Sightreading](#lick-sightreading)
@@ -37,9 +38,11 @@ app).
 
 ## The song list
 
-Every screen with a song list has a **Playlists** filter (check the playlists
-to list; none checked lists them all; **ChoCo charts** is the catalog, 28,000+
-songs) and a **Progressions** filter: the songs that contain **any of** the
+Every screen with a song list shows one playlist: the **Practice Companion
+Playlist** (every song shipped with the app and a search of the ChoCo catalog,
+28,000+ chord charts) or one of yours, chosen above the list once you have made
+one (**Playlists**). Exercises and licks are listed by **Categories** instead.
+Every list has a **Progressions** filter: the songs that contain **any of** the
 checked progressions (the default) or **all of** them. The catalog finds its own
 songs; the shipped lead sheets, imported playlists and saved songs are read in
 the app with the same rules (`studio/src/library/progressionMatch.ts`, after
@@ -377,7 +380,7 @@ auto-scroller On/Off).
 |---|---|
 | Mode | **Pick a song** or **Random song** (Lead Sheet Sightreading), **Pick an exercise** or **Random exercise** (Exercises Sightreading) |
 | Songs | Lead Sheet Sightreading: the 1,479 shipped lead sheets (OpenEWLD and Nottingham) and every saved tune with a melody. **Import** MuseScore MusicXML files or a Studio export: they are saved for the Lead Sheet Player too |
-| Exercises | Exercises Sightreading: the 677 exercises and licks of the [lick database](LICKS.md) (triads, seventh chords, guide tones, scales, approach notes, intervals, rhythm, licks) |
+| Exercises | Exercises Sightreading: six example exercises (one per category), your own presets, and the 175 licks of the [lick database](LICKS.md). **Build** opens the [exercise builder](#the-exercise-builder) |
 | Style, piano pattern | as in the players |
 | Key | the song's key, a random key, or any key; the sheet is redrawn in that key |
 | Tempo, choruses, Practice | as in the players (loop, keys, speed up); keys and speed-up apply without starting over, as in Chord Sightreading |
@@ -388,6 +391,36 @@ The notes you play sound through an acoustic piano. Swing and Blues play
 eighth-note "ands" late, and the notes are expected where the band swings them.
 A beat written in sixteenths is not swung: its four sixteenths stay even in
 every style (moving only its "and" would make them uneven).
+
+### The exercise builder
+
+Exercises Sightreading writes its exercises from a few settings
+(`studio/src/exercises/builder/`, the kinds in [LICKS.md](LICKS.md#exercises)).
+**Build**, above the list, opens the builder on the exercise on the stand (or on
+major triads, when the stand is empty):
+
+| Setting | Choices |
+|---|---|
+| Kind | Arpeggios, Scales, Lines through a progression, Approach notes, Intervals, Rhythm |
+| The kind's settings | the chord and its notes, the note to start on, the direction; the scale and its pattern, one or two octaves; the progression and the line; the chord and the approach; the interval and the order; the rhythm figure; and for most kinds the rhythm (quarter notes, eighth notes, triplets) |
+| Key | the key it starts in |
+| Then | stay in the key, or move up a half step, a whole step, a minor 3rd, a fourth (the cycle of fourths) or a fifth; arpeggios can also go through the diatonic chords of the key |
+| Keys | how many keys it goes through: 2, 3, 4, 6 or all 12 |
+
+Each change writes the exercise again on the stand, titled from its settings
+("Dominant 7th chords in fourths: 1-3-5-7 up"). A setting that does not fit
+the others is set to one that does (a triad has no 7th to start on).
+
+**Presets**: give the exercise a name (or keep the title) and **Save as a new
+preset**: it is listed under its category with the examples, and kept in the
+browser. On one of your presets, **Save changes** saves its new settings or its
+new name, and **Delete preset** deletes it (after asking). The six examples can
+be deleted too: they are only hidden, and **Restore all default songs** (main
+menu) brings them back.
+
+A [lesson step](LESSONS.md) that plays an exercise builds it from the settings
+in its link: its settings are locked (the builder shows them greyed out), as
+the step asks for this exercise.
 
 ### How notes are judged
 

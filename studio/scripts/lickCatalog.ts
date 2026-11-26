@@ -1,8 +1,10 @@
 // Build the lick and exercise database (pnpm run licks):
 //
-//   studio/public/licks/licks.json  shipped with the app: generated exercises and vocabulary, and
-//                                   licks from the shipped lead sheets (OpenEWLD melodies,
-//                                   Nottingham folk tunes); CC BY 4.0 like the project's data
+//   studio/public/licks/licks.json  shipped with the app: the vocabulary licks written for the
+//                                   project, and licks from the shipped lead sheets (OpenEWLD
+//                                   melodies); CC BY 4.0 like the project's data. The exercises are
+//                                   not in it: the app builds them from settings
+//                                   (src/exercises/builder/exerciseBuilder.ts)
 //   weimar/licks_weimar.json        not shipped (weimar/ is ignored by git): licks and common
 //                                   patterns from the Weimar Jazz Database solos (ODbL 1.0)
 //   data/licks.log                  what was kept and turned down, and why
@@ -12,6 +14,10 @@
 //
 // The licks from standards are listed, in each playlist, by how many of the shipped melodies
 // share their opening (openingFrequency), most common first; the other collections by level.
+//
+// What ships is a curated choice (lickCuration.ts): at most 15 licks per list, spread over the
+// levels. The licks mined from the Nottingham folk
+// tunes are logged but not shipped: they sound less like jazz than the standards'.
 //
 // The Weimar licks are built only when weimar/weimar_solos.json is there (made by
 // weimar_playlist.py from wjazzd.db, see docs/DATA.md). Every chart is checked: chart format,
@@ -25,6 +31,7 @@ import { isChartSymbol } from '../src/music/notation'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { generatedPlaylists } from './lickExercises'
 import { groupOneChordLicks, isOneChordContext } from './lickNaming'
+import { curateLicks } from './lickCuration'
 import {
   candidateChart, distinctPatterns, findPatterns, mineLicks, openingFrequency, patternChart, selectLicks,
   type Candidate, type MelodySource, type MiningOptions, type Selection,
@@ -114,7 +121,7 @@ function byCategory(charts: Chart[], prefix: string): { name: string; charts: Ch
 export function buildLickCatalog(paths: LickPaths): string {
   const log: string[] = [`Lick database built ${new Date().toISOString().slice(0, 10)}`, '']
   const generated = generatedPlaylists()
-  log.push('Generated exercises and vocabulary:')
+  log.push('Vocabulary licks written for the project:')
   for (const p of generated) log.push(`  ${p.name}: ${p.charts.length}`)
   log.push('')
 
@@ -137,13 +144,19 @@ export function buildLickCatalog(paths: LickPaths): string {
   log.push('One-chord licks, by group:')
   for (const { group, charts } of grouped) log.push(`  ${group}: ${charts.length}`)
   log.push('')
-  const main = [
-    ...generated.filter((p) => p.name !== 'Licks: vocabulary'),
+  const lickLists = [
     { name: 'Licks: vocabulary over progressions', charts: vocabulary.filter((chart) => !oneChord(chart)) },
     ...grouped.map(({ group, charts }) => ({ name: `Licks: ${group}`, charts })),
     ...byCategory(standardLicks.filter((chart) => !oneChord(chart)), 'Licks from standards: '),
-    ...byCategory(folkLicks, 'Licks from folk tunes: '),
   ]
+  log.push('Shipped (curated, lickCuration.ts):')
+  const licks = lickLists.map(({ name, charts }) => {
+    const kept = curateLicks(charts)
+    log.push(`  ${name}: ${kept.length} of ${charts.length}`)
+    return { name, charts: kept }
+  })
+  log.push(`  Licks from folk tunes: none of ${folkLicks.length} (not shipped)`, '')
+  const main = licks
   const written = writePlaylists(paths.out, main, log, true)
   let summary = `${written} charts in ${paths.out}`
 

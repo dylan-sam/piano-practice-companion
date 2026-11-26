@@ -42,7 +42,8 @@ import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ToneColorsLine } from './ReadingControls'
 import { infiniteLine, lineKeys, type InfiniteLine } from './sightReading'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
-import { TONE_COLORS } from './toneColors'
+import { TONE_COLORS, type ToneCounts } from './toneColors'
+import { countTones } from '../library/practiceLog'
 import { useBand } from './useBand'
 import { useEndlessLine } from './useEndlessLine'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
@@ -330,6 +331,7 @@ export function FreeImprovisation() {
     [bandChart, subs, chorus, written])
   const noteClasses = useMemo(() => Object.fromEntries((written?.colors ?? []).map((color, index) => [index, `tone-note-${color}`])),
     [written])
+  useChorusTones(written?.counts, chorus, playing)
 
   const keyPc = chords ? (chords.key + transpose + 12) % 12 : 0
   const positionLabel = !chords ? 'Choose a song or start an infinite line' :
@@ -392,7 +394,20 @@ export function FreeImprovisation() {
         <Mixer {...mixer(style.comp.program)} parts={BAND_PARTS} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}
-        onImport={(from, text) => source.importFrom(from, text)} />
+        onImported={(added) => source.imported(added)} />
     </div>
   )
+}
+
+/**
+ * Count each chorus's notes for the home screen's statistics when the band moves on or stops:
+ * how many sat inside the harmony (chord, colour and approach tones) of all played.
+ */
+function useChorusTones(counts: ToneCounts | undefined, chorus: number, playing: boolean): void {
+  const last = useRef<{ counts: ToneCounts | undefined; chorus: number; playing: boolean }>({ counts, chorus, playing })
+  useEffect(() => {
+    const before = last.current
+    if (before.counts && before.playing && (!playing || chorus !== before.chorus)) countTones(before.counts)
+    last.current = { counts, chorus, playing }
+  }, [counts, chorus, playing])
 }

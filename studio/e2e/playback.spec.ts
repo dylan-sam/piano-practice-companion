@@ -240,3 +240,20 @@ test('Lead Sheet Sightreading goes on from the same bar when the choruses change
   expect((await barNumber(page)) ?? 0).toBeGreaterThanOrEqual(before)
   expect(errors).toEqual([])
 })
+
+test('a new style or bass pattern on an endless line goes on from where the band is', async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto('/sightreading/chords')
+  await page.getByRole('button', { name: 'Infinite progressions' }).click()
+  const start = page.getByRole('button', { name: 'New infinite line' })
+  await expect(start).toBeEnabled({ timeout: 60_000 })
+  await start.click()
+  await setTempo(page, 200)
+  await expect.poll(() => readout(page), { timeout: 60_000 }).toMatch(/^Chord ([5-9]|1\d)/)
+  const chord = Number(/Chord (\d+)/.exec(await readout(page))![1])
+  await page.getByRole('combobox', { name: 'Style' }).selectOption({ index: 2 })
+  // No count-in again: the chords go on past the one playing
+  await expect.poll(async () => Number(/Chord (\d+)/.exec(await readout(page))?.[1] ?? 0), { timeout: 10_000 }).toBeGreaterThan(chord)
+  await page.getByRole('combobox', { name: 'Bass pattern' }).selectOption({ index: 1 })
+  await expect.poll(async () => Number(/Chord (\d+)/.exec(await readout(page))?.[1] ?? 0), { timeout: 10_000 }).toBeGreaterThan(chord + 1)
+})

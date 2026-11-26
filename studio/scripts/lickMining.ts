@@ -17,8 +17,8 @@
 import { barMeters, type Chart } from '../src/music/chart'
 import { chordTones, parseChord, type Chord } from '../src/music/chords'
 import { onLickGrid, type LickInfo } from '../src/music/licks'
-import { BAR_BEATS, makeLickChart, toMelodyNotes, transposeSymbol, type ChordSpan, type TimedNote } from './lickCharts'
-import { chordScale } from './lickExercises'
+import { BAR_BEATS, makeLickChart, toMelodyNotes, transposeSymbol, type ChordSpan, type TimedNote } from '../src/exercises/builder/lickCharts'
+import { chordScale } from '../src/exercises/builder/exerciseMusic'
 
 /** A song to mine, with what to say about where it comes from. */
 export interface MelodySource {

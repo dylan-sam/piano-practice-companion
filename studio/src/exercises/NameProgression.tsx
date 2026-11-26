@@ -30,6 +30,7 @@ import { KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
 import { useLessonLink } from '../lessons/lessonLink'
 import { useLessonGoal } from '../lessons/useLessonGoal'
 import { LessonDone } from '../lessons/LessonDone'
+import { countAnswer } from '../library/practiceLog'
 
 const STORAGE = 'eartraining:name-progression'
 const BPM_RANGE: [number, number] = [40, 240]
@@ -316,6 +317,7 @@ export function NameProgression() {
     setAnswer(id)
     setListening(asked.progression.id)
     const nextResults = recordAnswer(results, asked.progression.id, id)
+    countAnswer('ear', id === asked.progression.id)
     setResults(nextResults)
     save('results', nextResults)
     const result = { answered: round.answered + 1, correct: round.correct + (correct ? 1 : 0) }

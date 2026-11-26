@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { chartFromMeasures } from '../src/music/chart'
 import type { Tune } from '../src/music/songs'
-import { exportTunes, orderSavedTunes, parseStudioPlaylists, playlistNames, serializeStudioPlaylists } from '../src/library/playlistExport'
+import { categoryNames, exportFileName, inCategories, parseStudioPlaylists, serializeStudioPlaylists } from '../src/library/playlistExport'
 
-/** Create one saved tune with a distinct chart and playlist. */
+/** Create one tune with a distinct chart and category. */
 function tune(title: string, playlist: string, source: Tune['source'] = 'import'): Tune {
   return {
     id: title, source, playlist, addedAt: 1,
@@ -11,46 +11,35 @@ function tune(title: string, playlist: string, source: Tune['source'] = 'import'
   }
 }
 
-const tunes = [
-  tune('Zebra', 'Jazz'), tune('Alpha', 'My tunes', 'own'),
-  tune('Bravo', 'Folk'), tune('ChoCo result', 'ChoCo', 'choco'), tune('Linked', 'Shared with me', 'link'),
-]
+const charts = (titles: string[]) => titles.map((title) => tune(title, '').chart)
 
-describe('saved playlist ordering and export', () => {
-  it('lists only the selected playlists, or every saved playlist, never fetched ChoCo scores', () => {
-    expect(orderSavedTunes(tunes, ['Jazz']).map((item) => item.chart.title)).toEqual(['Zebra'])
-    expect(orderSavedTunes(tunes, ['Jazz', 'Folk']).map((item) => item.chart.title)).toEqual(['Bravo', 'Zebra'])
-    expect(orderSavedTunes(tunes).map((item) => item.chart.title)).toEqual(['Alpha', 'Bravo', 'Zebra', 'Linked'])
-    expect(playlistNames(tunes)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
+describe('categories of licks and exercises', () => {
+  it('keeps the file order of the categories and of their items', () => {
+    const licks = [tune('Easy', 'Arpeggios', 'bundled'), tune('Turn', 'Turns', 'bundled'), tune('Hard', 'Arpeggios', 'bundled')]
+    expect(categoryNames(licks)).toEqual(['Arpeggios', 'Turns'])
+    expect(inCategories(licks, ['Arpeggios']).map((item) => item.id)).toEqual(['Easy', 'Hard'])
+    expect(inCategories(licks, [])).toHaveLength(3)
+  })
+})
+
+describe('Studio export files', () => {
+  it('round-trips playlists under the names chosen, leaving empty ones out', () => {
+    const file = serializeStudioPlaylists([{ name: ' Jazz ', charts: charts(['Zebra', 'Alpha']) }, { name: 'Empty', charts: [] }, { name: '', charts: charts(['Folk']) }])
+    expect(parseStudioPlaylists(file).map((list) => [list.name, list.charts.map((c) => c.title)]))
+      .toEqual([['Jazz', ['Zebra', 'Alpha']], ['My playlist', ['Folk']]])
+    expect(() => serializeStudioPlaylists([{ name: 'Empty', charts: [] }])).toThrow('No songs to export')
   })
 
-  it('keeps the order of a bundled playlist', () => {
-    const licks = ['Easy', 'Hard', 'Average'].map((title) => ({ ...tune(title, 'Licks'), source: 'bundled' as const }))
-    expect(orderSavedTunes(licks, ['Licks']).map((item) => item.chart.title)).toEqual(['Easy', 'Hard', 'Average'])
-  })
-
-  it('sorts numbered titles in number order', () => {
-    const licks = ['Lick 10', 'Lick 2', 'Lick 1'].map((title) => tune(title, 'Licks'))
-    expect(orderSavedTunes(licks, ['Licks']).map((item) => item.chart.title)).toEqual(['Lick 1', 'Lick 2', 'Lick 10'])
-  })
-
-  it('round-trips all saved songs, or the written, shared or imported ones', () => {
-    const all = parseStudioPlaylists(serializeStudioPlaylists(tunes))
-    expect(all.map((list) => list.name)).toEqual(['My tunes', 'Folk', 'Jazz', 'Shared with me'])
-    expect(all.flatMap((list) => list.charts.map((chart) => chart.title))).toEqual(['Alpha', 'Bravo', 'Zebra', 'Linked'])
-    const titles = (group: 'own' | 'link' | 'import') =>
-      parseStudioPlaylists(serializeStudioPlaylists(tunes, group)).map((list) => [list.name, list.charts.map((c) => c.title)])
-    expect(titles('own')).toEqual([['My tunes', ['Alpha']]])
-    expect(titles('link')).toEqual([['Shared with me', ['Linked']]])
-    expect(titles('import')).toEqual([['Folk', ['Bravo']], ['Jazz', ['Zebra']]])
-    expect(exportTunes(tunes, 'import')).toHaveLength(2)
+  it('names the file after one playlist, or "playlists"', () => {
+    expect(exportFileName(['My Bossa songs!'])).toBe('my-bossa-songs.json')
+    expect(exportFileName(['A', 'B'])).toBe('playlists.json')
   })
 
   it('rejects malformed files before saving any tune', () => {
     expect(() => parseStudioPlaylists('not JSON')).toThrow('Invalid Studio export JSON')
     expect(() => parseStudioPlaylists(JSON.stringify({ format: 'other', version: 1, playlists: [] })))
       .toThrow('Unsupported Studio playlist export')
-    const invalid = JSON.parse(serializeStudioPlaylists(tunes))
+    const invalid = JSON.parse(serializeStudioPlaylists([{ name: 'Jazz', charts: charts(['Zebra']) }]))
     invalid.playlists[0].charts[0].bars[0].chords[0].beats = -1
     expect(() => parseStudioPlaylists(JSON.stringify(invalid)))
       .toThrow('Studio export contains an invalid playlist or chart')

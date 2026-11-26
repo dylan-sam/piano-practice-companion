@@ -12,10 +12,10 @@ import { useSubstitutedChart } from './ui/useSubstitutedChart'
 import { irealLink } from './formats/irealWrite'
 import { reportError } from './errorReports'
 import { chartFromHash, labFromHash, shareUrl, styleShareUrl } from './formats/share'
-import { addTunes, loadTunes, removePlaylist, removeTune, saveTune } from './library/db'
-import { CHORD_SOURCES, importTunes, LEAD_SOURCES } from './library/importTunes'
+import { addTunes, loadTunes, saveTune } from './library/db'
+import { CHORD_SOURCES, importByName, LEAD_SOURCES, type ImportTarget } from './library/importTunes'
+import { addToPlaylist, addToPlaylistNamed, createPlaylist, deleteSongs, SHARED_PLAYLIST, showPlaylist } from './library/playlists'
 import { fetchChocoTune } from './library/choco'
-import { exportTunes, serializeStudioPlaylists, type ExportGroup } from './library/playlistExport'
 import { loadMyStyles, myStyleId, removeMyStyle, saveMyStyle } from './library/myStyles'
 import { hasMelody, withoutMelody, type Chart as ChartData } from './music/chart'
 import { offsetToKey, prettyNoteName } from './music/chords'
@@ -26,7 +26,10 @@ import { getStyle, STYLES, styleForChart, type StyleDefinition } from './styles'
 import { labFromStyle, styleFromLab, styleSource, STEPS_PER_BEAT, type LabStyle } from './styles/lab'
 import { Chart } from './ui/Chart'
 import { Editor, EditorHeader } from './ui/Editor'
-import { ImportDialog, type ImportResult, type ImportSource } from './ui/ImportDialog'
+import { ImportDialog } from './ui/ImportDialog'
+import { ExportPlaylists } from './ui/ExportPlaylists'
+import { SaveToPlaylist } from './ui/SaveToPlaylist'
+import { ManagePlaylists } from './ui/ManagePlaylists'
 import { Library } from './ui/Library'
 import { Mixer } from './ui/Mixer'
 import { Popover } from './ui/Popover'
@@ -44,7 +47,7 @@ import { useHeardBeat, usePausedAt, usePlayer } from './audio/usePlayer'
 import { channelVolumes, MELODY_PARTS, useMixer } from './audio/useMixer'
 import { exportMidi, trackFilename } from './engine/exportTrack'
 import { TrackDownloads } from './ui/TrackDownload'
-import { downloadBlob, useTrackDownload, type TrackSource } from './ui/useTrackDownload'
+import { useTrackDownload, type TrackSource } from './ui/useTrackDownload'
 import { LeadSheet } from './ui/LeadSheet'
 import { useBackClose } from './ui/backButton'
 import { useDrawerScreen } from './ui/useNarrowScreen'
@@ -99,14 +102,6 @@ const NO_LEAD_SHEETS = 'No lead sheets yet. Import a MusicXML lead sheet or a St
 // The style being made in the Pattern Creator is kept in the browser between visits
 const LAB_KEY = 'eartraining:style-lab'
 const LAB_STYLE = 'lab' // style id used while the lab is open
-
-// The choices of the Export menu: a Studio JSON file, to import again with Import -> Studio export
-const EXPORT_CHOICES: { group: ExportGroup; name: string; desc: string; file: string }[] = [
-  { group: 'own', name: 'Songs I wrote or edited', desc: 'New songs, and catalog or example songs you edited (My tunes).', file: 'my-songs' },
-  { group: 'link', name: 'Shared with me via link', desc: 'The songs opened from a Studio link, with your edits.', file: 'shared-with-me' },
-  { group: 'import', name: 'Imported', desc: 'The playlists added with Import, with your edits.', file: 'imported' },
-  { group: 'all', name: 'All 3', desc: 'Everything above, in one file.', file: 'all-songs' },
-]
 
 /** The style being made in the Pattern Creator, as last saved in the browser. */
 function loadLab(): LabStyle | null {
@@ -194,6 +189,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [editBar, setEditBar] = useState(0)
   const [irealState, setIrealState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const [saving, setSaving] = useState(false) // the Save dialog: which playlist a new song goes into
+  const [managing, setManaging] = useState(false) // Edit Song's Manage playlists dialog
 
   // The tunes this player offers, and the chart as it plays it
   const shownTunes = useMemo(() => (leadMode ? tunes.filter((t) => hasMelody(t.chart)) : tunes), [tunes, leadMode])
@@ -360,7 +357,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       if (sharedStyle) openSharedStyleRef.current(sharedStyle)
       let open: Tune | undefined
       if (shared) {
-        const [added] = await addTunes([shared], 'link', 'Shared with me')
+        const [added] = await addTunes([shared], 'link')
+        await addToPlaylistNamed(SHARED_PLAYLIST, [added])
         all = [...all.filter((t) => t.id !== added.id), added]
         open = added
         history.replaceState(null, '', window.location.pathname)
@@ -396,7 +394,8 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       const shared = await chartFromHash(window.location.hash)
       if (sharedStyle) openSharedStyleRef.current(sharedStyle)
       if (!shared) return
-      const [added] = await addTunes([shared], 'link', 'Shared with me')
+      const [added] = await addTunes([shared], 'link')
+      await addToPlaylistNamed(SHARED_PLAYLIST, [added])
       setTunes((all) => [...all.filter((t) => t.id !== added.id), added])
       showTune(added)
       history.replaceState(null, '', window.location.pathname)
@@ -415,19 +414,6 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     if (first) showTune(first)
   }, [showTune, leadMode])
 
-  /** Import charts in one of the formats; they are saved for every screen and shown here. */
-  const importFrom = useCallback(async (source: ImportSource, text: string): Promise<ImportResult> => {
-    const { added, result } = await importTunes(source, text)
-    showAddedTunes(added)
-    return result
-  }, [showAddedTunes])
-
-  /** Download a portable JSON copy of the saved songs of a group (written, shared, imported or all). */
-  const downloadStudioExport = (group: ExportGroup) => {
-    const content = serializeStudioPlaylists(tunes, group)
-    const filename = EXPORT_CHOICES.find((choice) => choice.group === group)?.file
-    downloadBlob(new Blob([content], { type: 'application/json' }), `ear-training-${filename || 'playlist'}.json`)
-  }
 
   // The band's track to download, made with the settings of the moment it is asked for
   const trackDownload = useTrackDownload()
@@ -456,11 +442,11 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       const text = e.clipboardData?.getData('text') ?? ''
       if (!/irealb(ook)?:\/\//.test(text)) return
       e.preventDefault()
-      void importFrom('ireal', text)
+      void importByName('ireal', text).then(showAddedTunes)
     }
     window.addEventListener('paste', onPaste)
     return () => window.removeEventListener('paste', onPaste)
-  }, [importFrom])
+  }, [showAddedTunes])
 
   // Copy a text to the clipboard and show whether it worked
   const copy = async (text: () => Promise<string> | string, set: (s: 'idle' | 'copied' | 'failed') => void) => {
@@ -541,27 +527,48 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     setEditBar(0)
   }
 
-  // Save the tune being edited
-  const saveDraft = async () => {
-    if (!draft) return
-    const chart = { ...draft.chart, title: draft.chart.title.trim() || 'Untitled' }
-    let saved: Tune
-    if (draft.from && isSavedTune(draft.from)) {
-      saved = { ...draft.from, chart }
-      await saveTune(saved)
-    } else {
-      ;[saved] = await addTunes([chart], 'own', 'My tunes')
-    }
+  /** Show a saved song and keep editing it (its playlists now managed, new edits saved again). */
+  const keepEditing = (saved: Tune) => {
     setTunes((all) => [...all.filter((t) => t.id !== saved.id), saved])
-    setDraft(null)
     showTune(saved)
+    setDraft({ chart: saved.chart, from: saved })
   }
 
-  // Delete the tune being edited and show another
+  /** The chart being edited, with a title. */
+  const draftChart = () => (draft ? { ...draft.chart, title: draft.chart.title.trim() || 'Untitled' } : null)
+
+  /** Save the edits of one's own song in place (it stays in its playlists). */
+  const saveDraft = async () => {
+    const chart = draftChart()
+    if (!chart || !draft?.from || !isSavedTune(draft.from)) return
+    const saved = { ...draft.from, chart }
+    await saveTune(saved)
+    keepEditing(saved)
+  }
+
+  /**
+   * Save the edits as a new song, into the playlist chosen in the Save dialog (asked first). The
+   * new song is then the one being edited.
+   */
+  const saveDraftAsNew = async (target?: ImportTarget) => {
+    const chart = draftChart()
+    if (!chart) return
+    if (!target) {
+      setSaving(true) // ask where it goes first
+      return
+    }
+    setSaving(false)
+    const [saved] = await addTunes([chart], 'own')
+    if ('playlist' in target) await addToPlaylist(target.playlist, [saved])
+    showPlaylist('playlist' in target ? target.playlist : (await createPlaylist(target.newName, [saved])).id)
+    keepEditing(saved)
+  }
+
+  // Delete the song being edited for good (a saved one erased, a shipped or ChoCo one hidden; out of every playlist) and show another
   const deleteDraftTune = async () => {
     if (!draft?.from) return
-    await removeTune(draft.from.id)
-    setTunes((all) => all.filter((t) => t.id !== draft.from?.id))
+    const erased = await deleteSongs([draft.from])
+    setTunes((all) => all.filter((t) => !erased.includes(t.id)))
     setDraft(null)
     showTune(shownTunes.find((item) => item.id !== draft.from?.id) ?? STARTER)
   }
@@ -624,8 +631,6 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
     // Non-breaking spaces keep each part on one line when the readout wraps on phones
     return `Chorus\u00a0${position.chorus + 1}/${choruses}  Bar\u00a0${position.measure + 1}${extras ? `  ${extras}` : ''}`
   })()
-  // The songs of each export choice, to show their number (an empty choice is greyed out)
-  const exportCounts = Object.fromEntries(EXPORT_CHOICES.map(({ group }) => [group, exportTunes(tunes, group).length]))
 
   // The Android back button closes, the last opened first: the tune drawer, the editor (without
   // saving), the Pattern Creator and loop picking (menus and dialogs register themselves)
@@ -676,16 +681,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
             <Popover id="export-playlists" className="share" label="Export">
               {(close) => (
                 <div className="share-panel">
-                  {EXPORT_CHOICES.map(({ group, name, desc }) => (
-                    // An empty choice stays in the menu, greyed out
-                    <button key={group} className="share-option" disabled={!exportCounts[group]}
-                      onClick={() => { downloadStudioExport(group); close() }}>
-                      <span className="share-name">{name}</span>
-                      <span className="share-desc">
-                        {desc} {exportCounts[group] ? `${exportCounts[group]} song${exportCounts[group] === 1 ? '' : 's'}.` : 'None yet.'}
-                      </span>
-                    </button>
-                  ))}
+                  <ExportPlaylists tunes={tunes} onDone={close} />
                   <TrackDownloads download={trackDownload} source={trackSource} />
                 </div>
               )}
@@ -713,10 +709,7 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
           onNew={leadMode ? undefined : () => startEditing(null)}
           emptyText={leadMode ? NO_LEAD_SHEETS : undefined}
           disabled={editing}
-          onRemovePlaylist={(name) => {
-            void removePlaylist(name)
-            setTunes((all) => all.filter((t) => t.source === 'choco' || t.playlist !== name))
-          }}
+          onTunesDeleted={(ids) => setTunes((all) => all.filter((t) => !ids.includes(t.id)))}
         />
 
         <main
@@ -765,9 +758,12 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
           onChange={(c) => setDraft({ ...draft, chart: c })}
           selected={editBar}
           onSelect={setEditBar}
-          saveLabel={draft.from && isSavedTune(draft.from) ? 'Save' : 'Save to My tunes'}
-          canDelete={!!draft.from && isSavedTune(draft.from)}
+          edited={!draft.from || draft.chart !== draft.from.chart}
+          canSaveInPlace={!!draft.from && isSavedTune(draft.from)}
+          canDelete={!!draft.from && draft.from.id !== STARTER.id}
           onSave={() => void saveDraft()}
+          onSaveNew={() => void saveDraftAsNew()}
+          onManage={draft.from && draft.from.id !== STARTER.id ? () => setManaging(true) : undefined}
           onCancel={() => setDraft(null)}
           onDelete={() => void deleteDraftTune()}
         />
@@ -854,7 +850,11 @@ export default function App({ mode = 'chords' }: { mode?: PlayerMode }) {
       )}
 
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}
-        sources={leadMode ? LEAD_SOURCES : CHORD_SOURCES} onImport={importFrom} />
+        sources={leadMode ? LEAD_SOURCES : CHORD_SOURCES} onImported={showAddedTunes} />
+      <SaveToPlaylist open={saving} title={draft?.chart.title.trim() || 'Untitled'}
+        onSave={(target) => void saveDraftAsNew(target)} onCancel={() => setSaving(false)} />
+      <ManagePlaylists song={managing && draft?.from ? draft.from : null} onClose={() => setManaging(false)}
+        onDeleted={(ids) => setTunes((all) => all.filter((t) => !ids.includes(t.id)))} />
     </div>
   )
 }

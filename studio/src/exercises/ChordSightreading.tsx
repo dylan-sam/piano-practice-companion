@@ -9,6 +9,7 @@ import { barAtBeat, slotAtBeat, chorusKeyOffset, type Slot, type Timeline } from
 import { warmUpMidi } from '../engine/warmup'
 import { reportError } from '../errorReports'
 import { loadTunes } from '../library/db'
+import { loadBundledLeadSheets } from '../library/bundled'
 import { CHORD_SOURCES } from '../library/importTunes'
 import { loadJson, saveJson } from '../library/storage'
 import type { Chart as ChartData } from '../music/chart'
@@ -36,6 +37,7 @@ import { useEndlessLine } from './useEndlessLine'
 import { useProgressionSources, useSongSource, type SourceMode } from './useSongSource'
 import { useBand } from './useBand'
 import { SongsToggle, SongWorkspace } from './SongWorkspace'
+import { judged, judgementOf, useChorusEffects } from '../ui/effects'
 
 type Feedback = Record<string, 'correct' | 'missed'>
 
@@ -129,6 +131,7 @@ export function ChordSightreading() {
   const shownTranspose = playing ? chorusKeyOffset(practice, currentChorus, transpose) : transpose
   const liveBpm = rampedBpm(bpm, practice, Math.min(currentChorus, choruses - 1), BPM_RANGE)
   const shownChart = useSubstitutedChart(tune?.chart, practice.subs, playing, currentChorus)
+  useChorusEffects(currentChorus, playing)
   const liveBpmRef = useRef(liveBpm)
   useEffect(() => { liveBpmRef.current = liveBpm }, [liveBpm])
 
@@ -149,6 +152,7 @@ export function ChordSightreading() {
       if (!scoringRef.current) continue
       setFeedback((current) => ({ ...current, [feedbackKey(slot)]: 'missed' }))
       recordMiss(slot)
+      judged('sightreading', 'miss')
     }
   }, [recordMiss])
 
@@ -161,6 +165,7 @@ export function ChordSightreading() {
     const slot = judgeRef.current?.accept(currentBeat, held)
     if (!slot) return
     setFeedback((current) => ({ ...current, [feedbackKey(slot)]: 'correct' }))
+    if (scoringRef.current) judged('sightreading', judgementOf(currentBeat - slot.start))
   }, [])
   /** Release the local piano voice when a physical key lifts. */
   const onNoteOff = useCallback((note: number) => { playerRef.current?.liveNoteOff(note) }, [])
@@ -270,7 +275,8 @@ export function ChordSightreading() {
   useEffect(() => {
     // The saved charts, once per visit (the catalog is searched in the song list)
     let active = true
-    void loadTunes().then((loaded) => { if (active) source.setTunes(loaded) })
+    // The saved songs and the shipped lead sheets (their chords); the catalog is searched
+    void Promise.all([loadTunes(), loadBundledLeadSheets()]).then(([saved, bundled]) => { if (active) source.setTunes([...saved, ...bundled]) })
       .catch((cause) => { if (active) setError(String(cause)) })
     return () => { active = false }
     // Loaded once; setTunes is a state setter
@@ -296,7 +302,9 @@ export function ChordSightreading() {
   function goOnFrom(from: number) {
     if (!chart) return
     if (mode === 'infinite') endless.goesOn.current = true
-    void startPlayback(chart, styleId, patternId, transpose, choruses, practice, endless.countIn.current, from).then(() => {
+    const endlessChunk = mode === 'infinite' // arranged as it was made
+    void startPlayback(chart, styleId, patternId, endlessChunk ? 0 : transpose, endlessChunk ? 1 : choruses,
+      endlessChunk ? NO_PRACTICE : practice, endless.countIn.current, from).then(() => {
       if (mode === 'infinite' && line) prepareNext(line, styleId, patternId)
     })
   }
@@ -341,10 +349,17 @@ export function ChordSightreading() {
     const soundOnly = nextTranspose === transpose && nextPractice === practice
     if (!soundOnly && !playing) forgetPause() // a paused band starts a changed sheet from its beginning
     if (playing && chart && player) {
-      // A new style or bass pattern goes on from where the band is, with the chunk's own count-in
+      // A new style or bass pattern goes on from where the band is, with the chunk's own count-in;
+      // an infinite line's chunk is always arranged as it was made (one chorus, no keys or loop)
       if (soundOnly) finalizeThrough(player.heardPosition * BASE_BPM / 60)
-      void startPlayback(chart, nextStyle, nextPattern, nextTranspose, nextChoruses, nextPractice,
-        soundOnly ? endless.countIn.current : true, soundOnly ? player.position : 0)
+      const endlessChunk = mode === 'infinite'
+      // The next chunk is prepared again only once this one plays: preparing it while this one
+      // loads would load both on the same synthesizer, and the band would stop
+      if (endlessChunk) endless.prepare(null)
+      void startPlayback(chart, nextStyle, nextPattern, endlessChunk ? 0 : nextTranspose, endlessChunk ? 1 : nextChoruses,
+        endlessChunk ? NO_PRACTICE : nextPractice, soundOnly ? endless.countIn.current : true, soundOnly ? player.position : 0)
+        .then(() => { if (endlessChunk && line) prepareNext(line, nextStyle, nextPattern) })
+      return
     }
     if (mode === 'infinite' && line) prepareNext(line, nextStyle, nextPattern)
   }
@@ -507,7 +522,7 @@ export function ChordSightreading() {
         <Mixer {...mixerProps} parts={[...MIDI_PARTS]} />
       </Transport>}
       <ImportDialog open={source.importOpen} onClose={() => source.setImportOpen(false)} sources={CHORD_SOURCES}
-        onImport={(from, text) => source.importFrom(from, text)} />
+        onImported={(added) => source.imported(added)} />
     </div>
   )
 }

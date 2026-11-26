@@ -1,15 +1,17 @@
-// The lick database: the rhythmic grid, the chart helpers, the exercise generator, the miner and
-// the shipped files.
+// The lick database: the rhythmic grid, the chart helpers, the vocabulary licks, the exercise
+// helpers, the miner and the shipped file.
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { isChart, type Chart } from '../src/music/chart'
 import { parseChord } from '../src/music/chords'
 import { isLickInfo, onLickGrid } from '../src/music/licks'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
-import { barsFromChords, makeLickChart, parseChords, parseNotes, transposeSymbol } from '../scripts/lickCharts'
-import { chordScale, eighthLine, generatedPlaylists, guideToneLine, nearest, PROGRESSIONS, VOCABULARY } from '../scripts/lickExercises'
+import { barsFromChords, makeLickChart, parseChords, parseNotes, transposeSymbol } from '../src/exercises/builder/lickCharts'
+import { generatedPlaylists, VOCABULARY } from '../scripts/lickExercises'
+import { chordScale, guideToneLine, nearest } from '../src/exercises/builder/exerciseMusic'
 import { findWindows, lickOf, openingFrequency, snapToGrid, timelineOf, type MelodySource } from '../scripts/lickMining'
 import { chartProblem } from '../scripts/lickCatalog'
+import { curateLicks } from '../scripts/lickCuration'
 
 const note = (bar: number, at: number, beats: number, pitch = 60) => ({ bar, at, beats, pitch })
 
@@ -55,21 +57,12 @@ describe('lick charts', () => {
   })
 })
 
-describe('generated exercises', () => {
-  const playlists = generatedPlaylists()
-  const charts = playlists.flatMap((p) => p.charts)
+describe('vocabulary licks and the exercise helpers', () => {
+  const charts = generatedPlaylists().flatMap((p) => p.charts)
   it('makes valid charts on the lick grid', () => {
-    expect(charts.length).toBeGreaterThan(200)
+    expect(charts.length).toBe(VOCABULARY.length)
     for (const chart of charts) expect(chartProblem(chart), chart.title).toBeNull()
     expect(new Set(charts.map((c) => c.title)).size).toBe(charts.length)
-  })
-  it('covers triads, seventh chords with and without the fifth, guide tones, scales and enclosures', () => {
-    const titles = charts.map((c) => c.title)
-    for (const wanted of ['Major triads in half steps: 1-3-5-8 up', 'Dominant 7th chords in fourths: without the fifth: 1-3-7-8',
-      'ii-V-I in all keys: guide tones, one per chord, from the 3rd', 'Altered scale over C7alt: up and down',
-      'C^7: enclosure: scale step above, half step below', 'Minor 3rds in half steps: lower note first']) {
-      expect(titles).toContain(wanted)
-    }
   })
   it('finds pitches by pitch class around a note', () => {
     expect(nearest(4, 60)).toBe(64)
@@ -82,13 +75,6 @@ describe('generated exercises', () => {
     expect(line.map((n) => n.pitch)).toEqual([65, 65, 64]) // F, F, E
     const both = guideToneLine(parseChords('D-7:4 G7:4 C^7:8'), 2, 'seventh')
     expect(both.map((n) => n.pitch)).toEqual([72, 77, 77, 71, 71, 76]) // C F, F B, B E
-  })
-  it('keeps the eighth-note lines of every progression in range, on the chord on every chord change', () => {
-    for (const progression of PROGRESSIONS) {
-      const line = eighthLine(progression.spans, false)
-      expect(Math.min(...line.map((n) => n.pitch))).toBeGreaterThanOrEqual(53)
-      expect(Math.max(...line.map((n) => n.pitch))).toBeLessThanOrEqual(81)
-    }
   })
   it('writes every vocabulary lick with its beats on notes of the chord scale (or the blue third)', () => {
     for (const lick of VOCABULARY) {
@@ -161,12 +147,26 @@ describe('lick mining', () => {
   })
 })
 
+describe('curation', () => {
+  it('keeps licks from every level, in their order', () => {
+    const lick = (title: string, level: number) => ({ title, lick: { level } }) as unknown as Chart
+    const list = [lick('a', 1), lick('b', 1), lick('c', 1), lick('d', 2), lick('e', 3), lick('f', 3)]
+    expect(curateLicks(list, 3).map((chart) => chart.title)).toEqual(['a', 'd', 'e'])
+    expect(curateLicks(list, 5).map((chart) => chart.title)).toEqual(['a', 'b', 'd', 'e', 'f'])
+    expect(curateLicks(list, 10)).toHaveLength(6)
+  })
+})
+
 describe('shipped lick files', () => {
   for (const file of ['licks.json']) {
     it(`${file} is read by the app and keeps to the lick grid`, () => {
       const playlists = parseStudioPlaylists(readFileSync(new URL(`../public/licks/${file}`, import.meta.url), 'utf8'))
       const charts = playlists.flatMap((p) => p.charts)
-      expect(charts.length).toBeGreaterThan(300)
+      // The curated lists (lickCuration.ts): at most 15 licks per list, and no exercises (they are built in the app)
+      expect(charts.length).toBeGreaterThan(150)
+      for (const list of playlists) expect(list.charts.length, list.name).toBeLessThanOrEqual(15)
+      expect(charts.some((chart) => chart.lick?.kind === 'exercise'), 'an exercise in licks.json').toBe(false)
+      expect(playlists.some((list) => list.name.startsWith('Licks from folk tunes'))).toBe(false)
       for (const chart of charts) {
         expect(chart.lick, chart.title).toBeDefined()
         expect(onLickGrid(chart.melody!.notes), chart.title).toBe(true)

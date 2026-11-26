@@ -16,6 +16,8 @@ export interface LessonBand<P> {
   key?: number // pitch class of the key to play in
   bpm?: number
   subs?: SubstitutionId[] // chord substitutions, played every chorus
+  choruses?: number // how many times through
+  keyStep?: number // the key moving by this many semitones each time
 }
 
 /** What the band plays a song with (all but the tempo, which only changes the playback rate). */
@@ -53,14 +55,20 @@ export function useBand<P>(defaultPattern: (styleId: string) => P, bpmRange: [nu
 
   /**
    * A song goes on the stand: its style (with that style's pattern), its tempo, the chosen key, no
-   * Practice; a lesson step can ask for another style, pattern, key or tempo, and substitutions.
+   * Practice; a lesson step can ask for another style, pattern, key or tempo, substitutions, a
+   * number of times through and a key moving each time.
    */
   const takeSong = (chart: Chart, lesson: LessonBand<P> = {}) => {
     const style = lesson.style && STYLES.some((item) => item.id === lesson.style) ? lesson.style : styleForChart(chart)
     set({
       styleId: style, patternId: lesson.pattern ?? defaultPattern(style),
       transpose: transposeTo(chart.key, lesson.key) ?? transposeFor(keyChoice, chart),
-      practice: lesson.subs?.length ? { ...NO_PRACTICE, subs: { ids: lesson.subs, when: { kind: 'always' }, seed: 1 } } : NO_PRACTICE,
+      ...(lesson.choruses ? { choruses: lesson.choruses } : {}),
+      practice: {
+        ...NO_PRACTICE,
+        ...(lesson.keyStep ? { keyStep: lesson.keyStep } : {}),
+        ...(lesson.subs?.length ? { subs: { ids: lesson.subs, when: { kind: 'always' as const }, seed: 1 } } : {}),
+      },
     })
     setBpm(Math.max(bpmRange[0], Math.min(bpmRange[1], lesson.bpm ?? chart.bpm)))
   }

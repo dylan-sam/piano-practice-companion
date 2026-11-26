@@ -98,6 +98,10 @@ in `ui/useNarrowScreen.ts`:
 | `LANDSCAPE_QUERY` | landscape phones (compact desktop layout) |
 | `COMPACT_TRANSPORT_QUERY` | up to 1759 px wide (the whole bottom bar needs about 1760 px), and landscape phones (Settings panel) |
 
+The home screen puts its statistics and its tiles two to a row on phones (the
+week's minutes, the time by area and what to work on across both), and the
+Lessons tab's week circles shrink to fit a row.
+
 Everything else (sound bank, exercises, saved tunes and settings, kept in the
 web view's storage) runs unchanged.
 

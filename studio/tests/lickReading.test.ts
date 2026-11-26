@@ -5,7 +5,7 @@ import type { Chart } from '../src/music/chart'
 import { chordTones, parseChord } from '../src/music/chords'
 import { parseStudioPlaylists } from '../src/library/playlistExport'
 import { chordSlots, isOneChordLick, lickShape, withLick } from '../src/exercises/lickReading'
-import { makeLickChart, parseChords, parseNotes } from '../scripts/lickCharts'
+import { makeLickChart, parseChords, parseNotes } from '../src/exercises/builder/lickCharts'
 
 const info = { kind: 'lick' as const, category: 'Vocabulary', context: 'min7', source: 'test', license: 'CC BY 4.0' }
 // "The Lick" over C-7: C D Eb F D(quarter) Bb C
@@ -89,8 +89,8 @@ describe('the shipped one-chord licks', () => {
   const charts = ['licks.json'].flatMap((file) =>
     parseStudioPlaylists(readFileSync(new URL(`../public/licks/${file}`, import.meta.url), 'utf8')).flatMap((p) => p.charts))
   const licks = charts.filter(isOneChordLick)
-  it('are many', () => {
-    expect(licks.length).toBeGreaterThan(100)
+  it('are enough for a varied practice (the curated lists, lickCuration.ts)', () => {
+    expect(licks.length).toBeGreaterThan(60)
   })
   it('come back unchanged when written over their own chord', () => {
     for (const lick of licks) {

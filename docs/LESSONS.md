@@ -1,6 +1,7 @@
 # Lessons
 
-The **Lessons** tab (main menu) is a 46-week jazz piano program: about 11 months
+The **Lessons** tab (main menu; the home screen also offers today's lesson) is a
+46-week jazz piano program: about 11 months
 at 20 to 30 minutes a day, 5 days a week, for a pianist who reads music and has
 a MIDI keyboard. The program is in `studio/src/lessons/program.ts`; this page
 says what it holds, how the screens are set up from it, and where it comes
@@ -131,23 +132,74 @@ they were, unless you change one on the screen:
 | Setting | Screens | What it does |
 |---|---|---|
 | `song` | Lead Sheet and Exercises Sightreading, Free Improvisation | opens the first song or exercise whose title starts with it |
+| `exercise` | Exercises Sightreading | the settings of the exercise the step builds (`exercise=arpeggio;chord=dom7;notes=1-3-5-7`, [the builder](EXERCISES.md#the-exercise-builder)), locked for the step; `song` is its title |
 | `key`, `bpm`, `style`, `pattern` | the same | the band for that song |
 | `check`, `leftHand` | Lead Sheet and Exercises Sightreading | Scoring > Check and Left hand |
 | `subs` | Lead Sheet and Exercises Sightreading, Free Improvisation | the chord substitutions the band plays, every chorus (`subs=addII`) |
+| `frame` | Lead Sheet Sightreading | bars added before and after the head for an intro and an ending (`frame=avalon`, [Intros and endings](#intros-and-endings)) |
 | `mute` | every screen with a band | parts muted in the Mixer at first |
 | `playlist`, `infinite` | Lick Sightreading | the lick playlist; an endless line |
 | `voicing`, `infinite` | Chord Sightreading | the voicing drill; an endless line |
 | `step`, `goal` (with `bpm`, `timing`) | Lead Sheet, Exercises, Lick and Chord Sightreading, Name the progression, Melodic Dictation | the step to tick, and its target |
 
-A step's address ends with `from=lessons`: the back button and the screen's
-title lead back to the Lessons tab, not to the screen's menu.
+A step's address ends with `from=lessons` and carries the step's id (`step`,
+also for steps without a target): the back button, the screen's title and the
+"Target reached" line lead back to the step's page (`/lessons/step?id=...`),
+not to the screen's menu; the page leads back to the Lessons tab, which opens
+at that step again.
 
 Hands-together steps use Scoring > Check > **Melody, hands together**; voicing
 steps use Chord Sightreading's **Voicing** menu ([EXERCISES.md](EXERCISES.md)).
 Steps the app cannot score (recording yourself) have a short **self-check** to
-tick.
+tick. Chord symbols in the titles and texts are written for reading (Cmaj7,
+C−7, Cø7, ♭9) by `music/chordText.ts`; the links keep the song names the
+screens look for. A hands-together step names its exercise by its settings
+(`hands(week, n, 'scale;scale=Dorian', ...)` in `program.ts`): its title is made
+from them, and the screen builds the exercise.
 
 ## Progress
+
+The screen draws the program as a **path**: each unit a card with its number
+(a trophy once complete), its progress, and a row of week circles: done (a
+tick, in the second accent colour), the week of the next step (larger, in the
+accent colour, a play sign), started (a ring), or to come (its number).
+Clicking a circle opens the unit at that week; the week's steps are cards with
+an icon and a colour for each kind (hands together, the song, improvising, ear,
+self-check), a title and one sentence (the first of what to do), **Start** and
+**Mark done**.
+
+## A step's page
+
+Start (on a step card or Today's lesson) opens the step's page
+(`LessonStepPage.tsx`) before its exercise:
+
+- **What to do**, in full sentences as a teacher would say it, when it is
+  done, how long, its tempo and key. The first step of each song also tells
+  the song's story and its form (blues, AABA, ABAC...). A short exercise
+  (a scale, a rhythm) is played several times in a row, often a fourth higher
+  each time (lessonLink `choruses` and `keyStep`), and its target counts every
+  time through;
+- **Why**: what it trains;
+- **The theory** (`theory.ts`): up to three short cards, the most specific
+  first: the progression or substitution, the scale, the song's left-hand
+  pattern (on the song's stage 3 and its listening step), the chord or voicing,
+  then the way of working. They are matched by the step's title, text, kind or
+  link. Each has a picture written in C: a staff engraved by abcjs (a scale, a
+  voicing on one or two staves, a pattern, a guide-tone line, a lick), or a
+  progression as chord boxes with their Roman numerals (the ii-V-I, the minor
+  ii-V-i, the jazz and minor blues, the turnarounds, Rhythm Changes, the
+  substitutions). The page draws them in the step's key or any key chosen,
+  with chord names or Roman numerals (`theoryMusic.ts`), and **Listen** plays
+  each picture on the app's piano (`listen.ts`; the sound loads with the first
+  press);
+- the song's scale ideas, for an improvising step; the self-check, when it has
+  one;
+- **Understood, start** (opens the exercise set up for the step), Mark done,
+  Back to the lessons;
+- **References**: the unit's source and the books of its theory cards (Levine,
+  Aebersold, Siskind, Ligon, Open Music Theory, PianoFitness...).
+Today's lesson (the first step not done) heads the page as on the home screen.
+Finishing a unit's last step earns a burst of colour (with the effects on).
 
 A step with a target is **ticked by itself** when its screen reaches it
 (`useLessonGoal`), and stays ticked:
@@ -157,10 +209,11 @@ A step with a target is **ticked by itself** when its screen reaches it
   endless line), at least that percent right, at the step's tempo or faster;
   Embraceable You's stage 2 also wants the notes on time within 60 ms on
   average;
-- ear training: a round of 10 questions of Name the progression with 8 right,
-  or 20 notes or more of Melodic Dictation with 80% right.
+- ear training: a round of 10 questions of Name the progression with 8 right
+  (the screen counts the round at its top: "3/10 answered · 2 correct"), or 20
+  notes or more of Melodic Dictation with 80% right.
 
-The screen then says so, with a way back to the Lessons tab. The other steps
+The screen then says so, with a way back to the step's page. The other steps
 (listening, improvising, self-checks) are ticked with **Mark done**.
 
 Steps marked done and ticked boxes are kept in the browser (or the phone app)
@@ -201,8 +254,8 @@ Substitutions menu, [studio/README.md](../studio/README.md)).
 | 30 | Passing diminished chord | I Got Rhythm | B♭ B♭6 C−7 becomes B♭ B°7 C−7 in the A sections |
 
 Each week has the same steps: an exercise of guide tones over the new chords
-(both hands, Exercises Sightreading; written for these weeks, see
-[LICKS.md](LICKS.md)), hearing the song with the substitute, playing it with
+(both hands, Exercises Sightreading; built from the substitution's progression,
+see [LICKS.md](LICKS.md#exercises)), hearing the song with the substitute, playing it with
 the song's pattern on the new chords, improvising over it, and ear training.
 The order follows the teaching sources: the ii-V before its substitutions,
 the tritone substitution after the ii-V-I (Mark Levine's *The Jazz Piano Book*
@@ -239,20 +292,26 @@ Three units bring the minor side of jazz harmony, each after what it needs:
 
 ## Intros and endings
 
-Intros and endings come back on seven songs, each step on your own (the band
-muted, the sheet keeping the tempo), so they are practised again and again
-rather than in one unit:
+Intros and endings come back on eight songs rather than in one unit, so they
+are practised again and again. Their step opens Lead Sheet Sightreading with the
+song **framed** (`frame` in the step's link, `studio/src/lessons/introEndings.ts`):
+bars added before the head and after it, their chords written and no melody, so
+the intro and the ending have a fixed number of bars and the band plays them
+with you (its piano muted, so your left hand is heard). The framed sheet exists
+for that visit only: the catalog keeps the song as it is. A song starting with
+a pickup bar (no chord) takes the intro's last chord in that bar. The step says
+what an intro and an ending are for, and how to build this one:
 
 | Week | Song | Intro | Ending |
 |---|---|---|---|
-| 4 | Avalon | the last 4 bars | the last chord with its 6th and 9th, slowing down |
-| 11 | Tin Roof Blues | the last 4 bars of the blues (the turnaround) | ♭II7 to I7 |
-| 18 | Honeysuckle Rose | a ii-V vamp on the first chord | the "three times" tag: the last ii-V three times |
-| 23 | Love Me or Leave Me | a minor ii-V vamp | i−6, the ii-V again, i−6 held |
-| 27 | I Got Rhythm | I-vi-ii-V twice | ♭VI7, ♭II7, I |
-| 34 | What Is This Thing Called Love? | an altered ii-V vamp on the first chord | the last ii-V three times |
-| 38 | Minor Study Blues | the last 4 bars | ♭VI7, V7, i−6 |
-| 40 | Embraceable You | the last 4 bars, rubato | slowing down to a held I^7 with its 9th |
+| 4 | Avalon | the last 4 bars of the song (4 bars) | the last 4 bars again, the I as a 6th chord, held (4 bars) |
+| 11 | Tin Roof Blues | a turnaround twice, I VI ii V (4 bars) | ♭II7 then I (2 bars) |
+| 18 | Honeysuckle Rose | a vamp on the first ii-V (4 bars) | the "three times" tag: iii VI ii V twice, then I (5 bars) |
+| 23 | Love Me or Leave Me | a vamp on the minor ii-V, aiming for the ♭9 (4 bars) | the iv minor to the I, twice (4 bars) |
+| 27 | I Got Rhythm | I vi ii V, then a minor ii-V into the verse (4 bars) | ♭VI7, ♭II7, I (4 bars) |
+| 34 | What Is This Thing Called Love? | a vamp on the first ii-V, with its ♭9 (4 bars) | the "three times" tag with altered dominants (5 bars) |
+| 38 | Minor Study Blues | the last 4 bars of the blues (4 bars) | ♭VI7, V7, i−6 (4 bars) |
+| 40 | Embraceable You | the last 2 bars and a turnaround (4 bars) | the iv minor to the I^7 (3 bars) |
 
 ## Building a solo
 

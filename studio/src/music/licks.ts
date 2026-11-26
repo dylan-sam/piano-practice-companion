@@ -23,11 +23,12 @@ export interface LickInfo {
   credit?: string // who to credit for the exercise or the idea behind it
   tags?: string[] // devices it uses: arpeggio, enclosure, chromatic, triplets...
   level?: number // 1 (first steps), 2, 3 (busiest rhythms)
+  spec?: string // an exercise built in the app: its settings (exercises/builder/exerciseBuilder.ts specText)
 }
 
 const KINDS: LickKind[] = ['lick', 'pattern', 'exercise']
 const TEXT_FIELDS = ['category', 'context', 'source', 'license'] as const
-const OPTIONAL_TEXT = ['performer', 'tune', 'credit'] as const
+const OPTIONAL_TEXT = ['performer', 'tune', 'credit', 'spec'] as const
 
 /** Whether a value is a valid lick record (charts are checked when they are imported). */
 export function isLickInfo(value: unknown): value is LickInfo {

@@ -1,5 +1,5 @@
 import { isChart, type Chart } from '../music/chart'
-import { isSavedTune, type Tune } from '../music/songs'
+import type { Tune } from '../music/songs'
 
 const FORMAT = 'ear-training-studio-playlists'
 const VERSION = 1
@@ -9,56 +9,29 @@ export interface StudioPlaylist {
   charts: Chart[]
 }
 
-/** Return charts saved on this device, excluding fetched ChoCo scores and bundled lead sheets. */
-export function savedTunes(tunes: Tune[]): Tune[] {
-  return tunes.filter(isSavedTune)
-}
-
-/** The tunes of the tune list's playlists: the saved ones and the bundled lead sheets. */
-function listedTunes(tunes: Tune[]): Tune[] {
-  return tunes.filter((tune) => isSavedTune(tune) || tune.source === 'bundled')
-}
-
-/** List playlist names with My tunes first: saved ones only, or also bundled ones (`listed`). */
-export function playlistNames(tunes: Tune[], listed = false): string[] {
-  return [...new Set((listed ? listedTunes(tunes) : savedTunes(tunes)).map((tune) => tune.playlist ?? 'My tunes'))]
-    .sort((a, b) => (a === 'My tunes' ? -1 : b === 'My tunes' ? 1 : a.localeCompare(b)))
-}
-
 /**
- * The saved tunes to list: those of the selected playlists, or of every playlist when none is
- * selected (My tunes first). Saved titles sort with their numbers in order ("Lick 2" before
- * "Lick 10"); bundled playlists keep the order of their file (licks go from easy to hard).
+ * The categories of a list of shipped licks or exercises (their file's playlists, in its order)
+ * and the items of the checked ones (all when none is checked), in the file's order.
  */
-export function orderSavedTunes(tunes: Tune[], selected: string[] = []): Tune[] {
-  const name = (tune: Tune) => tune.playlist ?? 'My tunes'
-  const rank = (tune: Tune) => (name(tune) === 'My tunes' ? 0 : 1)
-  return listedTunes(tunes).filter((tune) => !selected.length || selected.includes(name(tune)))
-    .sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b)) ||
-      (a.source === 'bundled' && b.source === 'bundled' ? 0 : a.chart.title.localeCompare(b.chart.title, undefined, { numeric: true })))
+export function categoryNames(tunes: readonly Tune[]): string[] {
+  return [...new Set(tunes.map((tune) => tune.playlist ?? ''))]
 }
 
-/**
- * What the Export menu downloads: the songs written or edited in the app ('own'), the ones
- * opened from a Studio link ('link'), the imported ones ('import'), or all three ('all').
- */
-export type ExportGroup = 'own' | 'link' | 'import' | 'all'
-
-/** The saved tunes of an export group. */
-export function exportTunes(tunes: Tune[], group: ExportGroup = 'all'): Tune[] {
-  return savedTunes(tunes).filter((tune) => group === 'all' || tune.source === group)
+/** The items of the checked categories (all of them when none is checked), keeping their order. */
+export function inCategories(tunes: readonly Tune[], chosen: readonly string[]): Tune[] {
+  return tunes.filter((tune) => !chosen.length || chosen.includes(tune.playlist ?? ''))
 }
 
-/** Encode the saved tunes of a group by playlist, without browser-specific record IDs. */
-export function serializeStudioPlaylists(tunes: Tune[], group: ExportGroup = 'all'): string {
-  const available = exportTunes(tunes, group)
-  const names = playlistNames(available)
-  if (!names.length) throw new Error('No saved tunes to export')
-  const playlists = names.map((name) => ({
-    name, charts: available.filter((tune) => (tune.playlist ?? 'My tunes') === name).map((tune) => tune.chart),
-  }))
-  return JSON.stringify({ format: FORMAT, version: VERSION, playlists }, null, 2) + '\n'
+/** Encode playlists, each under the name chosen for the file, without browser-specific record ids. */
+export function serializeStudioPlaylists(playlists: readonly StudioPlaylist[]): string {
+  const kept = playlists.filter((list) => list.charts.length)
+  if (!kept.length) throw new Error('No songs to export')
+  return JSON.stringify({ format: FORMAT, version: VERSION, playlists: kept.map(({ name, charts }) => ({ name: name.trim() || 'My playlist', charts })) }, null, 2) + '\n'
 }
+
+/** A file name from a playlist name: lower case, words joined by hyphens. */
+export const exportFileName = (names: readonly string[]): string =>
+  `${names.length === 1 ? names[0].toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'playlist' : 'playlists'}.json`
 
 /** Validate a Studio export before any of its charts are written to IndexedDB. */
 export function parseStudioPlaylists(text: string): StudioPlaylist[] {

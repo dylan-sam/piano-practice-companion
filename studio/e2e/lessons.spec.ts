@@ -1,5 +1,6 @@
-// The Lessons tab: a step's Start button opens its screen set up for the step, and progress is
-// kept on this device. Free Improvisation writes out the keys played (a fake MIDI keyboard).
+// The Lessons tab: a step's Start button opens its page (what to do, why, the theory), whose
+// "Understood, start" opens its screen set up for the step; back leads to the page again.
+// Progress is kept on this device. Free Improvisation writes out the keys played (a fake MIDI keyboard).
 
 import { expect, test } from '@playwright/test'
 import { collectErrors } from './helpers'
@@ -23,12 +24,18 @@ test('a lesson step opens Lead Sheet Sightreading with its song and left-hand st
   await expect(page.locator('#w1-avalon1').getByRole('button', { name: 'Done' })).toBeVisible()
 
   await page.locator('#w1-avalon1').getByRole('button', { name: 'Start' }).click()
+  // The step's page: what to do, the theory with its staff, the references
+  await expect(page).toHaveURL(/\/lessons\/step\?id=w1-avalon1/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Avalon, stage 1, bass' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'A song in three stages' })).toBeVisible()
+  await expect(page.locator('.theory-staff svg')).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: 'References' })).toBeVisible()
+  await page.getByRole('button', { name: 'Understood, start' }).click()
   await expect(page).toHaveURL(/\/sightreading\/lead-sheets\?song=Avalon/)
-  // Back once: the Lessons tab, as it was left
+  // Back once: the step's page
   await expect(page.locator('.readout')).toContainText('Avalon', { timeout: 60_000 })
   await page.goBack()
-  await expect(page).toHaveURL(/\/lessons$/)
-  await expect(page.locator('#w1-avalon1')).toBeVisible()
+  await expect(page).toHaveURL(/\/lessons\/step\?id=w1-avalon1/)
   await page.goForward()
   await expect(page.locator('.lead-sheet, .readout').first()).toBeVisible({ timeout: 60_000 })
   await expect(page.locator('.readout')).toContainText('Avalon')
@@ -36,8 +43,14 @@ test('a lesson step opens Lead Sheet Sightreading with its song and left-hand st
   await expect(page.getByLabel('Check')).toHaveValue('both')
   await expect(page.getByLabel('Left hand')).toHaveValue('bass')
   await expect(page).toHaveURL(/step=w1-avalon1&goal=90/)
-  // The screen's title leads back to the Lessons tab, not to the Sightreading menu
-  await expect(page.locator('.wordmark')).toHaveAttribute('aria-label', 'Back to Lessons')
+  // The screen's title leads back to the step's page, not to the Sightreading menu; the page's to
+  // the Lessons tab, with the step shown
+  await expect(page.locator('.wordmark')).toHaveAttribute('aria-label', 'Back to the lesson')
+  await page.locator('.wordmark').click()
+  await expect(page).toHaveURL(/\/lessons\/step\?id=w1-avalon1/)
+  await page.locator('.wordmark').click()
+  await expect(page).toHaveURL(/\/lessons$/)
+  await expect(page.locator('#w1-avalon1')).toBeVisible()
 
   // The lesson's checking was for that visit only
   await page.goto('/sightreading/lead-sheets')
@@ -105,6 +118,8 @@ test('a substitution week: the song opens with the band playing the substitute, 
   await page.getByText('Unit 1. Time, chords and the first song').click()
   await page.getByRole('tab', { name: 'Week 5' }).click()
   await page.locator('#sub1-avalon3').getByRole('button', { name: 'Start' }).click()
+  await expect(page.getByRole('heading', { name: 'Adding the ii before a long V7' })).toBeVisible()
+  await page.getByRole('button', { name: 'Understood, start' }).click()
   await expect(page).toHaveURL(/subs=addII/)
   await expect(page.locator('text.lead-chord-sub').first()).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('text.lead-chord-sub').first()).toHaveText(/G/)
@@ -117,9 +132,24 @@ test('a substitution week: the song opens with the band playing the substitute, 
   // The unit opened above stays open
   await page.getByRole('tab', { name: 'Week 5' }).click()
   await page.locator('#sub1-improvise-avalon').getByRole('button', { name: 'Start' }).click()
+  await page.getByRole('button', { name: 'Understood, start' }).click()
   await expect(page).toHaveURL(/improvisation.*subs=addII/)
   await expect(page.locator('.lead-chord-sub, .chord-sub').first()).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: 'Substitutions' }).click()
   await expect(page.getByRole('checkbox', { name: /Add the ii before a long V7/ })).toBeChecked()
+  expect(errors).toEqual([])
+})
+
+test('an intro and ending step opens the song with bars added before and after the head', async ({ page }) => {
+  const errors = collectErrors(page)
+  await page.goto('/lessons')
+  await page.getByText('Unit 1. Time, chords and the first song').click()
+  await page.getByRole('tab', { name: 'Week 4' }).click()
+  await page.locator('#w4-intro-avalon').getByRole('button', { name: 'Start' }).click()
+  await expect(page.locator('.lesson-what')).toContainText('Intro, 4 bars')
+  await expect(page.getByRole('heading', { name: 'Intros and endings' })).toBeVisible()
+  await page.getByRole('button', { name: 'Understood, start' }).click()
+  await expect(page).toHaveURL(/frame=avalon/)
+  await expect(page.locator('.lead-score').getByText('Intro')).toBeVisible({ timeout: 30_000 })
   expect(errors).toEqual([])
 })
