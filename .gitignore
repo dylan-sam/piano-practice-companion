@@ -26,11 +26,12 @@ data/weimar*
 studio/public/leadsheets/weimar*
 studio/public/licks/licks_weimar*
 
-# Helpers for this computer (APK build, clean-up of old build files, the commit Claude prepares),
+# Helpers for this computer (APK build, clean-up of old build files, the commit Claude prepares, the release),
 # Claude's transfer files, and the APK the build copies here
 /build-apk.bat
 /clean-build.bat
 /commit.bat
+/release.bat
 /.claude-transfer/
 /app-debug.apk
 
