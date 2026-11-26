@@ -32,7 +32,7 @@ import { isOneChordLick, lickChord, lickShape, withLick, type LickShape } from '
 import { transposeFor, type KeyChoice } from './nameProgression'
 import { MidiButton, ReadingPopover, ReadingSheet } from './ReadingControls'
 import { readingCount, readingHint, readingTally } from './readingText'
-import { useLessonLink } from '../lessons/lessonLink'
+import { findByTitle, useLessonLink } from '../lessons/lessonLink'
 import { useLessonOverride } from '../lessons/useLessonOverride'
 import { useLessonGoal } from '../lessons/useLessonGoal'
 import { LessonDone } from '../lessons/LessonDone'
@@ -109,9 +109,11 @@ export function LickSightreading() {
   const [beat, setBeat] = useState(0)
   const [timeline, setTimeline] = useState<Timeline | null>(null)
   const [stored, store] = useStoredSettings<LickSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
-  // Opened from a lesson step: its lick playlist (for this visit), an infinite line, its tempo and muted parts
+  // Opened from a lesson step: its lick playlist and its lick (for this visit: the lick kept from
+  // an earlier visit is set aside until another is chosen), an infinite line, its tempo and muted parts
   const lesson = useLessonLink()
-  const [settings, setSettings] = useLessonOverride(stored, store, lesson && { lickGroups: lesson.playlist ? [lesson.playlist] : undefined })
+  const [settings, setSettings] = useLessonOverride(stored, store, lesson && {
+    lickGroups: lesson.playlist ? [lesson.playlist] : undefined, ...(lesson.song ? { lickId: '' } : {}) })
   const band = useBand<string | null>(defaultPatternForStyle, BPM_RANGE)
   const { styleId, patternId, keyChoice, setKeyChoice, transpose, setTranspose, bpm, setBpm, choruses, setChoruses, practice, setPractice } = band
 
@@ -137,9 +139,12 @@ export function LickSightreading() {
   // The licks of the checked lick playlists (all of them when none is checked)
   const licksIn = useCallback((groups: string[] = []) =>
     groups.length ? licks.filter((item) => groups.includes(item.playlist ?? '')) : licks, [licks])
-  // The lick of some settings: the one chosen, else the first one offered
+  // The lesson step's lick, by its title
+  const lessonLick = useMemo(() => (lesson?.song ? findByTitle(licks, lesson.song) ?? null : null), [licks, lesson?.song])
+  // The lick of some settings: the one chosen, else the lesson's, else the first one offered
   const lickFor = useCallback((chosen: LickSettings) =>
-    licks.find((item) => item.id === chosen.lickId) ?? licksIn(chosen.lickGroups)[0] ?? licks[0] ?? null, [licks, licksIn])
+    licks.find((item) => item.id === chosen.lickId) ?? (chosen.lickId ? null : lessonLick) ?? licksIn(chosen.lickGroups)[0] ?? licks[0] ?? null,
+  [licks, licksIn, lessonLick])
   const lick = lickFor(settings)
   const chords = mode === 'infinite' ? line?.chart ?? null : tune?.chart ?? null // the chart the lick goes over
   /**

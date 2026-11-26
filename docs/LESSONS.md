@@ -138,7 +138,8 @@ they were, unless you change one on the screen:
 | `subs` | Lead Sheet and Exercises Sightreading, Free Improvisation | the chord substitutions the band plays, every chorus (`subs=addII`) |
 | `frame` | Lead Sheet Sightreading | bars added before and after the head for an intro and an ending (`frame=avalon`, [Intros and endings](#intros-and-endings)) |
 | `mute` | every screen with a band | parts muted in the Mixer at first |
-| `playlist`, `infinite` | Lick Sightreading | the lick playlist; an endless line |
+| `playlist`, `infinite` | Lick Sightreading | the lick playlist; an endless line (`song`: the lick it opens on) |
+| `guesses`, `alterations` | Melodic Dictation | how many notes to write in each melody, and whether notes outside the key may come |
 | `voicing`, `infinite` | Chord Sightreading | the voicing drill; an endless line |
 | `step`, `goal` (with `bpm`, `timing`) | Lead Sheet, Exercises, Lick and Chord Sightreading, Name the progression, Melodic Dictation | the step to tick, and its target |
 
@@ -179,6 +180,11 @@ Start (on a step card or Today's lesson) opens the step's page
   (a scale, a rhythm) is played several times in a row, often a fourth higher
   each time (lessonLink `choruses` and `keyStep`), and its target counts every
   time through;
+  A lick step names its lick and says what to listen for in it (the screen
+  opens on that lick; the others of its list come after); a step in a style of
+  its own (the bossa nova songs, the ballad) recalls its feel, and the theory
+  shows the bossa rhythm on a staff; a dictation step sets how many notes to
+  write and gives one thing to listen for;
 - **Why**: what it trains;
 - **The theory** (`theory.ts`): up to three short cards, the most specific
   first: the progression or substitution, the scale, the song's left-hand
@@ -312,6 +318,12 @@ what an intro and an ending are for, and how to build this one:
 | 34 | What Is This Thing Called Love? | a vamp on the first ii-V, with its ♭9 (4 bars) | the "three times" tag with altered dominants (5 bars) |
 | 38 | Minor Study Blues | the last 4 bars of the blues (4 bars) | ♭VI7, V7, i−6 (4 bars) |
 | 40 | Embraceable You | the last 2 bars and a turnaround (4 bars) | the iv minor to the I^7 (3 bars) |
+
+The step's page has a card for the intro and one for the ending: their chords
+with Roman numerals (drawn in C, or in the key chosen on the page), and one way
+to play them written out on a staff, with what it shows (the guide tones of a
+tag, a ♭9 falling a half step, a riff played twice...). `tests/theory.test.ts`
+checks that each example follows the chords of its bars.
 
 ## Building a solo
 

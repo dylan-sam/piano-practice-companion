@@ -7,7 +7,9 @@
 // page draws them in the key chosen (theoryMusic.ts).
 
 import type { SubstitutionId } from '../music/substitutions'
+import { chordLabel, parseChord, prettyNoteName, transposeChord } from '../music/chords'
 import { placeOf, type LessonStep } from './program'
+import { FRAMES, type Frame, type FrameBars } from './introEndings'
 
 /** A progression drawn as chord boxes, each with its Roman numeral under it. */
 export interface ProgressionPicture { chords: string[]; numerals: string[] }
@@ -41,6 +43,30 @@ function pattern(id: string, title: string, text: string, abc: string): TheoryCa
     id: `pattern-${id}`, title: `The left hand: ${title.charAt(0).toLowerCase()}${title.slice(1)}`, text: [text], abc, source: SISKIND,
     match: (step) => step.link?.pattern === id && (step.kind === 'song' || step.kind === 'listen'),
   }
+}
+
+/** Bars written in a song's key ("Eb C7"), written in C instead (the pictures are drawn from C). */
+function barsInC(bars: string[], key: number): string[] {
+  return bars.map((bar) => bar.split(/\s+/).map((text) => {
+    const chord = parseChord(text)
+    return chord ? chordLabel(transposeChord(chord, -key), true) : text
+  }).join(' '))
+}
+
+/**
+ * The two cards of a song's intro and ending (introEndings.ts): the bars with their Roman
+ * numerals, how to build them, and an example written out, on the step that frames the song.
+ */
+function frameCards(id: string, frame: Frame): TheoryCard[] {
+  const where = frame.key ? ` The pictures are in C; choose ${prettyNoteName(frame.key)} in the key menu above to see them in the key of the song.` : ''
+  /** One card: the intro or the ending. */
+  const card = (part: 'intro' | 'ending', bars: FrameBars): TheoryCard => ({
+    id: `${part}-${id}`, title: part === 'intro' ? `The intro, ${bars.bars.length} bars` : `The ending, ${bars.bars.length} bars`,
+    text: [bars.example.text + where], // the step's own text already says how to build it
+    progression: { chords: barsInC(bars.bars, frame.key), numerals: bars.numerals }, abc: bars.example.abc, source: LEVINE,
+    match: (step) => step.link?.frame === id,
+  })
+  return [card('intro', frame.intro), card('ending', frame.ending)]
 }
 
 /** A staff of one line in C, quarter notes, with a chord symbol over it. */
@@ -82,7 +108,7 @@ export const THEORY: TheoryCard[] = [
       numerals: ['i', 'iv', 'i', 'i', 'iv', 'iv', 'i', 'i', '♭VI7', 'V7', 'i', 'iiø V'] }, source: 'Kerry Politzer, Beginning Jazz Piano',
   },
   {
-    id: 'turnaround', title: 'The turnaround', match: (step) => /I-vi-ii-V|iii-VI-ii-V/.test(step.title),
+    id: 'turnaround', title: 'The turnaround', match: (step) => /I-vi-ii-V|I-VI7-ii-V|iii-VI-ii-V/.test(step.title),
     text: ['A turnaround is a two-bar progression that leads back to the top of a song: I vi ii V, or iii VI ii V. Each chord falls a 5th to the next one.',
       'The vi and the iii can be turned into dominant chords (VI7, III7) to pull harder towards the next chord: these are secondary dominants.'],
     progression: { chords: ['Cmaj7', 'A−7', 'D−7', 'G7'], numerals: ['I', 'vi', 'ii', 'V7'] }, source: LEVINE_THEORY,
@@ -96,8 +122,9 @@ export const THEORY: TheoryCard[] = [
   // ---------- Substitutions ----------
   {
     id: 'addII', title: 'Adding the ii before a long V7', match: (step) => playsSub('addII')(step) || step.title.startsWith('V7 with its ii added'),
-    text: ['A V7 chord that lasts a bar or more can share its time with its own ii chord: four bars of G7 become two bars of D−7 and two bars of G7. The song gains a ii-V without losing its sound, because the ii simply prepares the V.'],
-    progression: { chords: ['G7 (2 bars)', '→', 'D−7', 'G7'], numerals: ['V7', '', 'ii', 'V7'] }, source: LEVINE_THEORY,
+    text: ['A V7 chord that lasts two bars or more can share its time with its own ii chord, the minor 7th chord built a 5th above its root. Two bars of G7 become a bar of D−7 and a bar of G7; four bars of G7 become two of each. The song gains a ii-V without losing its sound, because the ii simply prepares the V.',
+      'Each box below is one bar: first the chords as written, then the same two bars with the ii added. Listen to both and hear how the ii makes the V sound like an arrival.'],
+    progression: { chords: ['G7', 'G7', '→', 'D−7', 'G7'], numerals: ['V7', 'V7', '', 'ii', 'V7'] }, source: LEVINE_THEORY,
   },
   {
     id: 'secondary', title: 'Secondary dominants', match: (step) => playsSub('secondary')(step) || step.title.includes('secondary dominants'),
@@ -259,6 +286,19 @@ export const THEORY: TheoryCard[] = [
     text: ['An interval is the distance between two notes. A major 3rd is four half steps (C to E), a minor 3rd three half steps (C to E♭). Practising major 3rds by half steps through the twelve keys trains your ear and your hand to find the 3rd of any chord at once.'],
     abc: staff('[CE] [_DF] [D^F] [_EG] | [E^G] [FA] [^F^A] [GB] |]'), source: OMT,
   },
+  // ---------- Styles ----------
+  {
+    id: 'bossa', title: 'The bossa nova rhythm', match: (step) => step.link?.style === 'bossa-nova',
+    text: ['Bossa nova came from Brazil in the late 1950s (João Gilberto, Antônio Carlos Jobim). Unlike swing, its eighth notes are straight: two even halves of the beat. The piano and the guitar repeat a two-bar rhythm that falls partly on the beat and partly between the beats, while the bass rocks gently between the root and the 5th.',
+      'The staff shows the rhythm the band\'s piano plays. Bar 1: beat 1, the "and" of 2, beat 4. Bar 2: the "and" of 1, beat 3, the "and" of 4. Count the eighth notes "1 and 2 and 3 and 4 and" and clap only the written notes before you play them. Keep the chords short and soft: the bossa should whisper.'],
+    abc: 'X:1\nL:1/8\nK:C\n"Cmaj7"[EGB]3 [EGB]3 [EGB]2 | z [EGB]3 [EGB]3 [EGB] | "D-7"[FAc]3 [FAc]3 [FAc]2 | z [FAc]3 [FAc]3 [FAc] |]\nw: 1 2& 4 1& 3 4& 1 2& 4 1& 3 4&', source: 'The band\'s Bossa Nova style; Mark Levine, The Jazz Piano Book, the bossa nova',
+  },
+  {
+    id: 'ballad', title: 'Playing a ballad', match: (step) => step.link?.style === 'ballad',
+    text: ['A ballad is a slow song, often a love song. With so few notes in each bar, every note is heard: play the melody as a singer would, connecting the notes and shaping each phrase so that it rises and falls.',
+      'Let the left hand hold each voicing for its full length and use the sustain pedal lightly, lifting it at each new chord so the harmonies do not blur. In the long notes of the melody, count the beats inside you rather than rushing on to the next phrase.'],
+    abc: staff('"Cmaj7"E4- | E2 D2 | "D-7"C4- | C2 "G7"B,2 |]'), source: SISKIND,
+  },
   // ---------- Ways of working ----------
   {
     id: 'guideTones', title: 'Guide tones', match: mentions('guide tone'),
@@ -283,7 +323,7 @@ export const THEORY: TheoryCard[] = [
     abc: 'X:1\nL:1/4\nK:F clef=bass\n"G-7"G,, z D, z | "C7"C, z G,, z |]', source: SISKIND,
   },
   {
-    id: 'licks', title: 'Learning licks', match: (step) => /licks/i.test(step.title) || step.link?.route === '/sightreading/licks',
+    id: 'licks', title: 'Learning licks', match: (step) => /\blicks?\b/i.test(step.title) || step.link?.route === '/sightreading/licks',
     text: ['A lick is a short phrase of the jazz language. Learn it slowly, then in other keys, then over other chords. Use it in a solo, and then change it a little: that is how a borrowed phrase becomes your own.',
       'Approach notes (a half step below or above a chord tone) and enclosures (the note above, the note below, then the target) are what make lines sound like jazz.'],
     abc: staff('"Cmaj7"^D E z2 | F ^D E z |]\nw: approach * enclosure', '1/4'), source: AEBERSOLD,
@@ -305,9 +345,12 @@ export const THEORY: TheoryCard[] = [
     text: ['Hear what you are going to play before you play it: the rhythm of the left hand and the places where the chords change. Sing or hum along with the bass line.'],
     source: SISKIND,
   },
+  ...Object.entries(FRAMES).flatMap(([id, frame]) => frameCards(id, frame)),
   {
     id: 'introEnding', title: 'Intros and endings', match: (step) => !!step.link?.frame,
-    text: ['An intro sets the key, the tempo and the feel, and leads into the first bar of the song; an ending tells everyone that the song is over. Most intros and endings are a few bars of chords taken from the song itself: its last bars, a vamp on its first ii-V, a turnaround, or a tag that repeats the last ii-V.'],
+    text: ['An intro sets the key, the tempo and the feel, and leads into the first bar of the song; an ending tells everyone that the song is over. Most of them are a few bars of chords taken from the song itself, and four kinds cover most of what you will hear on records:',
+      'The last bars of the song, played before the head (the easiest intro). A turnaround (I vi ii V), played once or twice. A vamp: one ii-V, usually the song\'s first, repeated until everyone is ready. A tag: the last ii-V of the song repeated two or three times before the final chord, often through iii VI ii V.',
+      'Whatever the kind, keep the time steady, play little, and make the last bar of an intro lead clearly into the first note of the melody. On the final chord of an ending, add a colour note (the 6th or the 9th) and let it ring.'],
     source: LEVINE,
   },
   {

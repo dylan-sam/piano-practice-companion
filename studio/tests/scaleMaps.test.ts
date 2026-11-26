@@ -4,6 +4,7 @@ import lessonSongs from '../public/leadsheets/lessons.json'
 import { parseChord } from '../src/music/chords'
 import { chordScale } from '../src/exercises/toneColors'
 import { ALL_STEPS } from '../src/lessons/program'
+import { ROUTES } from '../src/router'
 import { inKey, keysWithPassages, scaleMapFor, sectionAt, SCALE_MAPS } from '../src/lessons/scaleMaps'
 import { describeScale } from '../src/music/scales'
 import { barKeyCentres } from '../src/music/roman'
@@ -31,8 +32,8 @@ describe('scale maps', () => {
     expect(scaleMapFor('Avalon')?.tonic).toBe(charts.find((c) => c.title === 'Avalon')!.key) // F, after the key fix
   })
 
-  test('every song improvised over in the lessons has a map', () => {
-    for (const item of ALL_STEPS.filter((step) => step.kind === 'improvise' && step.link?.song)) {
+  test('every song improvised over in the lessons (Free Improvisation) has a map', () => {
+    for (const item of ALL_STEPS.filter((step) => step.link?.route === ROUTES.freeImprovisation && step.link.song)) {
       expect(scaleMapFor(item.link!.song), item.link!.song).toBeDefined()
     }
   })

@@ -466,6 +466,12 @@ in it; it is rebuilt with the project's scripts ([the data](../docs/DATA.md)).
 
 ## Code map
 
+Windows and macOS ignore letter case in file names. Where a component and a
+module of the same folder differ only in case (`ui/Effects.tsx` and
+`ui/effects.ts`), the component is imported with its extension
+(`'./ui/Effects.tsx'`); otherwise the build on Windows opens the `.ts` file.
+`tests/fileCasing.test.ts` checks it.
+
 | Folder | Holds |
 |---|---|
 | `src/engine/` | arranges a chart into MIDI: bass (`bass.ts`), piano (`comp.ts`, `pianoPatterns.ts`), drums (`drums.ts`), melody (`melody.ts`: `melodyOccurrences` lists every note as the band plays it, which the melody sightreaders also judge), timeline and count-in (`timeline.ts`) |

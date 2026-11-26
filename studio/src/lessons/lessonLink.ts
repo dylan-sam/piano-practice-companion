@@ -14,7 +14,7 @@ import { FRAMES } from './introEndings'
 
 export interface LessonLink {
   route: string // the screen (ROUTES)
-  song?: string // a song, exercise or lick to open, by title (the first whose title starts with it, case ignored)
+  song?: string // a song, exercise or lick to open, by title (exact, else the first that starts with it, case ignored); in Lick Sightreading, the lick played
   key?: number // the key to play it in, as a pitch class (0 = C)
   bpm?: number
   style?: string // band style id
@@ -33,6 +33,8 @@ export interface LessonLink {
   exercise?: string // Exercises Sightreading: the settings of the exercise built for the step (exerciseBuilder.ts specText), locked
   choruses?: number // Lead Sheet and Exercises Sightreading: how many times through (a short exercise played several times)
   keyStep?: number // ... and the key moving by this many semitones each time (Practice > Keys; 5: up a fourth)
+  guesses?: number // Melodic Dictation: how many notes to write in each melody
+  alterations?: 'none' | 'with' | 'any' // ... and whether its melodies have notes outside the key signature
 }
 
 const PARTS: Part[] = ['bass', 'comp', 'melody', 'drums']
@@ -89,6 +91,8 @@ export function readLessonLink(search: string): Omit<LessonLink, 'route'> | null
     exercise: query.get('exercise') ?? undefined,
     choruses: numberIn(query.get('choruses'), 1, 24),
     keyStep: numberIn(query.get('keyStep'), 1, 11),
+    guesses: numberIn(query.get('guesses'), 1, 16),
+    alterations: oneOf(query.get('alterations'), [{ id: 'none' as const }, { id: 'with' as const }, { id: 'any' as const }]),
   }
 }
 

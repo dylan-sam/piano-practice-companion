@@ -112,7 +112,8 @@ export const PROGRESSIONS: Record<string, { name: string; chords: string; level:
   'minor ii-V-i': { name: 'minor ii-V-i', chords: 'Dh7:2 G7b9:2 C-6:4', level: 1 },
   'ii-V7b9-I': { name: 'ii-V7b9-I', chords: 'D-7:2 G7b9:2 C^7:4', level: 2 },
   'minor ii-V7b9b13-i': { name: 'minor ii-V7b9b13-i', chords: 'Dh7:2 G7b9b13:2 C-6:4', level: 2 },
-  'I-vi-ii-V': { name: 'I-vi-ii-V turnaround', chords: 'C^7:2 A7:2 D-7:2 G7:2 C^7:2 A7:2 D-7:2 G7:2 C^7:4', level: 1 },
+  'I-vi-ii-V': { name: 'I-vi-ii-V turnaround', chords: 'C^7:2 A-7:2 D-7:2 G7:2 C^7:2 A-7:2 D-7:2 G7:2 C^7:4', level: 1 },
+  'I-VI7-ii-V': { name: 'I-VI7-ii-V turnaround', chords: 'C^7:2 A7:2 D-7:2 G7:2 C^7:2 A7:2 D-7:2 G7:2 C^7:4', level: 1 }, // the vi made a dominant
   'iii-VI-ii-V': { name: 'iii-VI-ii-V turnaround', chords: 'E-7:2 A7:2 D-7:2 G7:2 E-7:2 A7:2 D-7:2 G7:2 C^7:4', level: 1 },
   'jazz blues': { name: 'jazz blues', chords: 'C7:4 F7:4 C7:4 G-7:2 C7:2 F7:4 F#o7:4 C7:4 A7:4 D-7:4 G7:4 C7:2 A7:2 D-7:2 G7:2 C7:4', level: 2 },
   'minor blues': { name: 'minor blues', chords: 'C-7:4 F-7:4 C-7:4 C-7:4 F-7:4 F-7:4 C-7:4 C-7:4 Ab7:4 G7b9b13:4 C-7:4 Dh7:2 G7b9b13:2 C-7:4', level: 2 },

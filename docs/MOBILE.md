@@ -195,5 +195,11 @@ fix small errors.
 
 The iOS project was generated on Linux, where Xcode is not available. Still to
 check on real devices: a USB or Bluetooth MIDI keyboard in Chord Sightreading
-(Android and iOS), and everything on iOS. Icons and splash screens are still
-Capacitor's defaults.
+(Android and iOS), and everything on iOS.
+
+The app icon and the splash screens show the music stand of the app (dark ink
+on the paper colour, the yellow line of a staff on its desk). They are drawn by
+`studio/scripts/build_app_icons.py` (`pip install cairosvg pillow`), which
+writes the Android launcher icons (square, round and adaptive), the iOS icon,
+both platforms' splash screens and the web app's icons: run it again after
+changing the picture.

@@ -43,15 +43,25 @@ describe('the program', () => {
     expect(new Set(ALL_STEPS.map((item) => item.id)).size).toBe(ALL_STEPS.length)
   })
 
+  test('a step that names another week names it as the Lessons tab numbers it', () => {
+    const weekOf = (id: string) => PROGRAM.flatMap((unit) => unit.weekList).find((week) => week.steps.some((step) => step.id === id))!.week
+    expect(weekOf(ALL_STEPS.find((step) => step.id === 'w11-hands1')!.id)).toBe(13) // the guide tones named by week 15's lick
+    expect(weekOf(ALL_STEPS.find((step) => step.id === 'w20-hands1')!.id)).toBe(27) // the iii-VI-ii-V named by week 24
+  })
+
   test('every link opens something the app has', () => {
     for (const item of ALL_STEPS) {
       const link = item.link
       if (!link) continue
-      if (link.route === ROUTES.exerciseSightreading) {
-        const spec = readSpec(link.exercise ?? '')
+      const lickCharts = licks.playlists.flatMap((list) => list.charts.map((chart) => ({ chart, list: list.name })))
+      if (link.route === ROUTES.exerciseSightreading && link.exercise) {
+        const spec = readSpec(link.exercise)
         expect(spec, `${item.id} ${link.exercise}`).toBeTruthy()
         expect(link.song).toBe(exerciseTitle(spec!))
       }
+      // A lick over a progression (Exercises Sightreading), or the lick of a lick playlist (Lick Sightreading)
+      else if (link.route === ROUTES.exerciseSightreading) expect(findByTitle(lickCharts, link.song!), `${item.id} ${link.song}`).toBeDefined()
+      else if (link.route === ROUTES.lickSightreading) expect(findByTitle(lickCharts.filter((c) => c.list === link.playlist), link.song!)?.chart.bars.length, `${item.id} ${link.song}`).toBeLessThanOrEqual(2)
       else if (link.song) expect(findByTitle(leadSheets, link.song), link.song).toBeDefined()
       if (link.pattern) {
         const style = link.style ?? findByTitle(leadSheets, link.song!)?.chart.style ?? 'swing'

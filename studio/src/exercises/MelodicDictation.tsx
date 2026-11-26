@@ -30,6 +30,7 @@ import { keyReferenceMidi, measureAt, referenceForKey, transposeFor, type KeyCho
 import { ExerciseStatus, KeyChoiceControl, KeyReferenceButtons } from './ExerciseControls'
 import { MidiButton } from './ReadingControls'
 import { useLessonLink } from '../lessons/lessonLink'
+import { useLessonOverride } from '../lessons/useLessonOverride'
 import { useLessonGoal } from '../lessons/useLessonGoal'
 import { LessonDone } from '../lessons/LessonDone'
 import { useWindowKeys } from '../ui/useWindowKeys'
@@ -89,7 +90,11 @@ export function MelodicDictation() {
 
   const [tunes, setTunes] = useState<Tune[] | null>(null)
   const [error, setError] = useState('')
-  const [settings, setSettings] = useStoredSettings<DictationSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
+  const [stored, store] = useStoredSettings<DictationSettings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings)
+  // Opened from a lesson step: its number of notes to write and its alterations, for this visit
+  const lesson = useLessonLink()
+  const lessonGuesses = GUESS_CHOICES.find((choice) => choice === lesson?.guesses)
+  const [settings, setSettings] = useLessonOverride(stored, store, lesson && { guesses: lessonGuesses, alterations: lesson.alterations })
   const [excerpt, setExcerpt] = useState<Excerpt | null>(null)
   const [guesses, setGuesses] = useState<Record<number, Guess>>({})
   const [selected, setSelected] = useState<number | null>(null)
@@ -97,7 +102,7 @@ export function MelodicDictation() {
   const [showMine, setShowMine] = useState(false) // after checking: the placed notes instead of the right ones
   const [tally, setTally] = useState({ notes: 0, correct: 0 }) // this visit's checked notes
   // Opened from a lesson step: enough notes written, right enough, tick it
-  const reachedGoal = useLessonGoal(useLessonLink(), { right: tally.correct, judged: tally.notes, complete: tally.notes >= LESSON_NOTES, bpm: 0 })
+  const reachedGoal = useLessonGoal(lesson, { right: tally.correct, judged: tally.notes, complete: tally.notes >= LESSON_NOTES, bpm: 0 })
 
   const [styleId, setStyleId] = useState('swing')
   const [patternId, setPatternId] = useState<string | null>(() => defaultPatternForStyle('swing'))

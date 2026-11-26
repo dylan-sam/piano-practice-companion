@@ -111,11 +111,12 @@ export function ChordSightreading() {
     },
   })
   const { mode, tune } = source
-  // Opened from a lesson step: a voicing drill, an infinite line, its tempo
+  // Opened from a lesson step: a voicing drill, an infinite line, its tempo and style
   const lesson = useLessonLink()
   useEffect(() => {
     if (lesson?.voicing) changeVoicing(lesson.voicing, false)
     if (lesson?.bpm) setBpm(lesson.bpm)
+    if (lesson?.style && STYLES.some((item) => item.id === lesson.style)) band.set({ styleId: lesson.style, patternId: defaultBassPatternForStyle(lesson.style) })
     if (lesson?.infinite) source.chooseMode('infinite')
     // Once, when the screen opens
     // eslint-disable-next-line react-hooks/exhaustive-deps

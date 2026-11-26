@@ -48,7 +48,7 @@ export function chordNotes(chord: Chord): number[] {
 
 /**
  * The ABC of a progression to hear, in the key chosen: each box a bar of 4 beats, a box of two
- * chords ("F7 D7") two beats each; labels ("→", "(2 bars)") are skipped.
+ * chords ("F7 D7") two beats each; labels ("→") are skipped.
  */
 export function progressionAbc(boxes: readonly string[], transpose: number): string {
   const bars = boxes.flatMap((box) => {

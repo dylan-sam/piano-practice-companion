@@ -153,3 +153,15 @@ test('an intro and ending step opens the song with bars added before and after t
   await expect(page.locator('.lead-score').getByText('Intro')).toBeVisible({ timeout: 30_000 })
   expect(errors).toEqual([])
 })
+
+test('a lick step opens Lick Sightreading on its own lick, whatever lick was chosen before', async ({ page }) => {
+  // A lick chosen on an earlier visit is kept for the screen, not for the lesson
+  await page.goto('/sightreading/licks')
+  const lick = page.getByRole('combobox', { name: 'Lick', exact: true })
+  await expect(lick.locator('option').first()).toBeAttached({ timeout: 30_000 })
+  await lick.selectOption(await lick.locator('option', { hasText: 'Blue third' }).first().getAttribute('value') ?? '')
+  await page.goto('/lessons/step?id=w28-licks')
+  await expect(page.getByRole('heading', { level: 1, name: /Scale lines licks: The Lick/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Understood, start' }).click()
+  await expect(lick.locator('option:checked')).toHaveText(/ The Lick$/, { timeout: 60_000 })
+})

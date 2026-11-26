@@ -42,7 +42,7 @@ import { SongsToggle, SongWorkspace } from './SongWorkspace'
 import { arrangeMelody, averageOffsetMs } from './melodyReading'
 import { buildExercise, categoryList, EXAMPLES, exerciseCategory, FAMILY_DEFAULTS, readSpec, type ExercisePreset, type ExerciseSpec } from './builder/exerciseBuilder'
 import { presetOfTune, presetTune, usePresetTunes, useUserPresets } from './builder/exercisePresets'
-import { ExerciseBuilder } from './builder/ExerciseBuilder'
+import { ExerciseBuilder } from './builder/ExerciseBuilder.tsx'
 
 const SETTINGS_KEY = 'eartraining:melody-reading'
 

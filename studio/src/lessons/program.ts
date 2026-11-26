@@ -129,6 +129,15 @@ const STAGES = {
     what: "Play the melody with your right hand and the song's own accompaniment pattern with your left hand, in the rhythm of the band's piano (which is muted, so that you hear yourself)." },
 } as const
 
+// The feel of a song the lessons play in a style of its own, recalled on each of its steps
+const STYLE_WORDS: Record<string, string> = {
+  'bossa-nova': 'The band plays a bossa nova: the eighth notes are straight, two even halves of the beat instead of the long-short of swing, the drums play a soft rim click, and the bass rocks between the root and the 5th. Keep everything light and even; the theory below shows the bossa rhythm on a staff.',
+  ballad: 'The band plays a ballad: slowly, with brushes on the drums. At this tempo every note is heard, so play evenly, let each chord ring until the next one, and do not rush the long notes.',
+}
+
+/** The words recalling a style's feel, as a sentence to add to a step ('' for the usual swing). */
+const styleWords = (style: string | undefined): string => (style && STYLE_WORDS[style] ? ` ${STYLE_WORDS[style]}` : '')
+
 const WHY = {
   hands: 'Playing the same material with both hands at once builds the coordination that the songs need, and reading it from the staff trains your eyes at the same time. Short drills repeated every day make chords and scales automatic, which frees your attention for the music itself.',
   listen: 'Hearing a pattern before you play it makes its rhythm much easier to copy. Jazz is learnt by ear first: the band plays the pattern you are about to learn, so that you absorb its feel before you think about the notes.',
@@ -191,12 +200,12 @@ function hands(week: WeekId, n: number, spec: string, what: string,
     { goal: { percent: 90, bpm } })
 }
 
-/** A voicing drill of Chord Sightreading over an endless line of progressions. */
-function voicings(week: WeekId, n: number, voicing: NonNullable<LessonLink['voicing']>, title: string, what: string, bpm = 60): LessonStep {
+/** A voicing drill of Chord Sightreading over an endless line of progressions (in a style other than swing if asked). */
+function voicings(week: WeekId, n: number, voicing: NonNullable<LessonLink['voicing']>, title: string, what: string, bpm = 60, style?: string): LessonStep {
   return step(week, `hands${n}`, 'hands', title,
-    `${what} The screen writes an endless line of progressions; play each chord when the band reaches it, and it turns green when your voicing is right.`,
+    `${what}${styleWords(style)} The screen writes an endless line of progressions; play each chord when the band reaches it, and it turns green when your voicing is right.`,
     `every chord green for one whole line at ${bpm} BPM`,
-    { route: ROUTES.chordSightreading, voicing, bpm, infinite: true }, { goal: { percent: 100, bpm } })
+    { route: ROUTES.chordSightreading, voicing, bpm, infinite: true, ...(style ? { style } : {}) }, { goal: { percent: 100, bpm } })
 }
 
 // The songs already introduced: the first step of a song tells what the song is and its form
@@ -217,13 +226,14 @@ function song(week: WeekId, id: SongId, stage: 1 | 2 | 3, options: StepOptions =
   const band = { key, style: item.style, pattern: stage === 3 ? item.pattern : undefined, subs }
   const listen = stage === 3 ? step(week, `${id}-listen`, 'listen', `Hear the pattern: ${item.title}`,
     `Play the song and listen carefully to the band's piano: it plays the pattern you will learn next. ${item.patternText}\n` +
-    'Listen to a whole chorus first, without playing. Then join in softly with your left hand, copying the rhythm before you worry about the exact notes.' + aboutOnce(id),
+    'Listen to a whole chorus first, without playing. Then join in softly with your left hand, copying the rhythm before you worry about the exact notes.' + styleWords(item.style) + aboutOnce(id),
     'you can tap or hum the rhythm of the pattern', { route: ROUTES.leadSheetSightreading, song: item.title, bpm, check: 'melody', ...band, pattern: item.pattern }) : null
   const words = stage === 3
     ? `${STAGES[3].what} ${item.patternText} Go slowly at first: a steady pattern at a slow tempo is worth more than a stumbling one at the target tempo.`
     : STAGES[stage].what
+  const feel = styleWords(item.style)
   const play = step(week, `${id}${stage}`, 'song', options.title ?? `${item.title}, ${STAGES[stage].name}`,
-    words + (options.what ? `\n${options.what}` : '') + (listen ? '' : aboutOnce(id)), done,
+    words + feel + (options.what ? `\n${options.what}` : '') + (listen ? '' : aboutOnce(id)), done,
     { route: ROUTES.leadSheetSightreading, song: item.title, bpm, check: 'both', leftHand: STAGES[stage].leftHand, mute: ['comp'], ...band },
     { goal: { percent: 90, bpm, ...(options.timing ? { timingMs: options.timing } : {}) } })
   return listen ? [listen, play] : [play]
@@ -234,29 +244,53 @@ function improvise(week: WeekId, id: SongId, what: string, options: StepOptions 
   const item: CourseSong = SONGS[id]
   const { key, bpm = 80, done = 'one chorus without stopping' } = options
   return step(week, `improvise-${id}`, 'improvise', options.title ?? `Improvise over ${item.title}`,
-    `${what}\nYour left hand keeps the song's pattern while you improvise. If that is too much at first, go back to stage 1 (the roots) or stage 2 (the chords): today, the ideas of your right hand matter more than the left hand. Every note you play is written on the sheet and coloured, so you can see which notes belonged to the chord.`, done,
+    `${what}${styleWords(item.style)}\nYour left hand keeps the song's pattern while you improvise. If that is too much at first, go back to stage 1 (the roots) or stage 2 (the chords): today, the ideas of your right hand matter more than the left hand. Every note you play is written on the sheet and coloured, so you can see which notes belonged to the chord.`, done,
     { route: ROUTES.freeImprovisation, song: item.title, bpm, key, style: item.style, pattern: item.pattern, mute: ['comp'], subs: options.subs },
     { selfCheck: ['I kept my place in the form', 'I played some notes on purpose, not only scale runs', 'I came back to the melody at the end'] })
 }
 
-/** Licks of Lick Sightreading, from one playlist, over an endless line. */
-function licks(week: WeekId, playlist: string, what: string, bpm = 80): LessonStep {
-  return step(week, 'licks', 'improvise', `${playlist.replace(/^Licks: /, '')} licks`,
-    `${what}\nA lick is a short phrase from the jazz language. The screen writes a lick over an endless line of chords and moves it to fit each new chord; read it, play it, and listen to how it sounds against the band. Pick one lick you like and play it from memory before you move on.`,
+// How every lick step goes on, once the lick itself is described
+const LICK_ROUTINE = 'Learn it the way jazz musicians learn a phrase from a record. First read it slowly and play it with the band, listening to how each note sounds against the chord. Then play it without looking at the staff. Finally, sing or hum it before you play it: a phrase you can sing is a phrase you can use in a solo.'
+
+/**
+ * A lick of Lick Sightreading (one chord), over an endless line: the screen opens on `lick` (the
+ * start of a title in the lick playlist) and moves it to fit each new chord; the other licks of
+ * the list are in its Licks menu for later.
+ */
+function licks(week: WeekId, playlist: string, lick: string, what: string, bpm = 80): LessonStep {
+  return step(week, 'licks', 'improvise', `${playlist.replace(/^Licks: /, '')} licks: ${lick}`,
+    `${what}\nThe screen writes this lick over an endless line of chords and moves it to fit each new chord, so you hear the same shape over many chords. ${LICK_ROUTINE}\n` +
+    'When it is in your fingers, open the Licks menu: the other licks of the same list use the same idea. Choose one more you like and use both in the improvising step.',
     `90% of the notes right at ${bpm} BPM`,
-    { route: ROUTES.lickSightreading, playlist, bpm, infinite: true }, { goal: { percent: 90, bpm } })
+    { route: ROUTES.lickSightreading, playlist, song: lick, bpm, infinite: true }, { goal: { percent: 90, bpm } })
 }
 
+/**
+ * A lick over a whole progression (a ii-V-I from a standard), in Exercises Sightreading: played
+ * `times` times through, a fourth higher each time.
+ */
+function phrase(week: WeekId, lick: string, what: string, options: { bpm?: number; times?: number } = {}): LessonStep {
+  const { bpm = 80, times = 4 } = options
+  return step(week, 'licks', 'improvise', `A lick from a standard: ${lick.replace(/^Standards: /, '')}`,
+    `${what}\n${LICK_ROUTINE}${repeatText({ times, keyStep: FOURTH })}`,
+    `90% of the notes right over the ${times} times through, at ${bpm} BPM`,
+    { route: ROUTES.exerciseSightreading, song: lick, bpm, check: 'melody', choruses: times, keyStep: FOURTH }, { goal: { percent: 90, bpm } })
+}
+
+/** How a dictation step sets Melodic Dictation: the notes to write in each melody, and whether notes outside the key may come. */
+interface Dictation { guesses: number; alterations?: 'none' | 'with' | 'any' }
+
 /** A few minutes of ear training, ticked at 80% right (a round of 10 questions, or 20 notes written). */
-function ear(week: WeekId, kind: 'progression' | 'dictation', what: string): LessonStep {
+function ear(week: WeekId, kind: 'progression' | 'dictation', what: string, dictation: Dictation = { guesses: 4 }): LessonStep {
   const goal = { goal: { percent: 80, bpm: 0 } }
   return kind === 'progression'
     ? step(week, 'ear', 'ear', 'Name the progression',
       `${what}\nThe screen plays a short chord progression and you choose its name among the answers. Questions come in rounds of 10: the counter at the top of the screen shows how many you have answered and how many were right. Listen to the bass first, and play each progression as many times as you need before you answer.`,
       '8 right answers in a round of 10 questions', { route: ROUTES.nameProgression }, goal)
     : step(week, 'ear', 'ear', 'Melodic dictation',
-      `${what}\nThe screen plays a short melody; write its notes on the staff or play them on your keyboard. Sing the melody back before you answer, and find each note by its distance from the tonic of the key. The counter adds up the notes you have written.`,
-      '80% of the notes right, over 20 notes or more', { route: ROUTES.melodicDictation }, goal)
+      `${what}\nThe screen plays a short melody from a song or a lick, with ${dictation.guesses} of its notes hidden; write them on the staff or play them on your keyboard. Sing the melody back before you answer, and find each note by its distance from the tonic of the key. The counter adds up the notes you have written.`,
+      '80% of the notes right, over 20 notes or more',
+      { route: ROUTES.melodicDictation, guesses: dictation.guesses, alterations: dictation.alterations ?? 'none' }, goal)
 }
 
 /** A step to tick by yourself (recording, playing for someone...). */
@@ -282,6 +316,7 @@ function introEnding(week: WeekId, id: keyof typeof FRAMES, options: StepOptions
 interface SubstitutionPlan {
   sub: SubstitutionId
   exercise: string // the settings of the exercise over the new chords (exerciseBuilder.ts specText)
+  practise: string // what the exercise plays, chord by chord
   song: SongId
   bpm: number
   hear: string // what to listen for
@@ -300,7 +335,7 @@ function substitutionWeek(week: WeekId, plan: SubstitutionPlan): LessonStep[] {
   const item: CourseSong = SONGS[plan.song]
   const subs = [plan.sub]
   return [
-    hands(week, 1, plan.exercise, 'This exercise practises the new chords on their own before you meet them in the song. Play shells of the new chords with your left hand (the root with the 3rd or the 7th) and the guide tones with your right hand, one note per chord, so that you hear how the new chord leads on to the next one.',
+    hands(week, 1, plan.exercise, `This exercise practises the new chords on their own before you meet them in the song. ${plan.practise} Play shells with your left hand (the root with the 3rd or the 7th) and the guide tones with your right hand, one note per chord, so that you hear how the new chord leads on to the next one.`,
       { check: 'both', bpm: Math.min(plan.bpm, 80) }),
     step(week, `${plan.song}-hear`, 'listen', `Hear the ${name}: ${item.title}`,
       `${plan.hear}\nThe new chords are written in blue on the sheet. Listen to two choruses without playing, and raise a hand (or say "now") each time the new chord comes.`,
@@ -338,7 +373,7 @@ const UNITS: WrittenUnit[] = [
         hands(2, 2, 'arpeggio;move=halfUp;chord=minor', 'Play the same exercise with minor triads. A minor triad turns the order around: a minor 3rd at the bottom and a major 3rd on top, so only the middle note changes. Listen to the darker sound that this one note makes.'),
         ...song(2, 'avalon', 2, { bpm: 80 }),
         improvise(2, 'avalon', 'Improvise again with the root, the 3rd and the 5th of each chord, but this time choose one rhythm two bars long and keep repeating it, changing only the notes. A repeated rhythm makes even simple notes sound like a melody, and the listener can follow it.'),
-        ear(2, 'dictation', 'Today\'s melodies have 4 notes. Write what you hear.'),
+        ear(2, 'dictation', 'Write 4 notes. Today\'s melodies stay inside the key, with no sharps or flats added. Start with the first note: is it the tonic, the 3rd or the 5th of the key? Once you know it, the others are easier to find.', { guesses: 4 }),
       ] },
       { week: 3, steps: [
         hands(3, 1, 'scale;scale=Dorian', 'Play the Dorian scale up and down, both hands together. Dorian is a minor scale with a natural 6th: on C, it is C D E♭ F G A B♭. It is the scale jazz musicians use most over minor 7th chords, as you will see in the theory below.', { times: 4, keyStep: FOURTH }),
@@ -354,9 +389,10 @@ const UNITS: WrittenUnit[] = [
         ...song(4, 'avalon', 3, { key: C, bpm: 90, done: 'two keys (F and C) at 90 BPM' }),
         improvise(4, 'avalon', 'Improvise one chorus over the open 5ths and build it with space: play for two bars, then rest for two bars. Make each phrase answer the one before it, as in a conversation; musicians call this call and response.', { key: C, bpm: 90 }),
         introEnding(4, 'avalon', { key: C, bpm: 90 }),
-        ear(4, 'dictation', 'Today\'s melodies have 4 notes, then 6.'),
+        ear(4, 'dictation', 'Write 4 notes, then 6 when 4 feel easy (the menu of the screen changes it). Before you write anything, listen to the contour: does the melody go up, down, or turn around? Draw its shape in the air with your hand.', { guesses: 4 }),
       ] },
       { week: 'sub1', steps: substitutionWeek('sub1', {
+        practise: 'It starts in F: a bar of Fmaj7, then a bar shared by G−7 and C7 (the ii and the V, two beats each), then two bars of Fmaj7. Then the same in C. Without the ii, that middle bar would be C7 alone.',
         sub: 'addII', exercise: 'line;progression=add ii;key=5;move=fifthUp;keys=2;line=guide3', song: 'avalon', bpm: 90,
         hear: 'Where C7 lasts four bars, the band now plays G−7 for the first two bars, then C7. G−7 is the ii chord of C7 (the minor chord built a 5th above C), and together they form a ii-V, the move you will meet in almost every song from Unit 3 onwards.',
         play: 'Where the band plays G−7, your left hand plays G and D (the open 5th of G) instead of C and G.',
@@ -381,14 +417,14 @@ const UNITS: WrittenUnit[] = [
         hands(6, 1, 'line;progression=jazz blues;line=guide3', 'Play shells with your left hand (the root with the 3rd or the 7th) and the guide-tone line with your right hand: one note per chord, the 3rd or the 7th, each moving as little as possible to the next. The guide tones are the notes that define each chord, so this line sounds the whole progression with very few notes.', { check: 'both', bpm: 80 }),
         ...song(6, 'studyBlues', 3, { bpm: 90 }),
         improvise(6, 'studyBlues', 'Improvise with the chord triads again, but reach each note from a half step below: play E before F, G♯ before A, and so on. These approach notes are the first step towards the sound of bebop.', { bpm: 90 }),
-        ear(6, 'dictation', 'Today\'s melodies have 6 notes.'),
+        ear(6, 'dictation', 'Write 6 notes. Most notes of a melody move by step, to the next note of the scale; listen for the one leap and ask yourself how far it goes.', { guesses: 6 }),
       ] },
       { week: 7, steps: [
         hands(7, 1, 'scale;scale=Blues', 'Play the blues scale up and down, both hands together. It has six notes: on C, C E♭ F G♭ G B♭. The G♭, called the blue note, is what gives the scale its sound.', { times: 4, keyStep: FOURTH }),
         hands(7, 2, 'scale;scale=Minor pentatonic', 'Play the minor pentatonic scale up and down, both hands together: on C, C E♭ F G B♭. It is the blues scale without its blue note, and it has no half steps, so none of its notes clash.', { times: 4, keyStep: FOURTH }),
         ...song(7, 'studyBlues', 2, { key: Bb, bpm: 90, done: 'in B♭ at 90 BPM' }),
         improvise(7, 'studyBlues', 'Improvise with the blues scale of the key and work on the blue third: slide from the minor 3rd to the major 3rd (in B♭, from D♭ to D), as blues singers and guitarists bend their notes. On the piano you cannot bend a note, so play the two notes quickly one after the other, or both together.', { key: Bb, done: '2 choruses improvised' }),
-        licks(7, 'Licks: Blues', 'Today\'s licks are blues licks, the phrases you hear in every blues solo.'),
+        licks(7, 'Licks: Blues', 'Blue third', 'This lick is the sound of this week\'s improvising. It starts on the minor 3rd (E♭ over C7) and slides straight up to the major 3rd (E), then climbs through the chord to the 7th (B♭) and comes back down to the root. Play the first two notes quickly, as if you were bending one note on a guitar. Every blues player uses this slide: once you know it, you will hear it in almost every blues solo.'),
         ear(7, 'progression', 'Today\'s progressions mix blues and I-IV-V progressions.'),
       ] },
       { week: 8, steps: [
@@ -396,7 +432,7 @@ const UNITS: WrittenUnit[] = [
         ...song(8, 'tinRoof', 1, { bpm: 80 }),
         ...song(8, 'tinRoof', 2, { bpm: 80, done: 'the head at 80 BPM' }),
         improvise(8, 'tinRoof', 'Improvise with the blues scale over the roots, and put rhythm first. Choose just two notes and change only their rhythm. Then make up a short riff and repeat it as the chords change underneath, as blues players do: the same riff sounds different over each chord.'),
-        ear(8, 'dictation', 'Today\'s melodies have 6 notes.'),
+        ear(8, 'dictation', 'Write 6 notes. As you write each note, sing it on its number in the scale (1, 2, 3...): this links what you hear to where the note sits in the key.', { guesses: 6 }),
       ] },
       { week: 9, steps: [
         hands(9, 1, 'line;progression=jazz blues;line=chordTones', 'Play the notes of each chord in eighth notes through the blues, both hands together, then fill in the gaps with notes of the chord\'s scale. Landing on a chord tone on each beat is what makes a line follow the chords.', { bpm: 80 }),
@@ -410,9 +446,10 @@ const UNITS: WrittenUnit[] = [
         selfCheck(10, 'Record a blues', 'Record yourself playing the head, two improvised choruses, and the head again. Listen back the next day, when you hear it with fresh ears, and use the boxes below to check how it went.',
           ['I recorded it', 'The time was steady', 'I knew where I was in the 12 bars', 'I listened back']),
         introEnding(10, 'tinRoof', { bpm: 90 }),
-        ear(10, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(10, 'dictation', 'Write 8 notes. Split the melody in two halves of 4 notes, and write one half at a time.', { guesses: 8 }),
       ] },
       { week: 'sub2', steps: substitutionWeek('sub2', {
+        practise: 'In C, the turnaround C A−7 D−7 G7 becomes C A7 D7 G7: each chord is now a dominant 7th that leads to the next one, a 5th lower. Listen to the C♯ of A7 and the F♯ of D7, the notes that were not in the key before.',
         sub: 'secondary', exercise: 'line;progression=secondary;line=guide3', song: 'studyBlues', bpm: 90,
         hear: 'In the last bar, the band now plays G7 instead of G−7: the ii chord is turned into a dominant (II7), with B natural instead of B♭. The turnaround F7 D7 G7 C7 becomes a chain of dominants, each one the V of the next.',
         play: 'In the last bar, your left hand plays G7 (with B natural) where the chart says G−7.',
@@ -438,34 +475,35 @@ const UNITS: WrittenUnit[] = [
         voicings(12, 2, 'shell', 'Shells through endless progressions', 'Play shell voicings with your left hand: the root at the bottom, with the 3rd or the 7th above it, and nothing else. Shells are what jazz pianists play when they want a clear, light sound that leaves room for the melody.'),
         ...song(12, 'ladyBeGood', 3, { bpm: 90, done: 'the head at 90 BPM with shells' }),
         improvise(12, 'ladyBeGood', 'Improvise with the guide tones, filling the space between them with notes of the scale. Then try a motif: a two-bar idea that you play once, repeat, and then move so that it fits the next ii-V-I. Developing one idea is far more musical than playing new notes all the time.', { bpm: 90 }),
-        ear(12, 'dictation', 'Today\'s melodies have 6 notes, over a ii-V-I.'),
+        ear(12, 'dictation', 'Write 6 notes. Many of them are notes of the chord playing under them: listen with the chord in mind, as you do when you play guide tones.', { guesses: 6 }),
       ] },
       { week: 13, steps: [
         voicings(13, 1, 'twoHand', 'Two-hand voicings', 'Play a shell with your left hand and add the 9th and the 5th above it with your right hand. Two hands give a fuller, richer chord, the way a pianist sounds when there is no other instrument playing chords.'),
         improvise(13, 'ladyBeGood', 'Improvise with short cells over each ii-V-I: the pattern 1-2-3-5 of each chord, and the arpeggio licks you have learnt. Cells are small building blocks that you can join into longer lines.', { bpm: 90, done: 'one chorus improvised' }),
-        licks(13, 'Licks from standards: ii-V-I major', 'Today\'s licks are ii-V-I phrases taken from the melodies of standards.'),
+        phrase(13, 'Standards: ii-V-I major 8', 'This phrase comes from the melody of a standard, over D−7 G7 C. Look at its long notes: F over D−7, B over G7 and E over C. These are the 3rds of the three chords, the guide-tone line you played in week 13, and the shorter notes simply walk from one to the next. Many melodies are built like this: a guide-tone line, decorated.', { bpm: 80 }),
         ear(13, 'progression', 'Today\'s progressions are ii-V-I\'s and I-vi-ii-V turnarounds.'),
       ] },
       { week: 14, steps: [
         hands(14, 1, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=guide2', 'Play shells with your left hand and two guide tones per chord with your right hand, through minor ii-V-i\'s. In a minor key the ii chord is half-diminished and the V chord often takes a ♭9: you will study them properly in the next unit.', { check: 'both', bpm: 80 }),
         ...song(14, 'honeysuckle', 1, { bpm: 90 }),
         ...song(14, 'honeysuckle', 2, { bpm: 90 }),
-        licks(14, 'Licks: Arpeggios', 'Today\'s licks are built on arpeggios: the notes of the chord played one after another.', 90),
-        ear(14, 'dictation', 'Today\'s melodies have 6 notes.'),
+        licks(14, 'Licks: Arpeggios', 'Arpeggio 5-7-1-3, scale down to the root', 'This lick starts on the 5th of the chord and climbs through the 7th, the root and the 3rd (G B♭ C E♭ over C−7), then comes back down by step to the root. Starting an arpeggio on the 5th instead of the root is a small change that makes it sound much less like an exercise. Notice the shape: up by leaps, down by steps, the shape of many good melodies.', 90),
+        ear(14, 'dictation', 'Write 6 notes. Listen to the last note first: melodies often end on the tonic or the 3rd, and knowing where a melody lands helps you find the way there.', { guesses: 6 }),
       ] },
       { week: 15, steps: [
         hands(15, 1, 'line;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the scale of each chord, both hands together, starting each chord on one of its chord tones. This is the raw material of bebop lines.', { bpm: 80 }),
         ...song(15, 'honeysuckle', 3, { bpm: 100, done: 'the head at 100 BPM' }),
-        licks(15, 'Licks: Approach notes', 'Today\'s licks use approach notes: chord tones reached from a half step away, above or below.', 90),
+        licks(15, 'Licks: Approach notes', 'Approach into the 5: b5-5-6-7', 'This lick starts a half step below the 5th of the chord (G♭ before G over C−7), lands on the 5th, and climbs the scale to the 7th. The first note does not belong to the chord at all, yet it sounds right, because it resolves at once onto a chord tone: that is what an approach note is. Accent the 5th a little, so the ear hears where the line was going.', 90),
         ear(15, 'progression', 'Today\'s progressions are minor ii-V-i\'s.'),
       ] },
       { week: 16, steps: [
         voicings(16, 1, 'shell', 'ii-V-I shells in 12 keys', 'Play shell voicings through every key, slowly. Reading the chords as they come, rather than from memory, is the skill this drill trains.', 60),
         improvise(16, 'honeysuckle', 'Improvise one chorus over the ragtime bass (or over shells if the jumps are still too hard), with the head before and after.', { bpm: 100, done: 'the head, one chorus, the head' }),
         introEnding(16, 'honeysuckle', { bpm: 100 }),
-        ear(16, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(16, 'dictation', 'Write 8 notes. Before you write, sing the whole melody back once with the screen silent; then write it from memory.', { guesses: 8 }),
       ] },
       { week: 'sub3', steps: substitutionWeek('sub3', {
+        practise: 'In each key, the ii-V-I D−7 G7 C becomes D−7 D♭7 C: the V7 is replaced by the dominant a tritone away. The guide tones do not change (F and B for G7, F and C♭ for D♭7), but the bass now falls by half steps, D, D♭, C. The key moves up a fourth after each one.',
         sub: 'tritone', exercise: 'line;progression=tritone;move=fourthUp;keys=12;line=guide3', song: 'honeysuckle', bpm: 100,
         hear: 'Before F, the band now plays G♭7 instead of C7: the dominant a tritone away. G♭7 has the same 3rd and 7th as C7 (B♭ and E, which G♭7 spells F♭), so it leads to F just as well, and the bass now falls by half steps: G, G♭, F. The song already does this once by itself, with A♭−7 D♭7 before G−7.',
         play: 'Where the band plays G♭7, your ragtime bass plays G♭ (then D♭), and the chord in the middle keeps B♭ and E (F♭).',
@@ -492,21 +530,21 @@ const UNITS: WrittenUnit[] = [
         hands('minor2', 2, 'scale;scale=Phrygian dominant', 'Play the Phrygian dominant scale up and down, both hands together. It is Mixolydian with a flat 9th and a flat 13th (on C: C D♭ E F G A♭ B♭), and it is the fifth mode of the harmonic minor scale. It is the sound of the V chord in a minor key.', { times: 4, keyStep: FOURTH }),
         ...song('minor2', 'loveMe', 3, { bpm: 100, done: 'the head at 100 BPM with shells' }),
         improvise('minor2', 'loveMe', 'Over each E7, play its ♭9 (F) and let it fall a half step to E, the 5th of A−7. Lines that resolve like this make the minor ii-V-i sound complete.', { bpm: 100 }),
-        ear('minor2', 'dictation', 'Today\'s melodies have 6 notes, in a minor key.'),
+        ear('minor2', 'dictation', 'Write 6 notes. Some melodies now have notes outside the key signature, like the raised 7th of a minor key: write them as a sharp or a flat of the nearest note.', { guesses: 6, alterations: 'any' }),
       ] },
       { week: 'minor3', steps: [
         hands('minor3', 1, 'scale;scale=Locrian #2', 'Play the Locrian ♮2 scale up and down, both hands together. It is the scale of the half-diminished chord: the Locrian mode with a natural 2nd (on C: C D E♭ F G♭ A♭ B♭).', { times: 4, keyStep: FOURTH }),
-        hands('minor3', 2, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the three scales of the minor ii-V-i, both hands together: Locrian ♮2 over the ii, Phrygian dominant over the V, and the minor scale over the i.', { bpm: 90 }),
-        licks('minor3', 'Licks from standards: minor ii-V-i', 'Today\'s licks are minor ii-V-i phrases from standards.', 90),
+        hands('minor3', 2, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the three scales of the minor ii-V-i, both hands together: Locrian ♮2 over the ii, Phrygian dominant over the V, and melodic minor (a minor scale with a natural 6th and 7th) over the i, which is a minor 6th chord.', { bpm: 90 }),
+        phrase('minor3', 'Standards: minor ii-V-i 4', 'This phrase comes from the melody of a standard in a minor key. Watch the last notes: B, the 3rd of G7, falls a half step to B♭, the 7th of C−7. That half step is the guide-tone movement of every ii-V-i, and in a minor key it is what makes the arrival sound dark and final.', { bpm: 90 }),
         improvise('minor3', 'loveMe', 'In each minor ii-V-i, play one of the licks from the licks step, then a phrase of your own that answers it.', { bpm: 110 }),
         ear('minor3', 'progression', 'Today\'s progressions are minor ii-V-i\'s.'),
       ] },
       { week: 'minor4', steps: [
-        hands('minor4', 1, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=guide3', 'Review the minor ii-V-i in six keys: shells with your left hand, guide tones with your right hand.', { check: 'both', bpm: 90 }),
+        hands('minor4', 1, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=guide3', 'Review the minor ii-V-i before you play the song in a new key: shells with your left hand, guide tones with your right hand, in as many keys as you can. Say the name of each chord before it comes; this habit is what lets you play a song in any key.', { check: 'both', bpm: 90 }),
         ...song('minor4', 'loveMe', 3, { key: G, bpm: 110, done: 'in G (E minor) at 110 BPM' }).slice(1),
         improvise('minor4', 'loveMe', 'Improvise one chorus over the shells, with the head before and after.', { key: G, bpm: 110, done: 'the head, one chorus, the head' }),
         introEnding('minor4', 'loveMe', { bpm: 100 }),
-        ear('minor4', 'dictation', 'Today\'s melodies have 8 notes, in a minor key.'),
+        ear('minor4', 'dictation', 'Write 8 notes, with or without notes outside the key signature. In a minor key, listen for the raised 7th, the leading tone just below the tonic.', { guesses: 8, alterations: 'any' }),
       ] },
     ],
   },
@@ -516,7 +554,7 @@ const UNITS: WrittenUnit[] = [
     source: 'Kelly and Rasmussen, Book 1, Module 4 (song form, What Is This Thing Called Love?, melodic embellishment); Rhythm Changes added for the course',
     weekList: [
       { week: 17, steps: [
-        hands(17, 1, 'line;progression=I-vi-ii-V;line=guide3', 'Play the I-vi-ii-V turnaround with shells in your left hand and guide tones in your right hand. Turnarounds are the two-bar progressions that take a song back to its beginning, and you will find them everywhere in this unit\'s songs.', { check: 'both', bpm: 80 }),
+        hands(17, 1, 'line;progression=I-vi-ii-V;line=guide3', 'Play the I-vi-ii-V turnaround with shells in your left hand and guide tones in your right hand. Turnarounds are the two-bar progressions that take a song back to its beginning, and you will find them everywhere in this unit\'s songs. Here the vi is a minor chord (A−7 in C); songs often turn it into a dominant (A7), which you will meet in week 27 and can practise as I-VI7-ii-V in the exercise builder.', { check: 'both', bpm: 80 }),
         ...song(17, 'justYou', 1, { bpm: 100 }),
         ...song(17, 'justYou', 2, { bpm: 100 }),
         ...song(17, 'justYou', 3, { bpm: 100, done: 'the head at 100 BPM without losing a bar' }),
@@ -528,19 +566,19 @@ const UNITS: WrittenUnit[] = [
         improvise(18, 'justYou', 'Alternate a phrase of the melody with a phrase of your own, all the way through the song.', { bpm: 100, done: 'one chorus with the band' }),
         ...song(18, 'gotRhythm', 1, { bpm: 100 }),
         ...song(18, 'gotRhythm', 2, { bpm: 100 }),
-        ear(18, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(18, 'dictation', 'Write 8 notes. Listen for repeated notes and repeated shapes: a melody often says the same thing twice, a little changed.', { guesses: 8 }),
       ] },
       { week: 19, steps: [
-        hands(19, 1, 'line;progression=rhythm changes;line=guide2', 'Play two guide tones per chord through the A section of Rhythm Changes, both hands together, as a smooth two-voice line.', { bpm: 100 }),
+        hands(19, 1, 'line;progression=rhythm changes;line=guide2', 'Play two guide tones per chord, the 3rd and the 7th, through the A section of Rhythm Changes, both hands together. The two notes form two voices: follow the top one with your ear, and you will hear it move by half steps or stay where it is from chord to chord. With the chords changing twice a bar, these two voices are what keep you from getting lost.', { bpm: 100 }),
         ...song(19, 'gotRhythm', 3, { bpm: 110, done: 'the A sections at 110 BPM' }),
-        licks(19, 'Licks: Neighbours and turns', 'Today\'s licks use turns: a note circled by its neighbours above and below before you land on it.', 100),
+        licks(19, 'Licks: Neighbours and turns', 'Turn around the 3', 'This lick circles the 3rd of the chord (E over C): it steps down to the root and back up in quick sixteenth notes, plays the 3rd again, touches the 5th and comes back to the 3rd. Coming back to the same note from both sides is called a turn, and it makes that note stand out among the others. Practise the quick notes slowly at first, and listen for the 3rd each time it returns.', 100),
         ear(19, 'progression', 'Today\'s progressions come from Rhythm Changes.'),
       ] },
       { week: 20, steps: [
         hands(20, 1, 'line;progression=iii-VI-ii-V;line=guide3', 'Play the iii-VI-ii-V turnaround with shells and guide tones. It is a variation of I-vi-ii-V in which the iii chord replaces the I and the VI becomes a dominant.', { check: 'both', bpm: 90 }),
         improvise(20, 'gotRhythm', 'Add approach notes to the melody. Then quote it: start a phrase with the first notes of the melody and continue in your own way. Quoting the melody helps the listener follow your solo.', { bpm: 110, done: 'the head, one chorus, the head' }),
         introEnding(20, 'gotRhythm', { bpm: 110 }),
-        ear(20, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(20, 'dictation', 'Write 8 notes. Listen for the leaps of a 4th or a 5th: they often jump between the root and the 5th of the chord.', { guesses: 8 }),
       ] },
       { week: 21, steps: [
         hands(21, 1, 'line;progression=minor ii-V-i;move=fourthUp;keys=12;line=chordTones', 'Play the chord tones of each chord of the minor ii-V-i in eighth notes, through all keys, both hands together. This week\'s song is built on minor ii-V\'s, so this prepares you for it.', { bpm: 90 }),
@@ -553,9 +591,10 @@ const UNITS: WrittenUnit[] = [
         voicings(22, 1, 'rootless', 'Rootless voicings', 'Play rootless voicings with your left hand: the 3rd, the 7th and the 9th (with the 5th or the 13th if you like), but no root, because the bass player plays it. They are the sound of modern jazz piano, and the pattern of What Is This Thing Called Love?', 60),
         ...song(22, 'thisThing', 3, { bpm: 100 }),
         improvise(22, 'thisThing', 'Improvise one chorus over the rootless voicings (or over shells), with the head before and after.', { bpm: 100, done: 'the head, one chorus, the head' }),
-        ear(22, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(22, 'dictation', 'Write 8 notes, after hearing the melody twice at most. Trust your first impression, then check it by singing.', { guesses: 8 }),
       ] },
       { week: 'sub4', steps: substitutionWeek('sub4', {
+        practise: 'In C, the turnaround C A−7 D−7 G7 becomes C C♯°7 D−7 G7: a diminished chord a half step above the I leads up to the ii, and the bass climbs by half steps, C, C♯, D.',
         sub: 'passingDim', exercise: 'line;progression=passing dim;line=guide3', song: 'gotRhythm', bpm: 110,
         hear: 'In the A sections, the band now plays B°7 between B♭ and C−7: a diminished chord a half step above the I, leading up to the ii, as in most recordings of Rhythm Changes. The bass walks up by half steps: B♭, B, C.',
         play: 'Your walking bass goes B♭, B, C there.',
@@ -578,22 +617,22 @@ const UNITS: WrittenUnit[] = [
         ear('alt1', 'progression', 'Today\'s progressions compare V7 and V7♭9: listen for the darker sound of the ♭9.'),
       ] },
       { week: 'alt2', steps: [
-        hands('alt2', 1, 'line;progression=minor ii-V7b9b13-i;move=fourthUp;keys=12;line=guide2', 'Play shells with your left hand and two guide tones per chord with your right hand through minor ii-V7♭9♭13-i\'s.', { check: 'both', bpm: 80 }),
+        hands('alt2', 1, 'line;progression=minor ii-V7b9b13-i;move=fourthUp;keys=12;line=guide2', 'Play shells with your left hand and two guide tones per chord with your right hand through minor ii-V7♭9♭13-i\'s. Over the half-diminished ii the 7th falls to the 3rd of the V; over the V, listen for the ♭9 and the ♭13 in the band, the notes your right hand will soon add to its line.', { check: 'both', bpm: 80 }),
         hands('alt2', 2, 'scale;scale=Altered', 'Play the altered scale up and down, both hands together. It contains every alteration of a dominant chord: the ♭9, the ♯9, the ♯11 and the ♭13. It is the melodic minor scale started a half step above the root (C altered is D♭ melodic minor).', { times: 4, keyStep: FOURTH }),
         improvise('alt2', 'thisThing', 'Work on tension and release: over each altered dominant, play its ♭9 or its ♭13, then resolve it down a half step into the next chord.', { bpm: 110, subs: ['altered'] }),
-        ear('alt2', 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear('alt2', 'dictation', 'Write 8 notes, with notes outside the key signature. Like the ♭9 of an altered dominant, these notes usually sit a half step from a note of the key and move to it.', { guesses: 8, alterations: 'with' }),
       ] },
       { week: 'alt3', steps: [
-        hands('alt3', 1, 'line;progression=ii-V7b9-I;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the scale of each chord, both hands together, using the V\'s scale with its ♭9.', { bpm: 90 }),
+        hands('alt3', 1, 'line;progression=ii-V7b9-I;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the scale of each chord, both hands together: Dorian over the ii, Phrygian dominant over the V7♭9 (Mixolydian with a ♭9 and a ♭13, the scale you learnt in the minor unit), and the major scale over the I. Start each chord on a chord tone and let the ♭9 fall a half step into the next chord.', { bpm: 90 }),
         ...song('alt3', 'loveMeAltered', 3, { bpm: 110, subs: ['altered'], title: 'Love Me Or Leave Me with altered dominants', done: 'the head at 110 BPM with rootless voicings' }),
         improvise('alt3', 'loveMeAltered', 'Over each E7♭9♭13, play F (its ♭9) moving down to E, and C (its ♭13) held into A−7, where it becomes the 3rd of the new chord. One note, two meanings: that is the magic of resolution.', { bpm: 110, subs: ['altered'] }),
         ear('alt3', 'progression', 'Today\'s progressions are minor ii-V-i\'s.'),
       ] },
       { week: 'alt4', steps: [
-        hands('alt4', 1, 'line;progression=minor ii-V7b9b13-i;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the scales of the minor ii-V7♭9♭13-i, both hands together.', { bpm: 90 }),
+        hands('alt4', 1, 'line;progression=minor ii-V7b9b13-i;move=fourthUp;keys=12;line=chordScales', 'Play eighth notes through the scales of the minor ii-V7♭9♭13-i, both hands together: Locrian ♮2 over the half-diminished ii, Phrygian dominant over the V (its ♭9 and ♭13 are the band\'s alterations), and melodic minor over the i, a minor 6th chord.', { bpm: 90 }),
         improvise('alt4', 'loveMeAltered', 'Improvise one chorus in which every dominant chord has an altered note in your line, resolved each time into the next chord.', { bpm: 120, subs: ['altered'], done: 'the head, one chorus, the head' }),
         introEnding('alt4', 'thisThing', { bpm: 110 }),
-        ear('alt4', 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear('alt4', 'dictation', 'Write 8 notes, with or without notes outside the key signature. Aim for three hearings at most.', { guesses: 8, alterations: 'any' }),
       ] },
     ],
   },
@@ -603,33 +642,33 @@ const UNITS: WrittenUnit[] = [
     source: 'Kerry Politzer, Beginning Jazz Piano (the minor blues module); Duke Ellington and Bubber Miley, Black and Tan Fantasy (1927); Mark Levine, The Jazz Piano Book',
     weekList: [
       { week: 'mblues1', steps: [
-        hands('mblues1', 1, 'line;progression=minor blues;line=guide3', 'Play shells with your left hand and the guide-tone line through the minor blues with your right hand.', { check: 'both', bpm: 80 }),
+        hands('mblues1', 1, 'line;progression=minor blues;line=guide3', 'Play shells with your left hand and the guide-tone line through the minor blues with your right hand, one note per chord. The minor blues has the same plan as the major blues, but its chords are minor, so the 3rds are a half step lower: listen to how dark the line sounds.', { check: 'both', bpm: 80 }),
         ...song('mblues1', 'minorBlues', 1, { bpm: 100 }),
         ...song('mblues1', 'minorBlues', 2, { bpm: 100 }),
         improvise('mblues1', 'minorBlues', 'Improvise with the C minor pentatonic and the C blues scale over every chord. In a minor blues these scales are the notes of the key, so nothing clashes. Repeat a riff, changing it a little each time.', { bpm: 100 }),
         ear('mblues1', 'progression', 'Today\'s progressions are minor blues. Listen for the ♭VI7 and the V7 in bars 9 and 10.'),
       ] },
       { week: 'mblues2', steps: [
-        hands('mblues2', 1, 'line;progression=minor blues;line=guide2', 'Play two guide tones per chord through the minor blues, both hands together.', { check: 'both', bpm: 90 }),
+        hands('mblues2', 1, 'line;progression=minor blues;line=guide2', 'Play two guide tones per chord through the minor blues, both hands together. Listen for bar 9: over A♭7 the line uses G♭ and C, then over G7♭9♭13 it moves to F and B, a half step away, before it settles on C−7.', { check: 'both', bpm: 90 }),
         ...song('mblues2', 'minorBlues', 3, { bpm: 110, done: '2 choruses at 110 BPM with rootless voicings' }),
         improvise('mblues2', 'minorBlues', 'Now follow the chords: Dorian over C−7 and F−7, Mixolydian over A♭7, and the ♭9 and ♭13 over G7♭9♭13.', { bpm: 110 }),
-        ear('mblues2', 'dictation', 'Today\'s melodies have 8 notes, in a minor key.'),
+        ear('mblues2', 'dictation', 'Write 8 notes, with or without notes outside the key signature. Listen for the blue notes: the ♭3 and the ♭5 of the blues scale.', { guesses: 8, alterations: 'any' }),
       ] },
       { week: 'mblues3', steps: [
-        hands('mblues3', 1, 'line;progression=minor blues;line=chordScales', 'Play eighth notes through the scales of the minor blues, both hands together.', { bpm: 90 }),
+        hands('mblues3', 1, 'line;progression=minor blues;line=chordScales', 'Play eighth notes through the scales of the minor blues, both hands together: Dorian over C−7 and F−7, Mixolydian over A♭7, and Phrygian dominant over G7♭9♭13. These are the scales of next week\'s improvising: knowing them by hand lets you follow the chords instead of using one scale for everything.', { bpm: 90 }),
         ...song('mblues3', 'blackTan', 1, { bpm: 100 }),
         ...song('mblues3', 'blackTan', 2, { bpm: 100 }),
         improvise('mblues3', 'blackTan', 'The first 12 bars are a minor blues in B♭ minor: improvise there with the B♭ minor pentatonic and the B♭ blues scale. The second strain turns to B♭ major, so change to the major scale there.', { bpm: 100 }),
         ear('mblues3', 'progression', 'Today\'s progressions mix major and minor blues.'),
       ] },
       { week: 'mblues4', steps: [
-        hands('mblues4', 1, 'line;progression=minor blues;line=guide7', 'Play the guide-tone line through the minor blues starting from the 7th, both hands together.', { check: 'both', bpm: 100 }),
+        hands('mblues4', 1, 'line;progression=minor blues;line=guide7', 'Play the guide-tone line through the minor blues starting from the 7th, both hands together. It is the second path through the same chords: when you know both, you can start a phrase from either guide tone.', { check: 'both', bpm: 100 }),
         ...song('mblues4', 'blackTan', 3, { bpm: 110, done: 'the whole tune with a walking bass at 110 BPM' }),
         improvise('mblues4', 'minorBlues', 'Improvise three choruses with a shape: the first low and sparse, the second higher and busier, the third the highest and busiest, then play the head. A solo that builds like this tells a story.', { bpm: 110, done: 'the head, 3 choruses, the head' }),
         introEnding('mblues4', 'minorBlues', { bpm: 100 }),
         selfCheck('mblues4', 'Record a minor blues', 'Record yourself playing the intro, the head, three improvised choruses, the head and the ending. Listen back the next day and check the boxes below.',
           ['I recorded it', 'My solo had a shape: from low and sparse to high and busy', 'I kept the form', 'I listened back']),
-        ear('mblues4', 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear('mblues4', 'dictation', 'Write 8 notes, a review. Write each melody after two hearings.', { guesses: 8, alterations: 'any' }),
       ] },
     ],
   },
@@ -643,7 +682,7 @@ const UNITS: WrittenUnit[] = [
         ...song(23, 'embraceable', 1, { bpm: 60 }),
         ...song(23, 'embraceable', 2, { bpm: 60, timing: 60, done: 'even notes, without rushing: 90% right at 60 BPM, on time within 60 ms on average' }),
         improvise(23, 'embraceable', 'Improvise with long notes and space: let a note ring for a whole bar, and listen to it against the chords.', { bpm: 60 }),
-        ear(23, 'dictation', 'Today\'s melodies have 6 notes and are played slowly.'),
+        ear(23, 'dictation', 'Write 6 notes, at a slow tempo, as befits a ballad week: lower the tempo on the screen, then hold each note in your ear and sing it before you look for it on the keyboard.', { guesses: 6 }),
       ] },
       { week: 24, steps: [
         voicings(24, 1, 'rootless', 'Rootless voicings in 6 keys', 'Play rootless voicings through six keys, faster than last week.', 80),
@@ -653,15 +692,15 @@ const UNITS: WrittenUnit[] = [
         ear(24, 'progression', 'Today\'s progressions come from ballads.'),
       ] },
       { week: 25, steps: [
-        voicings(25, 1, 'twoHand', 'Bossa comping with two hands', 'Play two-hand voicings, then try them in the bossa nova rhythm while the band plays.', 100),
+        voicings(25, 1, 'twoHand', 'Bossa comping with two hands', 'Play two-hand voicings in the bossa nova rhythm, the rhythm the band\'s piano plays in this week\'s song. It lasts two bars: in the first bar the chord comes on beat 1, on the "and" of 2 and on beat 4; in the second bar, on the "and" of 1, on beat 3 and on the "and" of 4. Count "1 (2) and (3) 4, (1) and (2) 3 (4) and" out loud, slowly, before you play it. Every chord counts as right when it comes, so take the time to place the rhythm.', 100, 'bossa-nova'),
         ...song(25, 'wonderful', 1, { bpm: 120 }),
         ...song(25, 'wonderful', 2, { bpm: 120 }),
         ...song(25, 'wonderful', 3, { bpm: 120, done: 'the head at 120 BPM' }),
-        improvise(25, 'wonderful', 'Improvise with short rhythmic motifs two bars long, repeated and varied. The bossa has straight (not swung) eighth notes: keep them even.', { bpm: 120 }),
-        ear(25, 'dictation', 'Today\'s melodies have 8 notes.'),
+        improvise(25, 'wonderful', 'Improvise with short rhythmic motifs two bars long, repeated and varied. A bossa melody floats over the rhythm: try starting your motifs on an "and" rather than on the beat.', { bpm: 120 }),
+        ear(25, 'dictation', 'Write 8 notes. Name the first and the last note before anything else, then fill in the middle.', { guesses: 8 }),
       ] },
       { week: 26, steps: [
-        hands(26, 1, 'line;move=fourthUp;keys=12;line=chordScales', 'Review the chord scales of the ii-V-I in eighth notes, both hands together, this time at a faster tempo.', { bpm: 100 }),
+        hands(26, 1, 'line;move=fourthUp;keys=12;line=chordScales', 'Review the chord scales of the ii-V-I in eighth notes, both hands together, at a faster tempo than in Unit 3. Keep the eighths swung and light; if the tempo makes you tense, go back to 80 BPM and climb 5 BPM at a time.', { bpm: 100 }),
         improvise(26, 'wonderful', 'Improvise one chorus over the bossa, with the head before and after.', { bpm: 120, done: 'the head, one chorus, the head' }),
         ...song(26, 'teaForTwo', 2, { bpm: 120, done: 'the head in bossa' }),
         ear(26, 'progression', 'Today is a review of all the progressions so far.'),
@@ -679,19 +718,19 @@ const UNITS: WrittenUnit[] = [
         ...song(27, 'modalStudy', 1, { bpm: 100 }),
         ...song(27, 'modalStudy', 2, { bpm: 100 }),
         improvise(27, 'modalStudy', 'Improvise in phrases of two bars, each followed by two bars of rest. Over a long chord there is no harmony to guide you, so phrasing is what gives the music its shape.', { bpm: 100, done: '2 minutes without stopping at 100 BPM' }),
-        ear(27, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(27, 'dictation', 'Write 8 notes. Find the tonic first, then hear every note as a step above or below it, as you do when you improvise over a long chord.', { guesses: 8 }),
       ] },
       { week: 28, steps: [
         hands(28, 1, 'scale;scale=Mixolydian', 'Play the Mixolydian scale up and down, both hands together, then the minor pentatonic. Mixolydian is the major scale with a flat 7th (on C: C D E F G A B♭), the scale of the dominant 7th chord.', { bpm: 100, times: 4, keyStep: FOURTH }),
         ...song(28, 'modalStudy', 3, { bpm: 100, done: 'one whole chorus with the band' }),
         improvise(28, 'modalStudy', 'Improvise with the Dorian scale and the minor pentatonic. Try moving between them: the pentatonic sounds open, Dorian adds colour with its 6th.', { bpm: 100 }),
-        licks(28, 'Licks: Scale lines', 'Today\'s licks are scale lines: phrases that run along the chord\'s scale.', 100),
+        licks(28, 'Licks: Scale lines', 'The Lick', 'This is the most famous phrase in jazz, simply called "The Lick". It runs up the Dorian scale from the root (C D E♭ F over C−7), drops back to D, and turns down through B♭ to land on the root. Jazz musicians quote it so often that it has become a joke among them, which is a good reason to know it. It shows how a scale line becomes a phrase: a run, a leap back, and a turn onto a strong note.', 100),
         ear(28, 'progression', 'Today is a review of all the progressions so far.'),
       ] },
       { week: 29, steps: [
         voicings(29, 1, 'quartal', 'Quartal voicings, review', 'Play quartal voicings through endless progressions, at a faster tempo.', 100),
         improvise(29, 'modalStudy', 'Improvise two choruses. Take one motif up a half step when the bridge moves to E♭−7, and bring it back down afterwards.', { bpm: 110, done: 'the head, 2 choruses, the head' }),
-        ear(29, 'dictation', 'Today\'s melodies have 8 notes.'),
+        ear(29, 'dictation', 'Write 8 notes, a final review: try to write the whole melody at the first hearing.', { guesses: 8, alterations: 'any' }),
       ] },
     ],
   },

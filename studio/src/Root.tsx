@@ -3,7 +3,7 @@ import { Menu } from './Home'
 import { routeUrl, ROUTES, usePath } from './router'
 import { CrashCatch } from './ui/CrashScreen'
 import { usePracticeClock } from './library/practiceLog'
-import { Effects } from './ui/Effects'
+import { Effects } from './ui/Effects.tsx'
 
 // Each screen is its own download, fetched when it is opened: the menu (the first screen) shows
 // without waiting for the band, the sheet engraver or the exercises
